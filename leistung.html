@@ -41,7 +41,7 @@
   <div class="card" id="lastC" style="display:none"><h2>Letzte Messung</h2><div id="last" class="muted"></div></div>
 </div>
 <div id="stage"></div><div id="lab"></div><button class="btn alt" id="stop">✕ Abbrechen</button>
-<script>window.KLMETA = {"version":"0.3.0","built":"21.11.2026 21:47","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.4.0","built":"22.11.2026 00:36","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -282,7 +282,7 @@
   }
   function freshSave() {
     return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
-      set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
+      set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto', gfx: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
       game: freshGame() };
   }
   // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
