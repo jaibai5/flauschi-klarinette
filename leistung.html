@@ -41,7 +41,7 @@
   <div class="card" id="lastC" style="display:none"><h2>Letzte Messung</h2><div id="last" class="muted"></div></div>
 </div>
 <div id="stage"></div><div id="lab"></div><button class="btn alt" id="stop">✕ Abbrechen</button>
-<script>window.KLMETA = {"version":"0.2.2","built":"21.11.2026 19:14","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.3.0","built":"21.11.2026 21:47","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -266,10 +266,27 @@
   var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
 
   /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
+  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
+  // Version 4 (v0.3.0): neues Spiel (spiel.html) mit Feld game, Eltern-Einstellung set.help (Hilfe-Stufe der Klang-Formeln)
+  var SAVE_VERSION = 4;
+  // Neuer leerer Stand. Gemeinsam für App und Spiel, damit beide dieselben Felder kennen.
+  // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
+  // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
+  // set.help: 'auto' = Spiel wählt die Hilfe-Stufe der Klang-Formeln nach Können, 1/2/3 = fest (mit Namen / nur Noten / nur hören)
+  // mis: Tagesmissionen { day, list: [{k, id|note, need, n, done}], chest }
+  // hop: altes Hüpfspiel (bleibt für die Einzeldatei), game: neues Spiel
+  function freshGame() {
+    // intro: Vorspann gesehen · spells: { id: { lv, ok: [n1, n2, n3], gold, day } } gelernte Klang-Formeln
+    // coins: Noten-Münzen · stickers: Sticker-IDs · lv/gold/boss/medals/scenes/rec: Abenteuer und Klang-Reise (ab v0.3.1)
+    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {} };
+  }
+  function freshSave() {
+    return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
+      set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
+      game: freshGame() };
+  }
   // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
   // Rückgabe null, wenn obj kein Spielstand dieser App ist.
-  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
-  var SAVE_VERSION = 3;
   function migrateSave(obj, fresh) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
     if (obj.app === 'flauschi-klarinette' && obj.state) obj = obj.state; // Datei aus "Spielstand sichern"
@@ -286,13 +303,100 @@
     if (typeof out.name !== 'string') out.name = ''; out.name = out.name.slice(0, 20);
     // bis v2 war die Wochen-Datei überall fest "an" (Voreinstellung); ab v3 "automatisch" = auf Tablets aus
     if (oldV < 3 && out.set && out.set.autoFile === true) out.set.autoFile = null;
+    // v4: Spiel-Feld vollständig machen; Dank für geschaffte Welten im alten Hüpfspiel (je Welt 20 Noten-Münzen, Sticker "Alter Hase")
+    var g = out.game, fg = freshGame();
+    if (!g || typeof g !== 'object' || Array.isArray(g)) g = out.game = fg;
+    g.coins = Math.max(0, Math.floor(+g.coins || 0));
+    for (k in fg) if (g[k] === undefined || g[k] === null || typeof g[k] !== typeof fg[k] || Array.isArray(g[k]) !== Array.isArray(fg[k])) g[k] = fg[k];
+    if (oldV < 4) {
+      var worlds = 0, done = out.hop && Array.isArray(out.hop.done) ? out.hop.done : [];
+      for (var w = 0; w < 4; w++) if (done.indexOf(w * 5 + 4) >= 0) worlds++;
+      if (worlds) { g.coins += worlds * 20; if (g.stickers.indexOf('althase') < 0) g.stickers.push('althase'); }
+    }
+    if (out.set && [1, 2, 3, 'auto'].indexOf(out.set.help) < 0) out.set.help = 'auto';
     out.v = SAVE_VERSION;
     return out;
   }
   // "Lina" -> "Linas", "Rex" -> "Rex'"
   function genitive(n) { return /[sßxz]$/i.test(n) ? n + '’' : n + 's'; }
 
-  var KL = { SAVE_VERSION: SAVE_VERSION, migrateSave: migrateSave, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
+  /* ---------- Gemeinsam für App und Spiel: Tonverfolgung, Übungszeit, Missionen, Sterne ---------- */
+  // Tonverfolgung: aus einer Messung { rms, pitch: {f, clarity} | null } wird ein Bild (frame) für die Übungen.
+  // T = { floor, f3 } (Grundrauschen, letzte 3 Tonhöhen für den Median). mutedUntil: solange spielt die App selbst vor.
+  function pitchTracker() { return { floor: 0.003, f3: [] }; }
+  function pitchFrame(T, m, t, dt, mutedUntil, a4) {
+    var thr = Math.max(0.006, T.floor * 3);
+    var voiced = !!(m.pitch && m.pitch.clarity > 0.8 && m.rms > thr && t > mutedUntil);
+    if (!voiced && m.rms < T.floor * 2) T.floor += (m.rms - T.floor) * 0.05; else if (m.rms < T.floor) T.floor = m.rms;
+    T.floor = Math.max(0.0005, Math.min(0.02, T.floor));
+    var a = null;
+    if (voiced) { T.f3.push(m.pitch.f); if (T.f3.length > 3) T.f3.shift(); var s = T.f3.slice().sort(function (x, y) { return x - y; }); a = analyzeFreq(s[s.length >> 1], a4); } else T.f3 = [];
+    return { t: t, dt: dt, rms: m.rms, thr: thr, loud: m.rms > thr && t > mutedUntil, voiced: voiced, a: a };
+  }
+  function dayRec(S, date) { return S.days[date] || (S.days[date] = { sec: 0, ex: 0, stars: 0, fs: 0, games: 0 }); }
+  // Echte Spielzeit (nur solange ein Ton klingt). Rückgabe: { goal: Tagesziel gerade erreicht, fleiss: Fleiß-Stern (je 5 min) }
+  function practiceTick(S, dt, date) {
+    var d = dayRec(S, date), before = Math.floor(d.sec / 300), g = S.set.goal * 60, wasBelow = d.sec < g, r = { goal: false, fleiss: false };
+    d.sec += dt;
+    if (wasBelow && d.sec >= g) r.goal = true;
+    if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; r.fleiss = true; }
+    return r;
+  }
+  // Tagesmissionen im Spielstand: 3 Aufgaben pro Tag (Auswahl in dayMissions). Jede gibt +1 Stern, alle drei die Schatztruhe (+3 Sterne, +1 Ticket).
+  function stBest(S, id) { return S.st[id] ? S.st[id].best : 0; }
+  function missionsFor(S, date, playable) {
+    if (!S.mis || S.mis.day !== date || !Array.isArray(S.mis.list)) {
+      var list = dayMissions({ date: date, unlocked: S.unlocked, playable: playable, bestOf: function (id) { return stBest(S, id); }, nt: S.nt, hw: S.hw && S.hw.ids });
+      S.mis = { day: date, list: list.map(function (m) { m.n = 0; m.done = false; m.paid = false; return m; }), chest: false };
+    }
+    return S.mis;
+  }
+  function misLabel(m) { return m.k === 'note' ? 'Ton ' + m.note + ' ' + m.need + '× richtig' : (station(m.id) ? station(m.id).st.title : '?'); }
+  // Ton-Mission zählt jeden richtig gespielten Ton
+  function misNote(S, name, date) {
+    if (!S.mis || S.mis.day !== date) return;
+    S.mis.list.forEach(function (m) { if (m.k === 'note' && !m.done && m.note === name) { m.n++; if (m.n >= m.need) m.done = true; } });
+  }
+  // Nach einer Übung: Stationsmission abhaken, fertige Missionen auszahlen, Truhe
+  function misProgress(S, id, earned, date, playable) {
+    var M = missionsFor(S, date, playable), out = { pay: 0, tix: 0, msg: [] };
+    M.list.forEach(function (m) {
+      if (!m.done && m.k === 'st' && m.id === id && earned >= 1) m.done = true;
+      if (m.done && !m.paid) { m.paid = true; out.pay++; out.msg.push('🎯 Mission geschafft: ' + misLabel(m) + ' (+1 ⭐)'); }
+    });
+    if (!M.chest && M.list.length && M.list.every(function (m) { return m.done; })) { M.chest = true; out.pay += 3; out.tix += 1; out.msg.push('🎁 Schatztruhe: alle Missionen geschafft! +3 ⭐ +1 🎟️'); }
+    return out;
+  }
+  // Ton-Statistik für den Ton-Bericht der Eltern (und die Ton-Mission)
+  function noteStat(S, name, okHit, cents, date) {
+    var n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++;
+    if (okHit) { n.ok++; misNote(S, name, date); }
+    if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; }
+  }
+  // Sterne-Abrechnung am Ende einer Übung (auch Ton-Hüpfer und Klang-Formeln im Spiel).
+  // o = { id, isl, earned, date, playable, medal }. Ändert S. Rückgabe { pay, tix, medal, extra: [Texte], current }
+  // Regeln: neue Bestwert-Sterne (payout), Start-Bonus für die ersten 3 Übungen, Abwechslungs-Stern, Tagesmissionen, Ticket ab 2 Sternen.
+  function award(S, o) {
+    var s = S.st[o.id] || (S.st[o.id] = { best: 0, n: 0, last: '', rep: 0, medal: 0 });
+    var bestBefore = s.best, rep = s.last === o.date ? s.rep : 0;
+    var hwIds = S.hw && S.hw.ids ? S.hw.ids : [], current = isCurrent(o.isl, S.unlocked, o.playable, hwIds.indexOf(o.id) >= 0);
+    var pay = payout(o.earned, bestBefore, rep, current), extra = [];
+    if (S.bonus < 3 && o.earned > 0) { pay += 1; S.bonus++; }
+    var newToday = s.last !== o.date;
+    s.best = Math.max(s.best, o.earned); s.n++; s.rep = rep + 1; s.last = o.date;
+    var medal = 0;
+    if (o.medal && o.earned >= 2 && (s.medal || 0) < o.medal) { s.medal = o.medal; medal = o.medal; }
+    var d = dayRec(S, o.date); d.ex++;
+    // Abwechslung: die dritte verschiedene Übung des Tages (mit mindestens 1 Stern) gibt einmal +1 Stern
+    if (o.earned > 0 && newToday && !d.vary && Object.keys(S.st).filter(function (id) { return S.st[id].last === o.date && S.st[id].best > 0; }).length >= 3) { d.vary = 1; pay++; extra.push('🌈 Abwechslungs-Stern: 3 verschiedene Übungen heute!'); }
+    var mm = misProgress(S, o.id, o.earned, o.date, o.playable); pay += mm.pay; extra.push.apply(extra, mm.msg);
+    d.stars += pay; S.stars += pay;
+    var tix = (o.earned >= 2 ? 1 : 0) + mm.tix; S.tix += tix;
+    return { pay: pay, tix: tix, medal: medal, extra: extra, current: current };
+  }
+
+  var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
+    missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
     knownNotes: knownNotes, station: station };
   root.KL = KL;

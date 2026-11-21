@@ -246,6 +246,7 @@ h2{margin:4px 0 8px;font-size:26px}
           <button class="btn" style="flex:1" data-act="map">🗺️ Inseln</button>
           <button class="btn" style="flex:1" data-act="tuner">🔍 Ton-Lupe</button>
         </div>
+        <button class="btn pink" id="bGame" data-act="game" style="display:none">✨ Klang-Abenteuer <small style="font-size:16px;opacity:.9">Ton-Hüpfer · Zauberbuch</small></button>
         <div class="mlab">Belohnung</div>
         <div class="row" style="justify-content:stretch">
           <button class="btn green" style="flex:1" data-act="shop">🛍️ Laden</button>
@@ -283,7 +284,7 @@ h2{margin:4px 0 8px;font-size:26px}
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.2.2","built":"21.11.2026 19:14","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.3.0","built":"21.11.2026 21:47","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -508,10 +509,27 @@ h2{margin:4px 0 8px;font-size:26px}
   var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
 
   /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
+  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
+  // Version 4 (v0.3.0): neues Spiel (spiel.html) mit Feld game, Eltern-Einstellung set.help (Hilfe-Stufe der Klang-Formeln)
+  var SAVE_VERSION = 4;
+  // Neuer leerer Stand. Gemeinsam für App und Spiel, damit beide dieselben Felder kennen.
+  // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
+  // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
+  // set.help: 'auto' = Spiel wählt die Hilfe-Stufe der Klang-Formeln nach Können, 1/2/3 = fest (mit Namen / nur Noten / nur hören)
+  // mis: Tagesmissionen { day, list: [{k, id|note, need, n, done}], chest }
+  // hop: altes Hüpfspiel (bleibt für die Einzeldatei), game: neues Spiel
+  function freshGame() {
+    // intro: Vorspann gesehen · spells: { id: { lv, ok: [n1, n2, n3], gold, day } } gelernte Klang-Formeln
+    // coins: Noten-Münzen · stickers: Sticker-IDs · lv/gold/boss/medals/scenes/rec: Abenteuer und Klang-Reise (ab v0.3.1)
+    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {} };
+  }
+  function freshSave() {
+    return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
+      set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
+      game: freshGame() };
+  }
   // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
   // Rückgabe null, wenn obj kein Spielstand dieser App ist.
-  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
-  var SAVE_VERSION = 3;
   function migrateSave(obj, fresh) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
     if (obj.app === 'flauschi-klarinette' && obj.state) obj = obj.state; // Datei aus "Spielstand sichern"
@@ -528,17 +546,310 @@ h2{margin:4px 0 8px;font-size:26px}
     if (typeof out.name !== 'string') out.name = ''; out.name = out.name.slice(0, 20);
     // bis v2 war die Wochen-Datei überall fest "an" (Voreinstellung); ab v3 "automatisch" = auf Tablets aus
     if (oldV < 3 && out.set && out.set.autoFile === true) out.set.autoFile = null;
+    // v4: Spiel-Feld vollständig machen; Dank für geschaffte Welten im alten Hüpfspiel (je Welt 20 Noten-Münzen, Sticker "Alter Hase")
+    var g = out.game, fg = freshGame();
+    if (!g || typeof g !== 'object' || Array.isArray(g)) g = out.game = fg;
+    g.coins = Math.max(0, Math.floor(+g.coins || 0));
+    for (k in fg) if (g[k] === undefined || g[k] === null || typeof g[k] !== typeof fg[k] || Array.isArray(g[k]) !== Array.isArray(fg[k])) g[k] = fg[k];
+    if (oldV < 4) {
+      var worlds = 0, done = out.hop && Array.isArray(out.hop.done) ? out.hop.done : [];
+      for (var w = 0; w < 4; w++) if (done.indexOf(w * 5 + 4) >= 0) worlds++;
+      if (worlds) { g.coins += worlds * 20; if (g.stickers.indexOf('althase') < 0) g.stickers.push('althase'); }
+    }
+    if (out.set && [1, 2, 3, 'auto'].indexOf(out.set.help) < 0) out.set.help = 'auto';
     out.v = SAVE_VERSION;
     return out;
   }
   // "Lina" -> "Linas", "Rex" -> "Rex'"
   function genitive(n) { return /[sßxz]$/i.test(n) ? n + '’' : n + 's'; }
 
-  var KL = { SAVE_VERSION: SAVE_VERSION, migrateSave: migrateSave, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
+  /* ---------- Gemeinsam für App und Spiel: Tonverfolgung, Übungszeit, Missionen, Sterne ---------- */
+  // Tonverfolgung: aus einer Messung { rms, pitch: {f, clarity} | null } wird ein Bild (frame) für die Übungen.
+  // T = { floor, f3 } (Grundrauschen, letzte 3 Tonhöhen für den Median). mutedUntil: solange spielt die App selbst vor.
+  function pitchTracker() { return { floor: 0.003, f3: [] }; }
+  function pitchFrame(T, m, t, dt, mutedUntil, a4) {
+    var thr = Math.max(0.006, T.floor * 3);
+    var voiced = !!(m.pitch && m.pitch.clarity > 0.8 && m.rms > thr && t > mutedUntil);
+    if (!voiced && m.rms < T.floor * 2) T.floor += (m.rms - T.floor) * 0.05; else if (m.rms < T.floor) T.floor = m.rms;
+    T.floor = Math.max(0.0005, Math.min(0.02, T.floor));
+    var a = null;
+    if (voiced) { T.f3.push(m.pitch.f); if (T.f3.length > 3) T.f3.shift(); var s = T.f3.slice().sort(function (x, y) { return x - y; }); a = analyzeFreq(s[s.length >> 1], a4); } else T.f3 = [];
+    return { t: t, dt: dt, rms: m.rms, thr: thr, loud: m.rms > thr && t > mutedUntil, voiced: voiced, a: a };
+  }
+  function dayRec(S, date) { return S.days[date] || (S.days[date] = { sec: 0, ex: 0, stars: 0, fs: 0, games: 0 }); }
+  // Echte Spielzeit (nur solange ein Ton klingt). Rückgabe: { goal: Tagesziel gerade erreicht, fleiss: Fleiß-Stern (je 5 min) }
+  function practiceTick(S, dt, date) {
+    var d = dayRec(S, date), before = Math.floor(d.sec / 300), g = S.set.goal * 60, wasBelow = d.sec < g, r = { goal: false, fleiss: false };
+    d.sec += dt;
+    if (wasBelow && d.sec >= g) r.goal = true;
+    if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; r.fleiss = true; }
+    return r;
+  }
+  // Tagesmissionen im Spielstand: 3 Aufgaben pro Tag (Auswahl in dayMissions). Jede gibt +1 Stern, alle drei die Schatztruhe (+3 Sterne, +1 Ticket).
+  function stBest(S, id) { return S.st[id] ? S.st[id].best : 0; }
+  function missionsFor(S, date, playable) {
+    if (!S.mis || S.mis.day !== date || !Array.isArray(S.mis.list)) {
+      var list = dayMissions({ date: date, unlocked: S.unlocked, playable: playable, bestOf: function (id) { return stBest(S, id); }, nt: S.nt, hw: S.hw && S.hw.ids });
+      S.mis = { day: date, list: list.map(function (m) { m.n = 0; m.done = false; m.paid = false; return m; }), chest: false };
+    }
+    return S.mis;
+  }
+  function misLabel(m) { return m.k === 'note' ? 'Ton ' + m.note + ' ' + m.need + '× richtig' : (station(m.id) ? station(m.id).st.title : '?'); }
+  // Ton-Mission zählt jeden richtig gespielten Ton
+  function misNote(S, name, date) {
+    if (!S.mis || S.mis.day !== date) return;
+    S.mis.list.forEach(function (m) { if (m.k === 'note' && !m.done && m.note === name) { m.n++; if (m.n >= m.need) m.done = true; } });
+  }
+  // Nach einer Übung: Stationsmission abhaken, fertige Missionen auszahlen, Truhe
+  function misProgress(S, id, earned, date, playable) {
+    var M = missionsFor(S, date, playable), out = { pay: 0, tix: 0, msg: [] };
+    M.list.forEach(function (m) {
+      if (!m.done && m.k === 'st' && m.id === id && earned >= 1) m.done = true;
+      if (m.done && !m.paid) { m.paid = true; out.pay++; out.msg.push('🎯 Mission geschafft: ' + misLabel(m) + ' (+1 ⭐)'); }
+    });
+    if (!M.chest && M.list.length && M.list.every(function (m) { return m.done; })) { M.chest = true; out.pay += 3; out.tix += 1; out.msg.push('🎁 Schatztruhe: alle Missionen geschafft! +3 ⭐ +1 🎟️'); }
+    return out;
+  }
+  // Ton-Statistik für den Ton-Bericht der Eltern (und die Ton-Mission)
+  function noteStat(S, name, okHit, cents, date) {
+    var n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++;
+    if (okHit) { n.ok++; misNote(S, name, date); }
+    if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; }
+  }
+  // Sterne-Abrechnung am Ende einer Übung (auch Ton-Hüpfer und Klang-Formeln im Spiel).
+  // o = { id, isl, earned, date, playable, medal }. Ändert S. Rückgabe { pay, tix, medal, extra: [Texte], current }
+  // Regeln: neue Bestwert-Sterne (payout), Start-Bonus für die ersten 3 Übungen, Abwechslungs-Stern, Tagesmissionen, Ticket ab 2 Sternen.
+  function award(S, o) {
+    var s = S.st[o.id] || (S.st[o.id] = { best: 0, n: 0, last: '', rep: 0, medal: 0 });
+    var bestBefore = s.best, rep = s.last === o.date ? s.rep : 0;
+    var hwIds = S.hw && S.hw.ids ? S.hw.ids : [], current = isCurrent(o.isl, S.unlocked, o.playable, hwIds.indexOf(o.id) >= 0);
+    var pay = payout(o.earned, bestBefore, rep, current), extra = [];
+    if (S.bonus < 3 && o.earned > 0) { pay += 1; S.bonus++; }
+    var newToday = s.last !== o.date;
+    s.best = Math.max(s.best, o.earned); s.n++; s.rep = rep + 1; s.last = o.date;
+    var medal = 0;
+    if (o.medal && o.earned >= 2 && (s.medal || 0) < o.medal) { s.medal = o.medal; medal = o.medal; }
+    var d = dayRec(S, o.date); d.ex++;
+    // Abwechslung: die dritte verschiedene Übung des Tages (mit mindestens 1 Stern) gibt einmal +1 Stern
+    if (o.earned > 0 && newToday && !d.vary && Object.keys(S.st).filter(function (id) { return S.st[id].last === o.date && S.st[id].best > 0; }).length >= 3) { d.vary = 1; pay++; extra.push('🌈 Abwechslungs-Stern: 3 verschiedene Übungen heute!'); }
+    var mm = misProgress(S, o.id, o.earned, o.date, o.playable); pay += mm.pay; extra.push.apply(extra, mm.msg);
+    d.stars += pay; S.stars += pay;
+    var tix = (o.earned >= 2 ? 1 : 0) + mm.tix; S.tix += tix;
+    return { pay: pay, tix: tix, medal: medal, extra: extra, current: current };
+  }
+
+  var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
+    missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
     knownNotes: knownNotes, station: station };
   root.KL = KL;
 })(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Klarinetten-Abenteuer · Zeichnungen für App und Spiel (alles eigene SVG, nichts aus dem Netz):
+   Figuren mit Kleidung (auch in Schichten fürs Spiel), Oehler-Griffbild, Notenzeile, Zeigerinstrument.
+   Braucht window.KL (logic.js). Stellt window.KLDRAW bereit. */
+(function () {
+'use strict';
+const KL = window.KL;
+let uid = 0; const O = '#5a4668', CR = '#fff6e6', RB = ['#ff8fa3', '#ffb86b', '#ffe66d', '#8ee08a', '#7cc8ff', '#a996ff', '#e59bff'];
+const circ = (a, attr) => a.map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" ${attr}/>`).join('');
+// Figuren: Kopf immer um (146,48), Körper um (85,128), Beine bei x 52/72/101/119 – so passt jede Kleidung auf jede Figur
+const CHARS = [
+  { id: 'alpaka', n: 'Flauschi', what: 'Regenbogen-Alpaka', leg: ['#f1e3cc', CR], hoof: '#8a6a5c' },
+  { id: 'dino', n: 'Rex', what: 'Mini-Dino', leg: ['#62b85a', '#7ccf6a'], hoof: '#3f8a3a' },
+  { id: 'fuchs', n: 'Finn', what: 'Fuchs', leg: ['#e8752a', '#ff8c3a'], hoof: '#4a3028' },
+  { id: 'robo', n: 'Robo', what: 'Roboter', leg: ['#8aa3c4', '#a9c0dd'], hoof: '#4d6382' }
+];
+const charOf = id => CHARS.find(c => c.id === id) || CHARS[0];
+const eyes = '<circle cx="136" cy="47" r="5" fill="#3a2d4a"/><circle cx="156" cy="47" r="5" fill="#3a2d4a"/><circle cx="137.6" cy="45.4" r="1.8" fill="#fff"/><circle cx="157.6" cy="45.4" r="1.8" fill="#fff"/>';
+const cheeks = c => `<circle cx="127" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/><circle cx="165" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/>`;
+const BODY = {
+  alpaka: {
+    tail: st => `<circle cx="24" cy="122" r="12" fill="#ff9ec4" ${st}/><circle cx="19" cy="117" r="5" fill="#ffe66d"/><circle cx="28" cy="127" r="4.5" fill="#7cc8ff"/>`,
+    body(st, id) {
+      const body = [[48, 126, 24], [70, 112, 26], [96, 110, 27], [119, 119, 25], [121, 140, 22], [96, 146, 26], [68, 147, 25], [46, 141, 22]], neck = [[140, 104, 19], [143, 88, 17], [145, 72, 16]];
+      let s = circ(body.concat(neck), `fill="${O}" stroke="${O}" stroke-width="6"`) + circ(neck, `fill="${CR}"`);
+      s += `<clipPath id="${id}">${circ(body, '')}</clipPath><g clip-path="url(#${id})"><g transform="rotate(-20 85 128)">`;
+      RB.forEach((c, i) => { s += `<rect x="${2 + i * 25}" y="30" width="25.5" height="200" fill="${c}"/>`; });
+      return s + '</g></g>';
+    },
+    head(st) {
+      let s = `<ellipse cx="127" cy="26" rx="7" ry="13" transform="rotate(-18 127 26)" fill="${CR}" ${st}/><ellipse cx="165" cy="26" rx="7" ry="13" transform="rotate(18 165 26)" fill="${CR}" ${st}/>`;
+      s += '<ellipse cx="127" cy="27" rx="3" ry="7" transform="rotate(-18 127 27)" fill="#ffb3c7"/><ellipse cx="165" cy="27" rx="3" ry="7" transform="rotate(18 165 27)" fill="#ffb3c7"/>';
+      s += `<ellipse cx="146" cy="48" rx="26" ry="22" fill="${CR}" ${st}/>`;
+      s += `<circle cx="135" cy="29" r="8" fill="#ff8fa3" ${st}/><circle cx="157" cy="29" r="8" fill="#7cc8ff" ${st}/><circle cx="146" cy="25" r="9.5" fill="#ffe66d" ${st}/>`;
+      s += cheeks() + eyes;
+      return s + `<ellipse cx="146" cy="59" rx="12" ry="8.5" fill="#fff" stroke="${O}" stroke-width="2.5"/><path d="M142.5 55.5 q3.5 3.5 7 0 M146 57.5 v3 M141 61 q5 4.5 10 0" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+  },
+  dino: {
+    tail: st => `<path d="M58 112 Q24 116 2 154 Q30 146 60 148 Z" fill="#7ccf6a" ${st}/>` +
+      [[52, 102], [72, 92], [94, 89], [114, 95]].map(p => `<path d="M${p[0] - 10} ${p[1] + 8} L${p[0]} ${p[1] - 12} L${p[0] + 10} ${p[1] + 8} Z" fill="#ffb03a" ${st}/>`).join(''),
+    body: st => `<path d="M114 116 Q124 86 132 64 L162 66 Q152 96 146 124 Z" fill="#7ccf6a" ${st}/><ellipse cx="85" cy="128" rx="52" ry="33" fill="#7ccf6a" ${st}/><ellipse cx="92" cy="140" rx="32" ry="15" fill="#d9f5b5"/>` +
+      '<g fill="#5fb055"><circle cx="62" cy="116" r="4"/><circle cx="80" cy="108" r="3"/><circle cx="104" cy="112" r="3.5"/></g>',
+    head: st => `<circle cx="134" cy="25" r="5" fill="#ffb03a" ${st}/><circle cx="158" cy="25" r="5" fill="#ffb03a" ${st}/><ellipse cx="148" cy="47" rx="30" ry="24" fill="#7ccf6a" ${st}/>` +
+      cheeks('#ff9fb5') + eyes + `<circle cx="170" cy="50" r="1.8" fill="${O}"/><path d="M138 60 q9 7 18 0" fill="none" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M143 62 l2 4 l2 -3.5 M151 62 l2 4 l2 -4" fill="#fff" stroke="${O}" stroke-width="1.2"/>`
+  },
+  fuchs: {
+    tail: st => `<path d="M54 116 Q8 92 4 136 Q6 172 50 150 Z" fill="#ff8c3a" ${st}/><path d="M8 124 Q0 142 10 160 Q24 156 22 138 Q18 126 8 124 Z" fill="#fff6e6" ${st}/>`,
+    body: st => `<path d="M106 120 Q118 90 128 64 L164 66 Q160 100 150 128 Z" fill="#ff8c3a" ${st}/><ellipse cx="85" cy="128" rx="50" ry="31" fill="#ff8c3a" ${st}/><path d="M138 66 Q132 96 120 128 Q134 136 144 124 Q150 98 154 68 Z" fill="#fff6e6"/>`,
+    head: st => `<path d="M122 38 L126 2 L144 26 Z" fill="#ff8c3a" ${st}/><path d="M170 38 L166 2 L148 26 Z" fill="#ff8c3a" ${st}/><path d="M128 28 L129 12 L137 24 Z M164 28 L163 12 L155 24 Z" fill="#4a3028"/>` +
+      `<ellipse cx="146" cy="48" rx="28" ry="22" fill="#ff8c3a" ${st}/><path d="M124 52 Q146 42 168 52 Q162 70 146 71 Q130 70 124 52 Z" fill="#fff6e6"/>` + eyes +
+      `<ellipse cx="146" cy="56" rx="4.5" ry="3.5" fill="#3a2d4a"/><path d="M140 62 q6 5 12 0" fill="none" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>`
+  },
+  robo: {
+    tail: st => `<path d="M42 126 Q16 124 18 100" fill="none" stroke="#4d6382" stroke-width="5" stroke-linecap="round"/><rect x="10" y="88" width="16" height="13" rx="3" fill="#ffcf2e" ${st}/><path d="M14 88 v-6 M22 88 v-6" stroke="${O}" stroke-width="3"/>`,
+    body: st => `<rect x="136" y="66" width="20" height="40" rx="4" fill="#8aa3c4" ${st}/><path d="M138 78 h16 M138 88 h16" stroke="${O}" stroke-width="2"/><rect x="36" y="98" width="106" height="58" rx="16" fill="#a9c0dd" ${st}/>` +
+      `<rect x="54" y="110" width="58" height="30" rx="8" fill="#e8f1ff" stroke="${O}" stroke-width="2.5"/><circle cx="68" cy="125" r="5" fill="#ff5a8a"/><circle cx="83" cy="125" r="5" fill="#ffcf2e"/><circle cx="98" cy="125" r="5" fill="#2fb35a"/><path d="M120 112 v28" stroke="${O}" stroke-width="2.5" stroke-dasharray="4 4"/>`,
+    head: st => `<path d="M146 26 V12" stroke="${O}" stroke-width="3"/><circle cx="146" cy="9" r="5.5" fill="#ff5a8a" ${st}/><circle cx="117" cy="48" r="6" fill="#ffcf2e" ${st}/><circle cx="175" cy="48" r="6" fill="#ffcf2e" ${st}/>` +
+      `<rect x="119" y="25" width="54" height="46" rx="13" fill="#a9c0dd" ${st}/><rect x="125" y="36" width="42" height="22" rx="10" fill="#e8f1ff" stroke="${O}" stroke-width="2"/>` + eyes + cheeks() +
+      `<path d="M137 63 h18" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M141 61 v4 M146 61 v4 M151 61 v4" stroke="${O}" stroke-width="1.5"/>`
+  }
+};
+// Figur in Schichten (gleiche Koordinaten, viewBox -2 -36 204 246). Das Spiel bewegt die Schichten einzeln (Laufen, Springen).
+function charLayers(cid, w) {
+  w = w || {}; const c = charOf(cid), B = BODY[c.id], id = 'bc' + (++uid), st = `stroke="${O}" stroke-width="3" stroke-linejoin="round"`; const L = {}; let s = '';
+  if (w.fx === 'sparkle') s += '<g fill="#ffcf2e" font-size="22" font-weight="800"><text class="tw" x="4" y="40">✦</text><text class="tw b" x="176" y="96">✦</text><text class="tw c" x="6" y="196">✦</text><text class="tw b" x="96" y="-14">✦</text></g>';
+  if (w.fx === 'notes') s += '<g fill="#7b5cff" font-size="26" font-weight="800"><text class="tw" x="2" y="44">♪</text><text class="tw b" x="178" y="100">♫</text><text class="tw c" x="90" y="-12">♪</text><text class="tw" x="8" y="196">♫</text></g>';
+  L.fx = s; s = '';
+  if (w.back === 'wings') s += `<path d="M86 104 Q66 46 26 58 Q44 74 34 92 Q60 88 86 112 Z" fill="#fff" ${st}/><path d="M100 102 Q96 40 58 40 Q72 60 62 76 Q86 78 100 108 Z" fill="#eaf6ff" ${st}/>`;
+  L.wings = s; s = '';
+  s += B.tail(st);
+  if (w.tail === 'tailbow') s += `<path d="M24 108 l-11 -8 v15 Z M24 108 l11 -8 v15 Z" fill="#ff5a8a" ${st}/><circle cx="24" cy="108" r="4" fill="#ffd23f" ${st}/>`;
+  L.tail = s; s = '';
+  L.legs = [];
+  [52, 72, 101, 119].forEach((x, i) => { s = '';
+    s += `<rect x="${x}" y="150" width="14" height="52" rx="7" fill="${c.leg[i % 2]}" ${st}/><rect x="${x}" y="192" width="14" height="10" rx="4" fill="${c.hoof}" ${st}/>`;
+    if (w.feet === 'boots') s += `<path d="M${x - 2} 178 h18 v14 h5 q5 0 5 6 v5 h-28 Z" fill="#ffd23f" ${st}/>`;
+    if (w.feet === 'turbo') s += `<path d="M${x - 2} 180 h18 v12 h6 q4 0 4 5 v6 h-28 Z" fill="#e0483e" ${st}/><path d="M${x - 4} 196 l-9 -3 l4 6 l-6 3 h11 Z" fill="#ffb86b"/>`;
+    L.legs.push(s);
+  });
+  s = '';
+  s += B.body(st, id);
+  L.body = s; s = '';
+  if (w.back === 'cape') s += `<path d="M136 96 Q84 80 28 100 Q16 128 26 156 Q82 134 138 126 Z" fill="#e0483e" ${st}/><text x="74" y="128" font-size="26" fill="#ffd23f">★</text>`;
+  if (w.back === 'blanket') s += `<path d="M64 90 Q92 82 118 90 L120 138 Q92 148 62 138 Z" fill="#7b5cff" ${st}/><path d="M68 106 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8" fill="none" stroke="#ffe66d" stroke-width="3.5"/>`;
+  L.cape = s; s = '';
+  if (w.friend === 'chick') s += `<circle cx="82" cy="78" r="12" fill="#ffe45c" ${st}/><circle cx="93" cy="65" r="8.5" fill="#ffe45c" ${st}/><path d="M100 63 l8 3 l-8 3 Z" fill="#ff8a3d" ${st}/><circle cx="95" cy="63" r="1.8" fill="#333"/>`;
+  L.chick = s; s = '';
+  s += B.head(st);
+  if (w.eyes === 'shades') s += `<rect x="124" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/><rect x="147" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/>`;
+  if (w.eyes === 'hearts') [135, 157].forEach(x => { s += `<path transform="translate(${x} 49) scale(1.25)" d="M0 5 C-11 -3 -6 -11 0 -5 C6 -11 11 -3 0 5 Z" fill="#ff5a8a" fill-opacity=".85" stroke="${O}" stroke-width="2"/>`; });
+  if (w.eyes === 'starglasses') [135, 157].forEach(x => { s += `<path transform="translate(${x} 47)" d="M0 -11 L3 -3 L11 -3 L5 2 L7 10 L0 5 L-7 10 L-5 2 L-11 -3 L-3 -3 Z" fill="#ffd23f" ${st}/>`; });
+  L.head = s; s = '';
+  if (w.neck === 'scarf') s += `<path d="M129 82 l-4 26 l12 2 l3 -24 Z" fill="#ff5a5a" ${st}/><path d="M127 70 q19 10 38 0 l1 13 q-20 10 -40 0 Z" fill="#ff5a5a" ${st}/>`;
+  if (w.neck === 'bow') s += `<path d="M146 78 l-15 -9 v18 Z M146 78 l15 -9 v18 Z" fill="#7b5cff" ${st}/><circle cx="146" cy="78" r="4.5" fill="#ffd23f" ${st}/>`;
+  if (w.neck === 'bell') s += `<path d="M129 73 q17 10 34 0" stroke="#e0483e" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="146" cy="85" r="7.5" fill="#ffd23f" ${st}/>`;
+  L.neck = s; s = '';
+  if (w.hat === 'party') s += `<path d="M146 -18 L127 26 L165 26 Z" fill="#ff6fa5" ${st}/><circle cx="146" cy="-19" r="6.5" fill="#ffe66d" ${st}/>`;
+  if (w.hat === 'crown') s += `<path d="M126 28 L123 4 L136 16 L146 -3 L156 16 L169 4 L166 28 Z" fill="#ffd23f" ${st}/><circle cx="146" cy="18" r="4" fill="#ff5a8a"/>`;
+  if (w.hat === 'flowers') [[124, 32, '#ff8fa3'], [134, 25, '#fff'], [146, 21, '#e59bff'], [158, 25, '#fff'], [168, 32, '#ff8fa3']].forEach(f => { s += `<circle cx="${f[0]}" cy="${f[1]}" r="7" fill="${f[2]}" stroke="${O}" stroke-width="2.5"/><circle cx="${f[0]}" cy="${f[1]}" r="2.6" fill="#ffcf2e"/>`; });
+  if (w.hat === 'wizard') s += `<path d="M150 -30 L123 24 L169 24 Z" fill="#6b4bd6" ${st}/><ellipse cx="146" cy="25" rx="33" ry="7.5" fill="#5a3cc0" ${st}/><text x="138" y="14" font-size="15" fill="#ffe66d">★</text>`;
+  if (w.hat === 'helmet') s += `<path d="M120 32 Q146 -10 172 32 Z" fill="#ff5a5a" ${st}/><rect x="118" y="27" width="56" height="8" rx="4" fill="#ffd23f" ${st}/><path d="M140 8 q6 -6 12 0" stroke="#fff" stroke-width="4" fill="none"/>`;
+  if (w.hat === 'phones') s += `<path d="M122 38 Q146 -6 170 38" fill="none" stroke="${O}" stroke-width="7"/><rect x="113" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/><rect x="165" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/>`;
+  if (w.hat === 'beret') s += `<ellipse cx="148" cy="22" rx="30" ry="11" transform="rotate(-8 148 22)" fill="#2b4c9b" ${st}/><path d="M150 11 v-7" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
+  L.hat = s; s = '';
+  if (w.friend === 'fly') s += `<g transform="translate(184 6)"><ellipse cx="-7" cy="-3" rx="8" ry="10" fill="#ff8fa3" ${st}/><ellipse cx="7" cy="-3" rx="8" ry="10" fill="#7cc8ff" ${st}/></g>`;
+  if (w.friend === 'magnet') s += `<g transform="translate(176 -6)"><path d="M0 0 v16 a11 11 0 0 0 22 0 v-16 h-7 v16 a4 4 0 0 1 -8 0 v-16 Z" fill="#e0483e" ${st}/><rect x="0" y="-6" width="7" height="7" fill="#ccc" ${st}/><rect x="15" y="-6" width="7" height="7" fill="#ccc" ${st}/></g>`;
+
+  L.friend = s;
+  return L;
+}
+// Schicht-Reihenfolge von hinten nach vorne; Hut gehört zum Kopf
+const LAYER_ORDER = ['fx', 'wings', 'tail', 'legs', 'body', 'cape', 'chick', 'head', 'hat', 'neck', 'friend'];
+function charInner(cid, w) { const L = charLayers(cid, w); return LAYER_ORDER.map(k => k === 'legs' ? L.legs.join('') : L[k]).join(''); }
+
+// Oehler-Griffbild: links Überblasklappe + Daumenloch, rechts A-Klappe und sechs Tonlöcher, Seitenklappen F und S
+function fingSVG(name) {
+  // Anordnung wie Grifftabelle Heft S. 72: Daumenfeld (Überblasklappe über Daumenloch) links oben, A-Klappe auf der Säule,
+  // vier Seitenklappen links zwischen L3 und R1 (f' = dritte), b-Klappe quer zwischen R2 und R3
+  const k = KL.NOTES[name].keys, on = x => k.indexOf(x) >= 0, F = c => on(c) ? '#ff4f8b' : '#fff', st = 'stroke="#5a4668" stroke-width="3"', lab = 'font-size="15" font-weight="800" fill="#5a4668"';
+  return `<svg viewBox="0 0 112 250" xmlns="http://www.w3.org/2000/svg"><rect x="58" y="6" width="30" height="238" rx="14" fill="#3a2d4a" opacity=".1"/>
+  <text x="1" y="13" ${lab}>Daumen</text><path d="M6 20 V86 M34 20 V86" stroke="#5a4668" stroke-width="3"/>
+  <ellipse cx="20" cy="36" rx="7" ry="12" fill="${F('Ü')}" ${st}/><circle cx="20" cy="68" r="11" fill="${F('D')}" ${st}/>
+  <path d="M73 6 v6" stroke="#5a4668" stroke-width="4"/><ellipse cx="73" cy="23" rx="7" ry="11" fill="${F('A')}" ${st}/>
+  <circle cx="73" cy="54" r="12" fill="${F('L1')}" ${st}/><circle cx="73" cy="84" r="12" fill="${F('L2')}" ${st}/><circle cx="73" cy="114" r="12" fill="${F('L3')}" ${st}/>
+  <circle cx="44" cy="103" r="6" fill="#fff" ${st}/><circle cx="44" cy="117" r="6" fill="#fff" ${st}/><ellipse cx="44" cy="132" rx="6.5" ry="7.5" fill="${F('F')}" ${st}/><ellipse cx="44" cy="153" rx="6" ry="11" fill="#fff" ${st}/>
+  <line x1="56" y1="135" x2="90" y2="135" stroke="#5a4668" stroke-width="3"/>
+  <circle cx="73" cy="156" r="12" fill="${F('R1')}" ${st}/><circle cx="73" cy="186" r="12" fill="${F('R2')}" ${st}/><ellipse cx="46" cy="207" rx="13" ry="5.5" fill="${F('S')}" ${st}/><circle cx="73" cy="228" r="12" fill="${F('R3')}" ${st}/>
+  <text ${lab} transform="translate(96 62) rotate(90)">links</text><text ${lab} transform="translate(96 164) rotate(90)">rechts</text></svg>`;
+}
+// Kleine Klarinette als Symbol (statt Trompeten- oder Saxophon-Emoji)
+const CLAR_ICON = '<svg class="ci" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(40 20 20)"><path d="M18.5 0 h3 l.6 6 h-4.2 Z" fill="#2b2333"/><rect x="17" y="6" width="6" height="26" rx="2" fill="#2b2333"/><path d="M17 31 h6 l4 8 h-14 Z" fill="#2b2333"/><g fill="#c9c9d2"><rect x="16.5" y="9" width="7" height="2"/><rect x="16.5" y="19" width="7" height="2"/><circle cx="20" cy="14" r="1.6"/><circle cx="20" cy="24" r="1.6"/><circle cx="20" cy="28" r="1.6"/></g></g></svg>';
+// Notenzeile(n). notes: Ergebnis von KL.parseMelody. o.per Takte je Zeile, o.single = ein Einzelton ohne Taktstriche
+const CLEF = '<path d="M31 120 C27 132 45 134 43 120 L37 24 C37 13 49 14 47 27 C45 41 22 52 22 76 C22 97 51 101 55 85 C58 71 38 65 32 78 C29 88 38 94 44 89" fill="none" stroke="#3a2d4a" stroke-width="3.6" stroke-linecap="round"/>';
+function noteG(n, i, x) {
+  let g = '';
+  if (n.rest) {
+    if (n.dur === 1) g = `<rect x="${x - 9}" y="54" width="18" height="7"/>`;
+    else if (n.dur === 2) g = `<rect x="${x - 9}" y="61" width="18" height="7"/>`;
+    else g = `<path d="M${x - 3} 52 l8 9 l-8 9 l8 9 q-10 -3 -6 8" fill="none" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return `<g class="n" id="n${i}">${g}</g>`;
+  }
+  const s = KL.staffStep(n.name), y = 96 - s * 7;
+  for (let l = -2; l >= s; l -= 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  for (let l = 10; l <= s; l += 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  const acc = KL.accidental(n.name), ax = x - 22;
+  if (acc === 'flat') g += `<path d="M${ax - 3} ${y - 20} V${y + 5} C${ax + 9} ${y - 2} ${ax + 7} ${y - 11} ${ax - 3} ${y - 3}" fill="none" stroke-width="2.4"/>`;
+  if (acc === 'sharp') g += `<path d="M${ax - 3} ${y - 14}V${y + 14}M${ax + 3} ${y - 16}V${y + 12}" stroke-width="1.8"/><path d="M${ax - 8} ${y - 3}L${ax + 8} ${y - 7}M${ax - 8} ${y + 6}L${ax + 8} ${y + 2}" stroke-width="4"/>`;
+  g += `<ellipse cx="${x}" cy="${y}" rx="8.6" ry="6.3" transform="rotate(-20 ${x} ${y})" stroke-width="2.4"${n.dur <= 2 ? ' class="hol"' : ''}/>`;
+  if (n.dur > 1) { const up = s < 4, sx = up ? x + 7.6 : x - 7.6; g += `<line x1="${sx}" x2="${sx}" y1="${y}" y2="${y + (up ? -44 : 44)}" stroke-width="2.4"/>`; if (n.dur === 8) g += `<path d="M${sx} ${y + (up ? -44 : 44)} q12 ${up ? 10 : -10} 8 ${up ? 26 : -26}" fill="none" stroke-width="2.6"/>`; }
+  if (n.dot) g += `<circle cx="${x + 15}" cy="${y + (s % 2 === 0 ? -5 : 0)}" r="2.8" stroke="none"/>`;
+  return `<g class="n" id="n${i}">${g}</g>`;
+}
+function staffSVG(notes, o) {
+  o = o || {}; const W = o.single ? 240 : 1000, lines = [], bars = [];
+  notes.forEach((n, i) => { (bars[n.bar] = bars[n.bar] || []).push([n, i]); });
+  const per = o.per || 4; for (let i = 0; i < bars.length; i += per) lines.push(bars.slice(i, i + per));
+  return lines.map((ln, li) => {
+    const x0 = li === 0 ? 112 : 70, bw = (W - 6 - x0) / per;
+    // kurze letzte Zeile nicht strecken: gleiche Taktbreite, schmaleres Bild
+    const LW = !o.single && li > 0 && ln.length < per ? Math.round(x0 + ln.length * bw + 6) : W;
+    let g = ''; for (let k = 0; k < 5; k++) g += `<line x1="6" x2="${LW - 4}" y1="${40 + k * 14}" y2="${40 + k * 14}" stroke="#8d7f9a" stroke-width="2"/>`;
+    g += CLEF;
+    if (o.single) { const [n, i] = ln[0][0]; g += noteG(n, i, 150); }
+    else {
+      if (li === 0) g += '<text x="86" y="67" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text><text x="86" y="95" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text>';
+      ln.forEach((bar, bi) => {
+        const bx = x0 + bi * bw; let pos = 0;
+        bar.forEach(([n, i]) => { const x = bx + 24 + (pos / 4) * (bw - 36) + (n.beats === 4 ? (bw - 36) * 0.3 : 0); g += noteG(n, i, x); pos += n.beats; });
+        const last = li === lines.length - 1 && bi === ln.length - 1;
+        g += `<line x1="${bx + bw}" x2="${bx + bw}" y1="40" y2="96" stroke="#5a4668" stroke-width="${last ? 6 : 2}"/>`;
+      });
+    }
+    return `<svg viewBox="0 0 ${LW} 150" xmlns="http://www.w3.org/2000/svg"${LW < W ? ` style="width:${(LW / W * 100).toFixed(1)}%"` : ''}>${g}</svg>`;
+  }).join('');
+}
+const single = name => staffSVG([{ name, dur: 1, beats: 4, bar: 0 }], { single: true });
+
+// Zeigerinstrument: −50 … +50 Cent auf einem Halbkreis (±75°), grüner Bereich = erlaubte Abweichung (tol in Cent)
+// hold = true: äußerer Bogen füllt sich, solange der Ton gehalten wird (holdP)
+let ND = null;
+function gaugeSVG(tol, big, hold) {
+  const R = 118, C = 150;
+  const pt = (c, r) => { const a = c / 50 * 75 * Math.PI / 180; return [(C + r * Math.sin(a)).toFixed(1), (C - r * Math.cos(a)).toFixed(1)]; };
+  const arc = (c1, c2, col, w, r, extra) => { r = r || R; const p = pt(c1, r), q = pt(c2, r); return `<path d="M${p} A${r} ${r} 0 0 1 ${q}" fill="none" stroke="${col}" stroke-width="${w}"${extra || ''}/>`; };
+  ND = null;
+  const hp = hold ? arc(-50, 50, '#efe6f7', 12, 142, ' stroke-linecap="round"') + arc(-50, 50, '#7b5cff', 12, 142, ' id="hp" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"') : '';
+  let ticks = ''; for (let c = -50; c <= 50; c += 10) { const p = pt(c, R - 20), q = pt(c, R - (c % 50 ? 30 : 36)); ticks += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#3a2d4a" stroke-width="${c ? 2 : 4}"/>`; }
+  return `<svg class="gauge${big ? ' big' : ''}" viewBox="0 0 300 172" role="img" aria-label="Zeiger: zu tief, genau, zu hoch">${hp}${tol < 50 ? arc(-50, -tol, '#ffb3c7', 22) + arc(tol, 50, '#ffb3c7', 22) : ''}${arc(-Math.min(tol, 50), Math.min(tol, 50), '#a6e9a0', 22)}${tol > 10 ? arc(-10, 10, '#3fbf4f', 22) : ''}${ticks}
+  <text x="22" y="168" font-size="20" font-weight="800" fill="#c2185b">tiefer</text><text x="278" y="168" font-size="20" font-weight="800" fill="#c2185b" text-anchor="end">höher</text>
+  <text id="gw" x="150" y="118" font-size="28" font-weight="900" fill="#c2185b" text-anchor="middle"></text><g id="nd" class="nd off" style="transform:rotate(0deg)"><path d="M146 150 L150 ${C - R + 6} L154 150 Z" fill="#3a2d4a"/></g><circle cx="150" cy="150" r="12" fill="#3a2d4a"/><circle cx="150" cy="150" r="5" fill="#fff"/></svg>`;
+}
+// c in Cent; null = kein Ton (Zeiger blass in der Mitte)
+// Anzeige leicht geglättet (nur die Anzeige, nicht die Bewertung); Anschlag ±50 = falscher Ton, springt sofort
+function needle(c) {
+  const e = document.getElementById('nd'); if (!e) return; const on = c != null && isFinite(c); e.classList.toggle('off', !on);
+  if (!on) { ND = null; e.style.transform = 'rotate(0deg)'; return; }
+  c = Math.max(-50, Math.min(50, c)); ND = ND == null || Math.abs(c) >= 50 || Math.abs(ND) >= 50 ? c : ND + (c - ND) * 0.35;
+  e.style.transform = `rotate(${ND / 50 * 75}deg)`;
+}
+// Falscher Ton im Instrument: "du: d'" (leer = ausblenden)
+function gaugeWrong(name) { const e = document.getElementById('gw'); if (e && e.textContent !== (name ? 'du: ' + name : '')) e.textContent = name ? 'du: ' + name : ''; }
+function holdP(f) { const e = document.getElementById('hp'); if (e) e.setAttribute('stroke-dasharray', `${Math.max(0, Math.min(1, f)) * 100} 100`); }
+
+window.KLDRAW = { CHARS, charOf, charLayers, charInner, LAYER_ORDER, VIEWBOX: '-2 -36 204 246', fingSVG, CLAR_ICON, staffSVG, single, gaugeSVG, needle, gaugeWrong, holdP };
+})();
 </script>
 <script>/* Klarinetten-Abenteuer · Oberfläche, Ton, Mikrofon, Übungen, Belohnungen, Spiel, Elternbereich. */
 (function () {
@@ -555,13 +866,8 @@ const dayKey = off => { const d = new Date(); d.setDate(d.getDate() - off); retu
 
 /* ================= Spielstand ================= */
 // Der Schlüssel KEY bleibt bei Updates gleich, sonst wären Sterne weg. Neue Felder ergänzt KL.migrateSave.
-function fresh() {
-  // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
-  // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
-  // mis: Tagesmissionen { day, list: [{k, id|note, need, n, done}], chest }
-  return { v: KL.SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
-    set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null };
-}
+// Neuer leerer Stand: KL.freshSave() in logic.js (gemeinsam mit dem Spiel spiel.html)
+const fresh = () => KL.freshSave();
 // Version, Erstellungszeit und Mitwirkende setzt tools/build.mjs aus src/meta.json ein
 const META = window.KLMETA || { version: '0.0.0', built: '', model: '', credits: [] };
 // Tablet / Silk-Browser (Fire HD): Touch als Hauptbedienung oder Silk bzw. Android in der Kennung
@@ -627,7 +933,7 @@ window.addEventListener('pagehide', saveIfChanged);
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} // Browser soll den Speicher nicht von selbst leeren
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cm = () => S.name ? ', ' + esc(S.name) : ''; // ", Lina" oder nichts
-const day = () => S.days[today()] || (S.days[today()] = { sec: 0, ex: 0, stars: 0, fs: 0, games: 0 });
+const day = () => KL.dayRec(S, today());
 const stat = id => S.st[id] || (S.st[id] = { best: 0, n: 0, last: '', rep: 0, medal: 0 });
 const best = id => (S.st[id] ? S.st[id].best : 0);
 const isl = n => KL.ISLANDS[n - 1];
@@ -722,174 +1028,23 @@ function measure() {
 }
 function tick() {
   const t = now(), dt = Math.min(0.2, t - LAST); LAST = t;
-  const m = measure(), thr = Math.max(0.006, MIC.floor * 3);
-  let voiced = !!(m.pitch && m.pitch.clarity > 0.8 && m.rms > thr && t > MUTE_UNTIL);
-  if (!voiced && m.rms < MIC.floor * 2) MIC.floor += (m.rms - MIC.floor) * 0.05; else if (m.rms < MIC.floor) MIC.floor = m.rms;
-  MIC.floor = Math.max(0.0005, Math.min(0.02, MIC.floor));
-  let a = null;
-  if (voiced) { MIC.f3.push(m.pitch.f); if (MIC.f3.length > 3) MIC.f3.shift(); const s = MIC.f3.slice().sort((x, y) => x - y); a = KL.analyzeFreq(s[s.length >> 1], S.set.a4); } else MIC.f3 = [];
-  const fr = { t, dt, rms: m.rms, thr, loud: m.rms > thr && t > MUTE_UNTIL, voiced, a };
-  if (voiced && EX && EX.running) { const d = day(), before = Math.floor(d.sec / 300), g = S.set.goal * 60, wasBelow = d.sec < g; d.sec += dt / SPEED; if (wasBelow && d.sec >= g) { save(); confetti(); toast('🎉 Tagesziel geschafft' + (S.name ? ', ' + S.name : '') + '! ' + S.set.goal + ' Minuten Klarinette – super!', 4000); hud(); } if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); } if (t - LASTSAVE > 10) { LASTSAVE = t; save(); } }
+  const fr = KL.pitchFrame(MIC, measure(), t, dt, MUTE_UNTIL, S.set.a4); // MIC hält Grundrauschen und Median (floor, f3)
+  if (fr.voiced && EX && EX.running) {
+    const r = KL.practiceTick(S, dt / SPEED, today());
+    if (r.goal) { save(); confetti(); toast('🎉 Tagesziel geschafft' + (S.name ? ', ' + S.name : '') + '! ' + S.set.goal + ' Minuten Klarinette – super!', 4000); hud(); }
+    if (r.fleiss) { save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); }
+    if (t - LASTSAVE > 10) { LASTSAVE = t; save(); }
+  }
   if (LISTEN) LISTEN(fr);
 }
 
 /* ================= Zeichnungen (alles eigene SVG) ================= */
-let uid = 0; const O = '#5a4668', CR = '#fff6e6', RB = ['#ff8fa3', '#ffb86b', '#ffe66d', '#8ee08a', '#7cc8ff', '#a996ff', '#e59bff'];
-const circ = (a, attr) => a.map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" ${attr}/>`).join('');
-// Figuren: Kopf immer um (146,48), Körper um (85,128), Beine bei x 52/72/101/119 – so passt jede Kleidung auf jede Figur
-const CHARS = [
-  { id: 'alpaka', n: 'Flauschi', what: 'Regenbogen-Alpaka', leg: ['#f1e3cc', CR], hoof: '#8a6a5c' },
-  { id: 'dino', n: 'Rex', what: 'Mini-Dino', leg: ['#62b85a', '#7ccf6a'], hoof: '#3f8a3a' },
-  { id: 'fuchs', n: 'Finn', what: 'Fuchs', leg: ['#e8752a', '#ff8c3a'], hoof: '#4a3028' },
-  { id: 'robo', n: 'Robo', what: 'Roboter', leg: ['#8aa3c4', '#a9c0dd'], hoof: '#4d6382' }
-];
-const charOf = id => CHARS.find(c => c.id === id) || CHARS[0];
+const { CHARS, charOf, charInner, fingSVG, CLAR_ICON, staffSVG, single, needle, gaugeWrong, holdP } = window.KLDRAW; // src/draw.js
 const CN = () => charOf(S.char).n; // Name der Figur für Texte
-const eyes = '<circle cx="136" cy="47" r="5" fill="#3a2d4a"/><circle cx="156" cy="47" r="5" fill="#3a2d4a"/><circle cx="137.6" cy="45.4" r="1.8" fill="#fff"/><circle cx="157.6" cy="45.4" r="1.8" fill="#fff"/>';
-const cheeks = c => `<circle cx="127" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/><circle cx="165" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/>`;
-const BODY = {
-  alpaka: {
-    tail: st => `<circle cx="24" cy="122" r="12" fill="#ff9ec4" ${st}/><circle cx="19" cy="117" r="5" fill="#ffe66d"/><circle cx="28" cy="127" r="4.5" fill="#7cc8ff"/>`,
-    body(st, id) {
-      const body = [[48, 126, 24], [70, 112, 26], [96, 110, 27], [119, 119, 25], [121, 140, 22], [96, 146, 26], [68, 147, 25], [46, 141, 22]], neck = [[140, 104, 19], [143, 88, 17], [145, 72, 16]];
-      let s = circ(body.concat(neck), `fill="${O}" stroke="${O}" stroke-width="6"`) + circ(neck, `fill="${CR}"`);
-      s += `<clipPath id="${id}">${circ(body, '')}</clipPath><g clip-path="url(#${id})"><g transform="rotate(-20 85 128)">`;
-      RB.forEach((c, i) => { s += `<rect x="${2 + i * 25}" y="30" width="25.5" height="200" fill="${c}"/>`; });
-      return s + '</g></g>';
-    },
-    head(st) {
-      let s = `<ellipse cx="127" cy="26" rx="7" ry="13" transform="rotate(-18 127 26)" fill="${CR}" ${st}/><ellipse cx="165" cy="26" rx="7" ry="13" transform="rotate(18 165 26)" fill="${CR}" ${st}/>`;
-      s += '<ellipse cx="127" cy="27" rx="3" ry="7" transform="rotate(-18 127 27)" fill="#ffb3c7"/><ellipse cx="165" cy="27" rx="3" ry="7" transform="rotate(18 165 27)" fill="#ffb3c7"/>';
-      s += `<ellipse cx="146" cy="48" rx="26" ry="22" fill="${CR}" ${st}/>`;
-      s += `<circle cx="135" cy="29" r="8" fill="#ff8fa3" ${st}/><circle cx="157" cy="29" r="8" fill="#7cc8ff" ${st}/><circle cx="146" cy="25" r="9.5" fill="#ffe66d" ${st}/>`;
-      s += cheeks() + eyes;
-      return s + `<ellipse cx="146" cy="59" rx="12" ry="8.5" fill="#fff" stroke="${O}" stroke-width="2.5"/><path d="M142.5 55.5 q3.5 3.5 7 0 M146 57.5 v3 M141 61 q5 4.5 10 0" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`;
-    }
-  },
-  dino: {
-    tail: st => `<path d="M58 112 Q24 116 2 154 Q30 146 60 148 Z" fill="#7ccf6a" ${st}/>` +
-      [[52, 102], [72, 92], [94, 89], [114, 95]].map(p => `<path d="M${p[0] - 10} ${p[1] + 8} L${p[0]} ${p[1] - 12} L${p[0] + 10} ${p[1] + 8} Z" fill="#ffb03a" ${st}/>`).join(''),
-    body: st => `<path d="M114 116 Q124 86 132 64 L162 66 Q152 96 146 124 Z" fill="#7ccf6a" ${st}/><ellipse cx="85" cy="128" rx="52" ry="33" fill="#7ccf6a" ${st}/><ellipse cx="92" cy="140" rx="32" ry="15" fill="#d9f5b5"/>` +
-      '<g fill="#5fb055"><circle cx="62" cy="116" r="4"/><circle cx="80" cy="108" r="3"/><circle cx="104" cy="112" r="3.5"/></g>',
-    head: st => `<circle cx="134" cy="25" r="5" fill="#ffb03a" ${st}/><circle cx="158" cy="25" r="5" fill="#ffb03a" ${st}/><ellipse cx="148" cy="47" rx="30" ry="24" fill="#7ccf6a" ${st}/>` +
-      cheeks('#ff9fb5') + eyes + `<circle cx="170" cy="50" r="1.8" fill="${O}"/><path d="M138 60 q9 7 18 0" fill="none" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M143 62 l2 4 l2 -3.5 M151 62 l2 4 l2 -4" fill="#fff" stroke="${O}" stroke-width="1.2"/>`
-  },
-  fuchs: {
-    tail: st => `<path d="M54 116 Q8 92 4 136 Q6 172 50 150 Z" fill="#ff8c3a" ${st}/><path d="M8 124 Q0 142 10 160 Q24 156 22 138 Q18 126 8 124 Z" fill="#fff6e6" ${st}/>`,
-    body: st => `<path d="M106 120 Q118 90 128 64 L164 66 Q160 100 150 128 Z" fill="#ff8c3a" ${st}/><ellipse cx="85" cy="128" rx="50" ry="31" fill="#ff8c3a" ${st}/><path d="M138 66 Q132 96 120 128 Q134 136 144 124 Q150 98 154 68 Z" fill="#fff6e6"/>`,
-    head: st => `<path d="M122 38 L126 2 L144 26 Z" fill="#ff8c3a" ${st}/><path d="M170 38 L166 2 L148 26 Z" fill="#ff8c3a" ${st}/><path d="M128 28 L129 12 L137 24 Z M164 28 L163 12 L155 24 Z" fill="#4a3028"/>` +
-      `<ellipse cx="146" cy="48" rx="28" ry="22" fill="#ff8c3a" ${st}/><path d="M124 52 Q146 42 168 52 Q162 70 146 71 Q130 70 124 52 Z" fill="#fff6e6"/>` + eyes +
-      `<ellipse cx="146" cy="56" rx="4.5" ry="3.5" fill="#3a2d4a"/><path d="M140 62 q6 5 12 0" fill="none" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>`
-  },
-  robo: {
-    tail: st => `<path d="M42 126 Q16 124 18 100" fill="none" stroke="#4d6382" stroke-width="5" stroke-linecap="round"/><rect x="10" y="88" width="16" height="13" rx="3" fill="#ffcf2e" ${st}/><path d="M14 88 v-6 M22 88 v-6" stroke="${O}" stroke-width="3"/>`,
-    body: st => `<rect x="136" y="66" width="20" height="40" rx="4" fill="#8aa3c4" ${st}/><path d="M138 78 h16 M138 88 h16" stroke="${O}" stroke-width="2"/><rect x="36" y="98" width="106" height="58" rx="16" fill="#a9c0dd" ${st}/>` +
-      `<rect x="54" y="110" width="58" height="30" rx="8" fill="#e8f1ff" stroke="${O}" stroke-width="2.5"/><circle cx="68" cy="125" r="5" fill="#ff5a8a"/><circle cx="83" cy="125" r="5" fill="#ffcf2e"/><circle cx="98" cy="125" r="5" fill="#2fb35a"/><path d="M120 112 v28" stroke="${O}" stroke-width="2.5" stroke-dasharray="4 4"/>`,
-    head: st => `<path d="M146 26 V12" stroke="${O}" stroke-width="3"/><circle cx="146" cy="9" r="5.5" fill="#ff5a8a" ${st}/><circle cx="117" cy="48" r="6" fill="#ffcf2e" ${st}/><circle cx="175" cy="48" r="6" fill="#ffcf2e" ${st}/>` +
-      `<rect x="119" y="25" width="54" height="46" rx="13" fill="#a9c0dd" ${st}/><rect x="125" y="36" width="42" height="22" rx="10" fill="#e8f1ff" stroke="${O}" stroke-width="2"/>` + eyes + cheeks() +
-      `<path d="M137 63 h18" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M141 61 v4 M146 61 v4 M151 61 v4" stroke="${O}" stroke-width="1.5"/>`
-  }
-};
-function charInner(cid, w) {
-  w = w || {}; const c = charOf(cid), B = BODY[c.id], id = 'bc' + (++uid), st = `stroke="${O}" stroke-width="3" stroke-linejoin="round"`; let s = '';
-  if (w.fx === 'sparkle') s += '<g fill="#ffcf2e" font-size="22" font-weight="800"><text class="tw" x="4" y="40">✦</text><text class="tw b" x="176" y="96">✦</text><text class="tw c" x="6" y="196">✦</text><text class="tw b" x="96" y="-14">✦</text></g>';
-  if (w.fx === 'notes') s += '<g fill="#7b5cff" font-size="26" font-weight="800"><text class="tw" x="2" y="44">♪</text><text class="tw b" x="178" y="100">♫</text><text class="tw c" x="90" y="-12">♪</text><text class="tw" x="8" y="196">♫</text></g>';
-  if (w.back === 'wings') s += `<path d="M86 104 Q66 46 26 58 Q44 74 34 92 Q60 88 86 112 Z" fill="#fff" ${st}/><path d="M100 102 Q96 40 58 40 Q72 60 62 76 Q86 78 100 108 Z" fill="#eaf6ff" ${st}/>`;
-  s += B.tail(st);
-  if (w.tail === 'tailbow') s += `<path d="M24 108 l-11 -8 v15 Z M24 108 l11 -8 v15 Z" fill="#ff5a8a" ${st}/><circle cx="24" cy="108" r="4" fill="#ffd23f" ${st}/>`;
-  [52, 72, 101, 119].forEach((x, i) => {
-    s += `<rect x="${x}" y="150" width="14" height="52" rx="7" fill="${c.leg[i % 2]}" ${st}/><rect x="${x}" y="192" width="14" height="10" rx="4" fill="${c.hoof}" ${st}/>`;
-    if (w.feet === 'boots') s += `<path d="M${x - 2} 178 h18 v14 h5 q5 0 5 6 v5 h-28 Z" fill="#ffd23f" ${st}/>`;
-    if (w.feet === 'turbo') s += `<path d="M${x - 2} 180 h18 v12 h6 q4 0 4 5 v6 h-28 Z" fill="#e0483e" ${st}/><path d="M${x - 4} 196 l-9 -3 l4 6 l-6 3 h11 Z" fill="#ffb86b"/>`;
-  });
-  s += B.body(st, id);
-  if (w.back === 'cape') s += `<path d="M136 96 Q84 80 28 100 Q16 128 26 156 Q82 134 138 126 Z" fill="#e0483e" ${st}/><text x="74" y="128" font-size="26" fill="#ffd23f">★</text>`;
-  if (w.back === 'blanket') s += `<path d="M64 90 Q92 82 118 90 L120 138 Q92 148 62 138 Z" fill="#7b5cff" ${st}/><path d="M68 106 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8" fill="none" stroke="#ffe66d" stroke-width="3.5"/>`;
-  if (w.friend === 'chick') s += `<circle cx="82" cy="78" r="12" fill="#ffe45c" ${st}/><circle cx="93" cy="65" r="8.5" fill="#ffe45c" ${st}/><path d="M100 63 l8 3 l-8 3 Z" fill="#ff8a3d" ${st}/><circle cx="95" cy="63" r="1.8" fill="#333"/>`;
-  s += B.head(st);
-  if (w.eyes === 'shades') s += `<rect x="124" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/><rect x="147" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/>`;
-  if (w.eyes === 'hearts') [135, 157].forEach(x => { s += `<path transform="translate(${x} 49) scale(1.25)" d="M0 5 C-11 -3 -6 -11 0 -5 C6 -11 11 -3 0 5 Z" fill="#ff5a8a" fill-opacity=".85" stroke="${O}" stroke-width="2"/>`; });
-  if (w.eyes === 'starglasses') [135, 157].forEach(x => { s += `<path transform="translate(${x} 47)" d="M0 -11 L3 -3 L11 -3 L5 2 L7 10 L0 5 L-7 10 L-5 2 L-11 -3 L-3 -3 Z" fill="#ffd23f" ${st}/>`; });
-  if (w.neck === 'scarf') s += `<path d="M129 82 l-4 26 l12 2 l3 -24 Z" fill="#ff5a5a" ${st}/><path d="M127 70 q19 10 38 0 l1 13 q-20 10 -40 0 Z" fill="#ff5a5a" ${st}/>`;
-  if (w.neck === 'bow') s += `<path d="M146 78 l-15 -9 v18 Z M146 78 l15 -9 v18 Z" fill="#7b5cff" ${st}/><circle cx="146" cy="78" r="4.5" fill="#ffd23f" ${st}/>`;
-  if (w.neck === 'bell') s += `<path d="M129 73 q17 10 34 0" stroke="#e0483e" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="146" cy="85" r="7.5" fill="#ffd23f" ${st}/>`;
-  if (w.hat === 'party') s += `<path d="M146 -18 L127 26 L165 26 Z" fill="#ff6fa5" ${st}/><circle cx="146" cy="-19" r="6.5" fill="#ffe66d" ${st}/>`;
-  if (w.hat === 'crown') s += `<path d="M126 28 L123 4 L136 16 L146 -3 L156 16 L169 4 L166 28 Z" fill="#ffd23f" ${st}/><circle cx="146" cy="18" r="4" fill="#ff5a8a"/>`;
-  if (w.hat === 'flowers') [[124, 32, '#ff8fa3'], [134, 25, '#fff'], [146, 21, '#e59bff'], [158, 25, '#fff'], [168, 32, '#ff8fa3']].forEach(f => { s += `<circle cx="${f[0]}" cy="${f[1]}" r="7" fill="${f[2]}" stroke="${O}" stroke-width="2.5"/><circle cx="${f[0]}" cy="${f[1]}" r="2.6" fill="#ffcf2e"/>`; });
-  if (w.hat === 'wizard') s += `<path d="M150 -30 L123 24 L169 24 Z" fill="#6b4bd6" ${st}/><ellipse cx="146" cy="25" rx="33" ry="7.5" fill="#5a3cc0" ${st}/><text x="138" y="14" font-size="15" fill="#ffe66d">★</text>`;
-  if (w.hat === 'helmet') s += `<path d="M120 32 Q146 -10 172 32 Z" fill="#ff5a5a" ${st}/><rect x="118" y="27" width="56" height="8" rx="4" fill="#ffd23f" ${st}/><path d="M140 8 q6 -6 12 0" stroke="#fff" stroke-width="4" fill="none"/>`;
-  if (w.hat === 'phones') s += `<path d="M122 38 Q146 -6 170 38" fill="none" stroke="${O}" stroke-width="7"/><rect x="113" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/><rect x="165" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/>`;
-  if (w.hat === 'beret') s += `<ellipse cx="148" cy="22" rx="30" ry="11" transform="rotate(-8 148 22)" fill="#2b4c9b" ${st}/><path d="M150 11 v-7" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
-  if (w.friend === 'fly') s += `<g transform="translate(184 6)"><ellipse cx="-7" cy="-3" rx="8" ry="10" fill="#ff8fa3" ${st}/><ellipse cx="7" cy="-3" rx="8" ry="10" fill="#7cc8ff" ${st}/></g>`;
-  if (w.friend === 'magnet') s += `<g transform="translate(176 -6)"><path d="M0 0 v16 a11 11 0 0 0 22 0 v-16 h-7 v16 a4 4 0 0 1 -8 0 v-16 Z" fill="#e0483e" ${st}/><rect x="0" y="-6" width="7" height="7" fill="#ccc" ${st}/><rect x="15" y="-6" width="7" height="7" fill="#ccc" ${st}/></g>`;
-  return s;
-}
 const alpSVG = (w, cid) => `<svg viewBox="-2 -36 204 246" xmlns="http://www.w3.org/2000/svg">${charInner(cid || S.char, w)}</svg>`;
 function drawAlp(id) { const el = $(id); if (el) el.innerHTML = alpSVG(S.wear); }
 function anim(id, cls) { const el = $(id); if (!el) return; el.classList.remove('salto', 'hop'); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 950); }
 
-// Oehler-Griffbild: links Überblasklappe + Daumenloch, rechts A-Klappe und sechs Tonlöcher, Seitenklappen F und S
-function fingSVG(name) {
-  // Anordnung wie Grifftabelle Heft S. 72: Daumenfeld (Überblasklappe über Daumenloch) links oben, A-Klappe auf der Säule,
-  // vier Seitenklappen links zwischen L3 und R1 (f' = dritte), b-Klappe quer zwischen R2 und R3
-  const k = KL.NOTES[name].keys, on = x => k.indexOf(x) >= 0, F = c => on(c) ? '#ff4f8b' : '#fff', st = 'stroke="#5a4668" stroke-width="3"', lab = 'font-size="15" font-weight="800" fill="#5a4668"';
-  return `<svg viewBox="0 0 112 250" xmlns="http://www.w3.org/2000/svg"><rect x="58" y="6" width="30" height="238" rx="14" fill="#3a2d4a" opacity=".1"/>
-  <text x="1" y="13" ${lab}>Daumen</text><path d="M6 20 V86 M34 20 V86" stroke="#5a4668" stroke-width="3"/>
-  <ellipse cx="20" cy="36" rx="7" ry="12" fill="${F('Ü')}" ${st}/><circle cx="20" cy="68" r="11" fill="${F('D')}" ${st}/>
-  <path d="M73 6 v6" stroke="#5a4668" stroke-width="4"/><ellipse cx="73" cy="23" rx="7" ry="11" fill="${F('A')}" ${st}/>
-  <circle cx="73" cy="54" r="12" fill="${F('L1')}" ${st}/><circle cx="73" cy="84" r="12" fill="${F('L2')}" ${st}/><circle cx="73" cy="114" r="12" fill="${F('L3')}" ${st}/>
-  <circle cx="44" cy="103" r="6" fill="#fff" ${st}/><circle cx="44" cy="117" r="6" fill="#fff" ${st}/><ellipse cx="44" cy="132" rx="6.5" ry="7.5" fill="${F('F')}" ${st}/><ellipse cx="44" cy="153" rx="6" ry="11" fill="#fff" ${st}/>
-  <line x1="56" y1="135" x2="90" y2="135" stroke="#5a4668" stroke-width="3"/>
-  <circle cx="73" cy="156" r="12" fill="${F('R1')}" ${st}/><circle cx="73" cy="186" r="12" fill="${F('R2')}" ${st}/><ellipse cx="46" cy="207" rx="13" ry="5.5" fill="${F('S')}" ${st}/><circle cx="73" cy="228" r="12" fill="${F('R3')}" ${st}/>
-  <text ${lab} transform="translate(96 62) rotate(90)">links</text><text ${lab} transform="translate(96 164) rotate(90)">rechts</text></svg>`;
-}
-// Kleine Klarinette als Symbol (statt Trompeten- oder Saxophon-Emoji)
-const CLAR_ICON = '<svg class="ci" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(40 20 20)"><path d="M18.5 0 h3 l.6 6 h-4.2 Z" fill="#2b2333"/><rect x="17" y="6" width="6" height="26" rx="2" fill="#2b2333"/><path d="M17 31 h6 l4 8 h-14 Z" fill="#2b2333"/><g fill="#c9c9d2"><rect x="16.5" y="9" width="7" height="2"/><rect x="16.5" y="19" width="7" height="2"/><circle cx="20" cy="14" r="1.6"/><circle cx="20" cy="24" r="1.6"/><circle cx="20" cy="28" r="1.6"/></g></g></svg>';
-// Notenzeile(n). notes: Ergebnis von KL.parseMelody. o.per Takte je Zeile, o.single = ein Einzelton ohne Taktstriche
-const CLEF = '<path d="M31 120 C27 132 45 134 43 120 L37 24 C37 13 49 14 47 27 C45 41 22 52 22 76 C22 97 51 101 55 85 C58 71 38 65 32 78 C29 88 38 94 44 89" fill="none" stroke="#3a2d4a" stroke-width="3.6" stroke-linecap="round"/>';
-function noteG(n, i, x) {
-  let g = '';
-  if (n.rest) {
-    if (n.dur === 1) g = `<rect x="${x - 9}" y="54" width="18" height="7"/>`;
-    else if (n.dur === 2) g = `<rect x="${x - 9}" y="61" width="18" height="7"/>`;
-    else g = `<path d="M${x - 3} 52 l8 9 l-8 9 l8 9 q-10 -3 -6 8" fill="none" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>`;
-    return `<g class="n" id="n${i}">${g}</g>`;
-  }
-  const s = KL.staffStep(n.name), y = 96 - s * 7;
-  for (let l = -2; l >= s; l -= 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
-  for (let l = 10; l <= s; l += 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
-  const acc = KL.accidental(n.name), ax = x - 22;
-  if (acc === 'flat') g += `<path d="M${ax - 3} ${y - 20} V${y + 5} C${ax + 9} ${y - 2} ${ax + 7} ${y - 11} ${ax - 3} ${y - 3}" fill="none" stroke-width="2.4"/>`;
-  if (acc === 'sharp') g += `<path d="M${ax - 3} ${y - 14}V${y + 14}M${ax + 3} ${y - 16}V${y + 12}" stroke-width="1.8"/><path d="M${ax - 8} ${y - 3}L${ax + 8} ${y - 7}M${ax - 8} ${y + 6}L${ax + 8} ${y + 2}" stroke-width="4"/>`;
-  g += `<ellipse cx="${x}" cy="${y}" rx="8.6" ry="6.3" transform="rotate(-20 ${x} ${y})" stroke-width="2.4"${n.dur <= 2 ? ' class="hol"' : ''}/>`;
-  if (n.dur > 1) { const up = s < 4, sx = up ? x + 7.6 : x - 7.6; g += `<line x1="${sx}" x2="${sx}" y1="${y}" y2="${y + (up ? -44 : 44)}" stroke-width="2.4"/>`; if (n.dur === 8) g += `<path d="M${sx} ${y + (up ? -44 : 44)} q12 ${up ? 10 : -10} 8 ${up ? 26 : -26}" fill="none" stroke-width="2.6"/>`; }
-  if (n.dot) g += `<circle cx="${x + 15}" cy="${y + (s % 2 === 0 ? -5 : 0)}" r="2.8" stroke="none"/>`;
-  return `<g class="n" id="n${i}">${g}</g>`;
-}
-function staffSVG(notes, o) {
-  o = o || {}; const W = o.single ? 240 : 1000, lines = [], bars = [];
-  notes.forEach((n, i) => { (bars[n.bar] = bars[n.bar] || []).push([n, i]); });
-  const per = o.per || 4; for (let i = 0; i < bars.length; i += per) lines.push(bars.slice(i, i + per));
-  return lines.map((ln, li) => {
-    const x0 = li === 0 ? 112 : 70, bw = (W - 6 - x0) / per;
-    // kurze letzte Zeile nicht strecken: gleiche Taktbreite, schmaleres Bild
-    const LW = !o.single && li > 0 && ln.length < per ? Math.round(x0 + ln.length * bw + 6) : W;
-    let g = ''; for (let k = 0; k < 5; k++) g += `<line x1="6" x2="${LW - 4}" y1="${40 + k * 14}" y2="${40 + k * 14}" stroke="#8d7f9a" stroke-width="2"/>`;
-    g += CLEF;
-    if (o.single) { const [n, i] = ln[0][0]; g += noteG(n, i, 150); }
-    else {
-      if (li === 0) g += '<text x="86" y="67" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text><text x="86" y="95" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text>';
-      ln.forEach((bar, bi) => {
-        const bx = x0 + bi * bw; let pos = 0;
-        bar.forEach(([n, i]) => { const x = bx + 24 + (pos / 4) * (bw - 36) + (n.beats === 4 ? (bw - 36) * 0.3 : 0); g += noteG(n, i, x); pos += n.beats; });
-        const last = li === lines.length - 1 && bi === ln.length - 1;
-        g += `<line x1="${bx + bw}" x2="${bx + bw}" y1="40" y2="96" stroke="#5a4668" stroke-width="${last ? 6 : 2}"/>`;
-      });
-    }
-    return `<svg viewBox="0 0 ${LW} 150" xmlns="http://www.w3.org/2000/svg"${LW < W ? ` style="width:${(LW / W * 100).toFixed(1)}%"` : ''}>${g}</svg>`;
-  }).join('');
-}
-const single = name => staffSVG([{ name, dur: 1, beats: 4, bar: 0 }], { single: true });
 // Teile wie Heft S. 4: leicht auseinandergezogen, schwarz mit Silberringen, je drei Ringklappen auf Ober- und Unterstück
 const PARTS = [{ n: 'Mundstück', x: 8, w: 70 }, { n: 'Blattschraube', x: 40, w: 24 }, { n: 'Birne', x: 92, w: 50 }, { n: 'Oberstück', x: 156, w: 206 }, { n: 'Unterstück', x: 376, w: 206 }, { n: 'Schallbecher', x: 596, w: 150 }];
 function clarSVG(hi) {
@@ -947,30 +1102,9 @@ const KIND = { quiz: 'Quiz', breath: 'Atmen', blow: 'Erster Ton', learn: 'Neuer 
 
 /* ================= Tagesmissionen ================= */
 // 3 Aufgaben pro Tag (Auswahl in KL.dayMissions). Jede gibt +1 Stern, alle drei die Schatztruhe (+3 Sterne, +1 Ticket).
-function missions() {
-  if (!S.mis || S.mis.day !== today() || !Array.isArray(S.mis.list)) {
-    const list = KL.dayMissions({ date: today(), unlocked: S.unlocked, playable: PLAYABLE, bestOf: best, nt: S.nt, hw: S.hw && S.hw.ids });
-    S.mis = { day: today(), list: list.map(m => Object.assign(m, { n: 0, done: false, paid: false })), chest: false };
-  }
-  return S.mis;
-}
-const misLabel = m => m.k === 'note' ? `Ton ${m.note} ${m.need}× richtig` : (KL.station(m.id) ? KL.station(m.id).st.title : '?');
+function missions() { return KL.missionsFor(S, today(), PLAYABLE); }
+const misLabel = m => KL.misLabel(m);
 const misIcon = m => m.k === 'note' ? '🎯' : (KL.station(m.id) ? (KL.station(m.id).st.medal ? MEDAL[KL.station(m.id).st.medal] : ICON[KL.station(m.id).st.type]) : '');
-// Ton-Mission zählt jeden richtig gespielten Ton (aus noteStat)
-function misNote(name) {
-  if (!S.mis || S.mis.day !== today()) return;
-  S.mis.list.forEach(m => { if (m.k === 'note' && !m.done && m.note === name) { m.n++; if (m.n >= m.need) m.done = true; } });
-}
-// Nach einer Übung: Stationsmission abhaken, fertige Missionen auszahlen, Truhe
-function misProgress(id, earned) {
-  const M = missions(), out = { pay: 0, tix: 0, msg: [] };
-  M.list.forEach(m => {
-    if (!m.done && m.k === 'st' && m.id === id && earned >= 1) m.done = true;
-    if (m.done && !m.paid) { m.paid = true; out.pay++; out.msg.push(`🎯 Mission geschafft: ${misLabel(m)} (+1 ⭐)`); }
-  });
-  if (!M.chest && M.list.length && M.list.every(m => m.done)) { M.chest = true; out.pay += 3; out.tix += 1; out.msg.push('🎁 Schatztruhe: alle Missionen geschafft! +3 ⭐ +1 🎟️'); }
-  return out;
-}
 // Station zu einer Ton-Mission: lange Töne oder neuer Ton mit diesem Ton, von der höchsten offenen Insel abwärts
 function misStation(m) {
   if (m.k === 'st') return m.id;
@@ -1001,6 +1135,7 @@ function home() {
   $('hSay').innerHTML = hi + ' ' + (left ? `Noch <b>${left} Minuten</b> Klarinette, dann ist dein Tagesziel geschafft.` : 'Tagesziel geschafft! 🎉 Du bist super!') + (nx ? `<br><span class="muted">Als Nächstes: ${nx.isl.icon} ${nx.st.title}</span>` : '');
   $('hMis').innerHTML = misHTML(); saveIfChanged();
   $('hVer').textContent = 'v' + META.version + (META.built ? ' · ' + META.built : '');
+  $('bGame').style.display = WEB ? '' : 'none'; // neues Spiel nur auf der Testseite (Phaser), die Datei-Version behält das alte Hüpfspiel
 }
 function map() {
   show('map'); let h = '';
@@ -1021,7 +1156,7 @@ function island(n) {
   $('islG').innerHTML = I.st.map((st, k) => {
     const s = stat(st.id), kind = st.medal ? ['', 'Bronze', 'Silber', 'Gold'][st.medal] + '-Stück' : KIND[st.type];
     return `<button class="stn${hw.indexOf(st.id) >= 0 ? ' hw' : ''}${nx === st ? ' next' : ''}" data-act="go" data-id="${st.id}"><span class="no">${k + 1}</span><span class="ic">${st.medal ? MEDAL[st.medal] : ICON[st.type]}</span><span><span class="t">${st.title}</span><br><span class="k">${st.main ? '👑 ' : ''}${kind}${hw.indexOf(st.id) >= 0 ? ' · 📌 Hausaufgabe' : ''}</span><br><span class="s">${starStr(s.best)}</span></span></button>`;
-  }).join('');
+  }).join('') + (WEB && KL.knownNotes(n).length ? `<button class="stn" data-act="hopisl" data-n="${n}"><span class="no">+</span><span class="ic">🎶</span><span><span class="t">Ton-Hüpfer</span><br><span class="k">Bonus-Spiel</span><br><span class="s">${starStr(Math.max(0, ...[1, 2, 3, 4].map(g => best('TH-' + n + '-' + g))))}</span></span></button>` : '');
 }
 
 /* ================= Übungen ================= */
@@ -1031,31 +1166,8 @@ function exShell(title) {
   screen = 'ex'; document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === 'ex')); hud();
   $('exT').textContent = title; $('exL').innerHTML = ''; $('exFing').innerHTML = ''; drawAlp('exAlp'); $('exRes').classList.remove('on'); $('exGo').classList.remove('on');
 }
-// Zeigerinstrument: −50 … +50 Cent auf einem Halbkreis (±75°), grüner Bereich = erlaubte Abweichung
-// hold = true: äußerer Bogen füllt sich, solange der Ton gehalten wird (holdP)
-function tunerHTML(big, hold) {
-  const tol = TUNER ? 10 : (EX && EX.D ? EX.D.tol : 25), R = 118, C = 150;
-  const pt = (c, r) => { const a = c / 50 * 75 * Math.PI / 180; return [(C + r * Math.sin(a)).toFixed(1), (C - r * Math.cos(a)).toFixed(1)]; };
-  const arc = (c1, c2, col, w, r, extra) => { r = r || R; const p = pt(c1, r), q = pt(c2, r); return `<path d="M${p} A${r} ${r} 0 0 1 ${q}" fill="none" stroke="${col}" stroke-width="${w}"${extra || ''}/>`; };
-  ND = null;
-  const hp = hold ? arc(-50, 50, '#efe6f7', 12, 142, ' stroke-linecap="round"') + arc(-50, 50, '#7b5cff', 12, 142, ' id="hp" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"') : '';
-  let ticks = ''; for (let c = -50; c <= 50; c += 10) { const p = pt(c, R - 20), q = pt(c, R - (c % 50 ? 30 : 36)); ticks += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#3a2d4a" stroke-width="${c ? 2 : 4}"/>`; }
-  return `<svg class="gauge${big ? ' big' : ''}" viewBox="0 0 300 172" role="img" aria-label="Zeiger: zu tief, genau, zu hoch">${hp}${tol < 50 ? arc(-50, -tol, '#ffb3c7', 22) + arc(tol, 50, '#ffb3c7', 22) : ''}${arc(-Math.min(tol, 50), Math.min(tol, 50), '#a6e9a0', 22)}${tol > 10 ? arc(-10, 10, '#3fbf4f', 22) : ''}${ticks}
-  <text x="22" y="168" font-size="20" font-weight="800" fill="#c2185b">tiefer</text><text x="278" y="168" font-size="20" font-weight="800" fill="#c2185b" text-anchor="end">höher</text>
-  <text id="gw" x="150" y="118" font-size="28" font-weight="900" fill="#c2185b" text-anchor="middle"></text><g id="nd" class="nd off" style="transform:rotate(0deg)"><path d="M146 150 L150 ${C - R + 6} L154 150 Z" fill="#3a2d4a"/></g><circle cx="150" cy="150" r="12" fill="#3a2d4a"/><circle cx="150" cy="150" r="5" fill="#fff"/></svg>`;
-}
-// c in Cent; null = kein Ton (Zeiger blass in der Mitte)
-// Anzeige leicht geglättet (nur die Anzeige, nicht die Bewertung); Anschlag ±50 = falscher Ton, springt sofort
-let ND = null;
-function needle(c) {
-  const e = $('nd'); if (!e) return; const on = c != null && isFinite(c); e.classList.toggle('off', !on);
-  if (!on) { ND = null; e.style.transform = 'rotate(0deg)'; return; }
-  c = Math.max(-50, Math.min(50, c)); ND = ND == null || Math.abs(c) >= 50 || Math.abs(ND) >= 50 ? c : ND + (c - ND) * 0.35;
-  e.style.transform = `rotate(${ND / 50 * 75}deg)`;
-}
-// Falscher Ton im Instrument: "du: d'" (leer = ausblenden)
-function gaugeWrong(name) { const e = $('gw'); if (e && e.textContent !== (name ? 'du: ' + name : '')) e.textContent = name ? 'du: ' + name : ''; }
-function holdP(f) { const e = $('hp'); if (e) e.setAttribute('stroke-dasharray', `${Math.max(0, Math.min(1, f)) * 100} 100`); }
+// Zeigerinstrument (src/draw.js): Toleranz der Übung, in der Ton-Lupe ±10 Cent
+function tunerHTML(big, hold) { return window.KLDRAW.gaugeSVG(TUNER ? 10 : (EX && EX.D ? EX.D.tol : 25), big, hold); }
 function setHint(t) { const e = $('exHint'); if (e) e.innerHTML = t; }
 function openStation(id) {
   const r = KL.station(id); if (!r) return home();
@@ -1091,7 +1203,7 @@ function micFail() {
   $('exGo').innerHTML = `<div class="say" style="max-width:760px">🎤 Ich kann dich leider nicht hören.<br><span class="muted">${micWhy()} (${MIC.err})</span></div><div class="row"><button class="btn pink" data-act="begin">Nochmal versuchen</button><button class="btn alt" data-act="skipmic">Ohne Mikrofon (nur anhören)</button></div>`;
 }
 let WL = null; function wake() { try { if (navigator.wakeLock && !WL) navigator.wakeLock.request('screen').then(w => { WL = w; w.addEventListener('release', () => { WL = null; }); }).catch(() => {}); } catch (e) {} }
-function noteStat(name, okHit, cents) { const n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++; if (okHit) { n.ok++; misNote(name); } if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; } }
+const noteStat = (name, okHit, cents) => KL.noteStat(S, name, okHit, cents, today());
 // Gemeinsamer Baustein: auf einen Zielton warten (Tonfolge, Ohren-Spiel, neuer Ton)
 function waiter(D) {
   return {
@@ -1343,22 +1455,9 @@ function finish(score) {
   const e = EX; if (!e || !e.running) return; e.running = false; LISTEN = null;
   score = Math.max(0, Math.min(1, score || 0));
   let earned = e.st.type === 'learn' ? (score >= 1 ? 3 : score > 0.5 ? 1 : 0) : KL.starsFor(score, e.isl);
-  const s = stat(e.id), bestBefore = s.best, rep = s.last === today() ? s.rep : 0;
-  const hwIds = S.hw && S.hw.ids ? S.hw.ids : [], current = KL.isCurrent(e.isl, S.unlocked, PLAYABLE, hwIds.indexOf(e.id) >= 0);
-  let pay = KL.payout(earned, bestBefore, rep, current);
-  if (S.bonus < 3 && earned > 0) { pay += 1; S.bonus++; }
-  const newToday = s.last !== today();
-  s.best = Math.max(s.best, earned); s.n++; s.rep = rep + 1; s.last = today();
-  let medal = '';
-  if (e.st.medal && earned >= 2 && (s.medal || 0) < e.st.medal) { s.medal = e.st.medal; medal = MEDAL[e.st.medal]; }
-  const d = day(); d.ex++;
-  // Abwechslung: die dritte verschiedene Übung des Tages (mit mindestens 1 Stern) gibt einmal +1 Stern
-  const extra = [];
-  if (earned > 0 && newToday && !d.vary && Object.keys(S.st).filter(id => S.st[id].last === today() && S.st[id].best > 0).length >= 3) { d.vary = 1; pay++; extra.push('🌈 Abwechslungs-Stern: 3 verschiedene Übungen heute!'); }
-  // Tagesmissionen
-  const mm = misProgress(e.id, earned); pay += mm.pay; extra.push(...mm.msg);
-  d.stars += pay; S.stars += pay;
-  const tix = (earned >= 2 ? 1 : 0) + mm.tix; S.tix += tix;
+  // Sterne, Bonus, Abwechslung, Missionen, Ticket: KL.award in logic.js (gleiche Regeln im Spiel)
+  const r = KL.award(S, { id: e.id, isl: e.isl, earned, date: today(), playable: PLAYABLE, medal: e.st.medal || 0 });
+  const pay = r.pay, tix = r.tix, current = r.current, extra = r.extra, medal = r.medal ? MEDAL[r.medal] : '';
   let unlock = '';
   const I = isl(e.isl);
   // Nächste Insel: alle 👑-Hauptaufgaben dieser Insel mit mindestens 1 Stern (Bonusaufgaben dürfen offen bleiben)
@@ -1585,7 +1684,7 @@ function parents() {
   $('parB').innerHTML = `<h1>👪 Elternbereich</h1><div class="cols">
   <div class="card"><h2>Übungszeit (letzte 7 Tage, Minuten)</h2><div class="bars">${bars}<i class="goal" style="bottom:${goal / max * 100}%"></i></div><p style="margin-top:30px">Diese Woche: <b>${wMin} min</b>, Tagesziel an <b>${wHit} von 7</b> Tagen erreicht · Serie: <b>${streak()} Tage</b> 🔥<br>Heute: ${Math.round(td.sec / 60)} min echte Spielzeit, ${td.ex} Übungen, ${td.stars} ⭐ verdient, ${td.games} Spielrunden.</p><p class="muted">Gezählt wird nur die Zeit, in der wirklich ein Ton erklingt – nicht die Zeit, in der die App offen ist.</p></div>
   <div class="card"><h2>Hausaufgabe der Lehrkraft</h2><p>Lektion (= Insel, öffnet sie sofort): ${sel('hwI', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), hwI)}</p><div id="hwL">${hwList(hwI)}</div><p class="muted" id="hwSum">${hwSum()}</p><p><textarea id="hwT" rows="2" style="width:100%" placeholder="Notiz, z. B. Töne aushalten c d e f g, Kinn ruhig">${S.hw ? S.hw.txt || '' : ''}</textarea></p><button class="btn green" data-act="hwsave">Speichern</button><p class="muted">Häkchen gelten sofort, auch auf mehreren Inseln. Markierte Übungen schlägt „Heute üben“ zuerst vor, jede einmal pro Tag.</p></div>
-  <div class="card"><h2>Lernstand</h2><table>${prog}</table><p class="muted">Eine Insel öffnet sich, wenn auf der vorigen alle 👑-Hauptaufgaben mindestens einen Stern haben. Bonusaufgaben (Quiz, Zusatzlieder, Medaillen-Stücke) dürfen offen bleiben. <b>Lehrer-Schlüssel:</b> Wählen Sie bei „Hausaufgabe“ die Lektion der Lehrkraft, dann ist diese Insel sofort offen. Es öffnet sich nichts von selbst nach Zeit (Ferien, Ausfall).</p></div>
+  <div class="card"><h2>Lernstand</h2><table>${prog}</table>${gameProg()}<p class="muted">Eine Insel öffnet sich, wenn auf der vorigen alle 👑-Hauptaufgaben mindestens einen Stern haben. Bonusaufgaben (Quiz, Zusatzlieder, Medaillen-Stücke) dürfen offen bleiben. <b>Lehrer-Schlüssel:</b> Wählen Sie bei „Hausaufgabe“ die Lektion der Lehrkraft, dann ist diese Insel sofort offen. Es öffnet sich nichts von selbst nach Zeit (Ferien, Ausfall).</p></div>
   <div class="card"><h2>Ton-Bericht</h2>${notes ? `<table><tr><th>Ton</th><th>Treffer</th><th>Stimmung im Schnitt</th></tr>${notes}</table>` : '<p>Noch keine Töne gespielt.</p>'}<p class="muted">Ist ein Ton dauerhaft zu hoch oder zu tief, lohnt eine Frage an die Lehrkraft (Ansatz, Blatt, Birne).</p></div>
   <div class="card"><h2>Einstellungen</h2><table>
    <tr><td>Tagesziel</td><td>${sel('sGoal', [5, 10, 15, 20, 25, 30].map(v => [v, v + ' Minuten']), goal)}</td></tr>
@@ -1594,11 +1693,18 @@ function parents() {
    <tr><td>Tonprüfung</td><td>${sel('sTol', [[10, 'großzügig'], [0, 'normal'], [-10, 'streng']], S.set.tolAdj)}</td></tr>
    <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr>
    <tr><td>Sicherungsdatei jede Woche</td><td>${sel('sFile', [['auto', 'automatisch (PC an, Tablet aus)'], [1, 'an (Ordner Downloads)'], [0, 'aus']], S.set.autoFile === true ? 1 : S.set.autoFile === false ? 0 : 'auto')}</td></tr>
-   <tr><td>Vollbild</td><td>${sel('sFull', [['auto', 'automatisch auf Tablets'], ['on', 'immer'], ['off', 'aus']], S.set.full || 'auto')}</td></tr></table>
+   <tr><td>Vollbild</td><td>${sel('sFull', [['auto', 'automatisch auf Tablets'], ['on', 'immer'], ['off', 'aus']], S.set.full || 'auto')}</td></tr>
+   <tr><td>Klang-Formeln: Hilfe</td><td>${sel('sHelp', [['auto', 'automatisch nach Können'], [1, 'immer mit Notennamen und Griff'], [2, 'nur Noten (Notenlesen)'], [3, 'nur hören (Gehör)']], S.set.help || 'auto')}</td></tr></table>
    <button class="btn green" data-act="setsave">Speichern</button><button class="btn alt" data-act="reset">Spielstand löschen</button></div>
-  <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne. Bei 3 Sternen gibt es höchstens zweimal am Tag einen Bonus-Stern, aber nur auf der aktuellen und der vorigen Insel sowie für Hausaufgaben – so lohnt es sich nicht, immer nur die leichteste alte Übung zu spielen. Dafür: 3 Tagesmissionen (je +1 ⭐, alle zusammen Schatztruhe +3 ⭐ +1 🎟️), ein Abwechslungs-Stern für 3 verschiedene Übungen am Tag und alle 5 Minuten echte Spielzeit ein Fleiß-Stern.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
+  <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne. Bei 3 Sternen gibt es höchstens zweimal am Tag einen Bonus-Stern, aber nur auf der aktuellen und der vorigen Insel sowie für Hausaufgaben – so lohnt es sich nicht, immer nur die leichteste alte Übung zu spielen. Dafür: 3 Tagesmissionen (je +1 ⭐, alle zusammen Schatztruhe +3 ⭐ +1 🎟️), ein Abwechslungs-Stern für 3 verschiedene Übungen am Tag und alle 5 Minuten echte Spielzeit ein Fleiß-Stern.</p><p class="muted">Klang-Abenteuer (Ton-Hüpfer, Zauberbuch): zählt als Üben – echte Spielzeit, Sterne nach denselben Regeln, kein Ticket. Klang-Formeln haben drei Hilfe-Stufen (mit Namen, nur Noten, nur hören); automatisch kommt die nächste nach zwei Erfolgen.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
   <div class="card" id="techC"><h2>Technik und offline</h2>${techHTML()}</div>
   </div><div class="row"><button class="btn alt" data-act="opt">⚙️ Zurück zu den Optionen</button></div>`;
+}
+// Elternbereich: Fortschritt im Klang-Abenteuer (spiel.html)
+function gameProg() {
+  const sp = S.game && S.game.spells ? S.game.spells : {}, n = Object.keys(sp).length, g = Object.keys(sp).filter(k => sp[k].gold).length;
+  const th = Object.keys(S.st).filter(id => /^TH-/.test(id) && S.st[id].best > 0).length;
+  return n || th ? `<p>✨ Klang-Abenteuer: ${n} Klang-Formel${n === 1 ? '' : 'n'} gelernt${g ? ', ' + g + ' mit Gold-Siegel (nur nach Gehör)' : ''} · Ton-Hüpfer: ${th} Strecke${th === 1 ? '' : 'n'} geschafft.</p>` : '';
 }
 // Elternbereich: Offline-Zustand, Start vom Startbildschirm, Leistungstest
 function techHTML() {
@@ -1622,6 +1728,8 @@ document.addEventListener('click', e => {
   else if (a === 'install') install();
   else if (a === 'full') { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d); else { const el = d.documentElement; try { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => toast('Vollbild geht in diesem Browser nicht.')); } catch (e) { toast('Vollbild geht in diesem Browser nicht.'); } } }
   else if (a === 'today') openStation(nextStation());
+  else if (a === 'game') { save(); location.href = 'spiel.html'; }
+  else if (a === 'hopisl') { save(); location.href = 'spiel.html?go=hop&isl=' + b.dataset.n; }
   else if (a === 'map') map();
   else if (a === 'isl') island(+b.dataset.n);
   else if (a === 'locked') toast(b.dataset.n ? `🔒 Insel ${b.dataset.n} öffnet sich, wenn du auf Insel ${b.dataset.n - 1} alle 👑-Aufgaben mit mindestens einem Stern geschafft hast – oder wenn deine Lehrerin die Lektion als Hausaufgabe gibt.` : '🔒 Das ist noch zu. Erst die Übungen davor schaffen!', 5000);
@@ -1648,7 +1756,7 @@ document.addEventListener('click', e => {
   else if (a === 'par') parGate();
   else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else options(); }
   else if (a === 'hwsave') { hwSync(); S.hw.txt = $('hwT').value; save(); toast('Hausaufgabe gespeichert ✓'); }
-  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === 'auto' ? null : $('sFile').value === '1'; S.set.full = $('sFull').value; save(); hud(); toast('Gespeichert ✓'); parents(); }
+  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === 'auto' ? null : $('sFile').value === '1'; S.set.full = $('sFull').value; S.set.help = $('sHelp').value === 'auto' ? 'auto' : +$('sHelp').value; save(); hud(); toast('Gespeichert ✓'); parents(); }
   else if (a === 'reset') { if (window.confirm('Wirklich den ganzen Spielstand löschen? Sterne, Sachen und Übungszeiten sind dann weg.')) { S = fresh(); save(); home(); } }
   else if (a === 'opt') options();
   else if (a === 'about') { options(); setTimeout(() => { const c = $('about'); if (c && c.scrollIntoView) c.scrollIntoView(); }, 30); }

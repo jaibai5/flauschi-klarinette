@@ -1,11 +1,11 @@
 /* Service Worker: macht die Testseite offline nutzbar (Tablet ohne WLAN).
    tools/build.mjs setzt SW ein: { version, cache, core: [...], extra: [...] }.
-   - Seiten (index.html, leistung.html): zuerst aus dem Netz (höchstens 3 s), sonst aus dem Speicher.
+   - Seiten (index.html, spiel.html, leistung.html): zuerst aus dem Netz (höchstens 3 s), sonst aus dem Speicher.
      So kommt ein Update sofort an, und ohne Netz startet die App trotzdem.
    - Alles andere (Symbole, vendor/): aus dem Speicher, sonst aus dem Netz und dann gespeichert.
    Der Spielstand liegt in localStorage und wird hier nie angefasst. */
 'use strict';
-const SW = {"version":"0.2.2","cache":"fk-0.2.2-387e77cd57","core":["./","index.html","leistung.html","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png"],"extra":["vendor/phaser-4.2.1/phaser.min.js","vendor/three-0.187.0/three.module.js","vendor/three-0.187.0/three.core.js"]};
+const SW = {"version":"0.3.0","cache":"fk-0.3.0-c1c8515e50","core":["./","index.html","spiel.html","leistung.html","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png"],"extra":["vendor/phaser-4.2.1/phaser.min.js","vendor/three-0.187.0/three.module.js","vendor/three-0.187.0/three.core.js"]};
 
 self.addEventListener('install', e => {
   // core muss vollständig ankommen; extra (große Bibliotheken) nur versuchen

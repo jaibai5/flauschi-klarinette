@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#7b5cff">
+<title>Klang-Abenteuer · Klarinetten-Abenteuer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<!-- Gebaut aus src/spiel.html, src/spiel.js, src/spiel.css, src/game_logic.js, src/draw.js, src/logic.js mit: node tools/build.mjs -->
+<style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Trebuchet MS","Segoe UI",Roboto,Arial,sans-serif;color:#3a2d4a;background:linear-gradient(160deg,#fff4fb 0%,#eef6ff 55%,#f1fff0 100%)}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#hud{display:flex;align-items:center;gap:8px;padding:6px 10px;min-height:54px;background:rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(90,70,104,.12);z-index:5}
+#hud .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:2px solid #e4d7f2;border-radius:22px;padding:4px 12px;font-weight:800;font-size:20px;white-space:nowrap}
+.ib{border:0;background:#fff;border-radius:16px;font-size:24px;width:48px;height:44px;box-shadow:0 2px 0 #d9cbe8}
+#tday{position:relative;overflow:hidden;min-width:150px}
+#tday i{position:absolute;left:0;top:0;bottom:0;background:#c9f2c4;z-index:0;transition:width .5s}
+#tday span{position:relative;z-index:1}
+main{flex:1;position:relative;overflow:hidden}
+.scr{position:absolute;inset:0;display:none;padding:12px 16px;overflow-y:auto}
+.scr.on{display:block}
+h1{margin:4px 0 8px;font-size:32px}
+h2{margin:4px 0 8px;font-size:26px}
+.btn{border:0;border-radius:22px;padding:14px 26px;font-size:24px;font-weight:800;color:#fff;background:#7b5cff;box-shadow:0 5px 0 #5a3cc0;margin:6px}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #5a3cc0}
+.btn.pink{background:#ff4f8b;box-shadow:0 5px 0 #c2185b}
+.btn.green{background:#2fb35a;box-shadow:0 5px 0 #1d7d3c}
+.btn.alt{background:#fff;color:#5a4668;box-shadow:0 5px 0 #d9cbe8;border:2px solid #e4d7f2}
+.btn.huge{font-size:34px;padding:22px 40px;border-radius:30px}
+.btn:disabled{opacity:.45}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
+.card{background:#fff;border-radius:26px;padding:16px 20px;box-shadow:0 6px 18px rgba(90,70,104,.12)}
+.say{background:#fff;border-radius:24px;padding:12px 18px;font-size:24px;font-weight:700;position:relative;box-shadow:0 4px 12px rgba(90,70,104,.12)}
+.muted{color:#7d6d8c;font-size:18px}
+/* Start */
+#home .wrap{display:flex;height:100%;align-items:center;justify-content:center;gap:24px}
+#hAlp{width:min(34vw,300px)}
+.hfig{display:flex;flex-direction:column;align-items:center}
+.tag{background:#fff;border-radius:16px;padding:2px 14px;font-weight:900;font-size:20px;box-shadow:0 3px 8px rgba(90,70,104,.15);margin-top:-6px}
+.mlab{font-size:15px;font-weight:800;color:#7d6d8c;margin:2px 10px -4px;text-transform:uppercase;letter-spacing:1px}
+#home .menu{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:330px}
+/* Karte */
+#map .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.isl{border:0;border-radius:24px;background:#fff;padding:10px;text-align:center;box-shadow:0 5px 0 #d9cbe8;min-height:132px}
+.isl b{display:block;font-size:44px}
+.isl span{display:block;font-weight:800;font-size:17px}
+.isl small{display:block;font-size:14px;color:#7d6d8c}
+.isl.lock{background:#eee8f3;color:#9b8fa8;box-shadow:none}
+.isl.cur{outline:4px solid #ffcf2e}
+.isl.soon{background:transparent;border:3px dashed #d9cbe8;box-shadow:none;color:#9b8fa8}
+/* Insel */
+#isl .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.stn{border:0;border-radius:22px;background:#fff;padding:12px;text-align:left;box-shadow:0 5px 0 #d9cbe8;display:flex;gap:10px;align-items:center;min-height:86px}
+.stn .ic{font-size:36px;flex:none}
+.stn .ic .ci{width:40px;height:40px;vertical-align:middle}
+.stn .no{flex:none;width:28px;height:28px;border-radius:50%;background:#efe6f7;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;color:#5a4668}
+.stn .k{font-size:14px;color:#7d6d8c;font-weight:700}
+.stn.next{outline:4px solid #ffcf2e;animation:pulse 1.6s infinite}
+.stn.next .no{background:#ffcf2e}
+@keyframes pulse{50%{outline-color:#ffe99a}}
+.stn .t{font-weight:800;font-size:19px}
+.stn .s{font-size:16px;letter-spacing:1px}
+.stn.hw{outline:4px solid #ff4f8b}
+/* Übung */
+#ex{display:none;flex-direction:column;padding:8px 14px}
+#ex.on{display:flex}
+#exTop{display:flex;align-items:center;gap:10px}
+#exTop h2{flex:1;margin:0}
+#exBody{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0}
+#exL{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:100%}
+#exR{width:170px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#exFing svg{width:150px;height:auto}
+#exAlp{width:140px}
+.bigname{font-size:64px;font-weight:900;line-height:1}
+.staff{width:100%;max-width:980px}
+.staff svg{width:100%;height:auto;display:block}
+.n{fill:#3a2d4a;stroke:#3a2d4a}
+.n.now{fill:#7b5cff;stroke:#7b5cff}
+.n.ok{fill:#2fb35a;stroke:#2fb35a}
+.n.bad{fill:#ff4f8b;stroke:#ff4f8b}
+.n .hol{fill:#fff}
+.meter{width:min(560px,90%);height:34px;border-radius:18px;background:#f0e8f8;overflow:hidden;border:3px solid #e4d7f2;margin:8px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8ee08a,#2fb35a);transition:width .12s}
+.hint{font-size:26px;font-weight:800;min-height:36px;text-align:center}
+.dots{display:flex;gap:10px;justify-content:center;margin:6px}
+.dots i{width:30px;height:30px;border-radius:50%;background:#efe6f7;border:3px solid #e4d7f2}
+.dots i.ok{background:#2fb35a;border-color:#1d7d3c}
+.dots i.bad{background:#ff4f8b;border-color:#c2185b}
+.dots i.now{border-color:#7b5cff;background:#d8ccff}
+.ring{width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;background:#e9f6ff;border:8px solid #7cc8ff;transition:transform 1s linear}
+.ov{position:absolute;inset:0;background:rgba(255,246,252,.94);display:none;align-items:center;justify-content:center;z-index:8;flex-direction:column;text-align:center;padding:16px}
+.ov.on{display:flex}
+.stars{font-size:72px;letter-spacing:6px}
+.stars .off,.stn .s .off{filter:grayscale(1);opacity:.3}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,95%)}
+.opt{border:0;border-radius:22px;background:#fff;font-size:30px;font-weight:900;padding:18px;box-shadow:0 5px 0 #d9cbe8;color:#3a2d4a}
+.opt.good{background:#c9f2c4}
+.opt.no{background:#ffd1df}
+.cnt{font-size:120px;font-weight:900;color:#7b5cff}
+/* Laden */
+#shop .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item{border:0;border-radius:20px;background:#fff;padding:8px;box-shadow:0 4px 0 #d9cbe8;text-align:center;font-weight:800}
+.item b{display:block;font-size:40px}
+.item.own{background:#f0fff0}
+.item.wear{outline:4px solid #2fb35a}
+.item.lock{opacity:.45}
+.item small{display:block;font-weight:600;font-size:13px;color:#7d6d8c}
+#shop .top{display:flex;gap:16px;align-items:center}
+#sAlp{width:170px;flex:none}
+/* Spiel */
+#run{padding:0}
+#runF{position:absolute;inset:0;overflow:hidden;touch-action:none}
+#runG{position:absolute;left:0;right:0;bottom:0;height:56px}
+#runA{position:absolute;left:50px;bottom:56px;width:100px;z-index:3}
+#runA.inv{opacity:.5}
+.ob{position:absolute;left:0;font-size:40px;line-height:1;z-index:2}
+#runH{position:absolute;left:10px;top:10px;display:flex;gap:6px;z-index:4}
+#runM{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;background:rgba(255,255,255,.55)}
+.lvl{display:grid;grid-template-columns:repeat(5,64px);gap:8px;justify-content:center;margin:8px}
+.lvl button{height:60px;border:0;border-radius:16px;font-size:20px;font-weight:900;background:#fff;box-shadow:0 4px 0 #d9cbe8}
+.lvl button.done{background:#c9f2c4}
+.lvl button:disabled{opacity:.35}
+/* Eltern */
+#par table{border-collapse:collapse;width:100%;font-size:17px}
+#par td,#par th{border-bottom:1px solid #eee3f5;padding:6px;text-align:left}
+.bars{display:flex;gap:8px;align-items:flex-end;height:150px;padding:6px;border-bottom:3px solid #e4d7f2;position:relative}
+.bars div{flex:1;background:#7cc8ff;border-radius:8px 8px 0 0;position:relative;min-height:2px}
+.bars div.hit{background:#2fb35a}
+.bars div span{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:13px}
+.bars div em{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:13px;font-style:normal;font-weight:800}
+.goal{position:absolute;left:0;right:0;border-top:2px dashed #ff4f8b}
+#par select,#par input,#par textarea{font-size:18px;padding:6px;border-radius:10px;border:2px solid #e4d7f2;font-family:inherit}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Flauschi-Animation */
+.salto{animation:salto .9s ease}
+@keyframes salto{0%{transform:translateY(0) rotate(0)}40%{transform:translateY(-70px) rotate(-180deg)}80%{transform:translateY(-10px) rotate(-360deg)}100%{transform:translateY(0) rotate(-360deg)}}
+.hop{animation:hop .5s ease}
+@keyframes hop{50%{transform:translateY(-22px)}}
+.tw{animation:tw 1.4s infinite}.tw.b{animation-delay:.4s}.tw.c{animation-delay:.8s}
+@keyframes tw{50%{opacity:.2}}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#3a2d4a;color:#fff;font-weight:800;font-size:22px;padding:10px 20px;border-radius:20px;display:none;z-index:20}
+.conf{position:fixed;top:-40px;font-size:34px;animation:fall 2.6s linear forwards;z-index:30;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (orientation:portrait){#home .wrap{flex-direction:column}#hAlp{width:44vw}#exBody{flex-direction:column}#exR{flex-direction:row;width:auto}.cols{grid-template-columns:1fr}}
+@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{width:116px}#exAlp{width:66px}}
+.gauge{width:min(230px,60%);height:auto;display:block;margin:2px auto}
+.gauge.big{width:min(460px,90%)}
+.gauge .nd{transform-origin:150px 150px;transform-box:view-box;transition:transform .12s ease-out,opacity .3s}
+.gauge .nd.off{opacity:.25}
+.demoV{display:none;gap:18px;align-items:center;justify-content:center;margin-top:8px;background:#fff;border-radius:22px;padding:4px 16px;box-shadow:0 4px 14px rgba(80,40,120,.12)}
+.demoV.on{display:flex}
+.demoV .dn{display:flex;flex-direction:column;align-items:center}
+.demoV .dn .bigname{font-size:52px;line-height:1}
+.demoV .staff{width:170px}
+.demoV .df svg{height:170px;width:auto}
+.ov.demo .say{font-size:20px;padding:10px 18px}
+.ov.demo .btn.huge{padding-top:8px;padding-bottom:8px}
+.ov.demo>p.muted{display:none}
+
+/* Übung: Overlay lässt die Kopfzeile mit „Aufhören“ frei */
+#ex .ov{top:52px}
+.exrow{display:flex;align-items:center;justify-content:center;gap:18px;flex:none;max-width:100%}
+.exrow .nb{display:flex;flex-direction:column;align-items:center}
+.exrow .hint{min-width:160px;text-align:left}
+.staff.sm{width:200px;flex:none}
+.staff.one{flex:none}
+.bigicon .ci{width:90px;height:90px}
+.gauge{flex:none;width:min(280px,42vw)}
+.gauge.big{width:min(460px,90%)}
+#exL>*{flex-shrink:0}
+/* Quiz */
+.qq{margin:2px 0 6px;text-align:center}
+.qz{display:flex;align-items:center;justify-content:center;gap:24px;width:100%}
+.qz .qimg{display:flex;justify-content:center;flex:none}
+.qz .qimg .staff{width:260px}
+.qz .qf svg{width:auto;height:min(300px,52vh)}
+.qz .opts{width:min(460px,55%)}
+.qz.wide{flex-direction:column;gap:10px}
+.qz.wide .qimg{width:100%}
+.qz.wide .qimg svg{width:100%;max-width:900px;height:auto}
+.qz.wide .opts{grid-template-columns:repeat(4,1fr);width:100%}
+.qz .opt{font-size:24px;padding:14px 8px}
+/* Ergebnis */
+.btn.nx small{display:block;font-size:16px;font-weight:700;opacity:.9}
+/* Figurenwahl, Name, Optionen */
+#who h1{text-align:center}
+.chars{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:960px;margin:0 auto}
+.chr{border:0;border-radius:24px;background:#fff;padding:10px 8px;box-shadow:0 5px 0 #d9cbe8;display:flex;flex-direction:column;align-items:center}
+.chr svg{width:100%;max-width:170px;height:auto}
+.chr b{font-size:26px}
+.chr small{font-size:16px;color:#7d6d8c;font-weight:700}
+.chr.sel{outline:5px solid #2fb35a}
+.namebox{display:flex;gap:20px;align-items:center;max-width:900px;margin:10px auto}
+.nmalp{width:220px;flex:none}
+#nameI{width:100%;font-size:34px;font-weight:800;padding:10px 16px;border-radius:18px;border:3px solid #d9cbe8;font-family:inherit;color:#3a2d4a;margin:8px 0}
+#opt .card{margin-bottom:12px}
+.lvl button:disabled{opacity:.6;background:#eee8f3}
+@media (orientation:portrait){.chars{grid-template-columns:1fr 1fr}.namebox{flex-direction:column}.qz{flex-direction:column}.qz .opts{width:100%}.exrow{flex-wrap:wrap}}
+@media (max-height:620px){.chr svg{max-width:140px}.nmalp{width:170px}}
+/* v0.2.0: Tagesmissionen, Versionshinweis, falscher Ton, Zusatzmeldungen im Ergebnis */
+.mis{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:#fff;border:2px solid #e4d7f2;border-radius:20px;padding:6px 8px}
+.mis .mt{font-size:13px;font-weight:800;color:#7d6d8c;text-transform:uppercase;letter-spacing:1px;margin:0 2px}
+.mp{border:2px solid #e4d7f2;background:#faf6ff;border-radius:16px;padding:5px 10px;font-size:16px;font-weight:800;color:#5a4668;display:inline-flex;align-items:center;gap:5px}
+.mp .mi{font-size:18px}.mp .mi .ci{width:20px;height:20px;vertical-align:middle}
+.mp small{color:#7b5cff}
+.mp.done{background:#e3f8e6;border-color:#8fd89d;color:#1d7d3c}
+.mis .chest{font-size:26px;cursor:pointer;line-height:1}
+.mis .chest.open{animation:hop .9s ease 1}
+.ver{position:absolute;right:12px;bottom:6px;font-size:13px;color:#9a8aa8;font-weight:700;cursor:pointer}
+.hint .wrong b,.say .wrong b{color:#c2185b}
+.xtra{font-size:19px;font-weight:800;color:#1d7d3c;margin:2px 0 6px}
+@media (max-height:620px){.mp{font-size:15px;padding:4px 8px}.mis{padding:4px 6px}}
+/* Kleine Bildschirme (Fire HD 8 im Browser ohne Vollbild: etwa 850 x 480) */
+@media (max-height:540px){
+#hud{min-height:44px;padding:4px 8px}.chip{font-size:17px;padding:2px 10px}.ib{height:38px;width:42px;font-size:21px}#tday{min-width:120px}
+#home .say{font-size:18px;padding:8px 14px}#home .menu{gap:3px}#home .mlab{display:none}
+#home .btn{font-size:21px;padding:9px 18px;margin:4px}#home .btn.huge{font-size:26px;padding:10px 24px}
+#hAlp{width:min(30vw,240px)}.ver{bottom:2px;font-size:11px}
+.mp{font-size:14px;padding:3px 8px}.mis{gap:4px}
+}
+
+/* Spielseite spiel.html: baut auf style.css auf (Knöpfe, Karten, Notenzeile, Zeigerinstrument) */
+body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-select:none}
+#stage{position:fixed;inset:0;z-index:0}
+#stage canvas{display:block}
+#ghud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:6px 10px;min-height:54px;z-index:6;pointer-events:none}
+#ghud>*{pointer-events:auto}
+#ghud .sp{flex:1}
+#ghud .ib{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.hide{display:none!important}
+.stg .off,.spc .off,.sres .off{filter:grayscale(1);opacity:.3}
+/* Menüs und Bücher über dem Spielbild */
+#ui{position:fixed;inset:54px 0 0 0;z-index:5;display:flex;align-items:center;justify-content:center;padding:8px 14px;pointer-events:none;overflow:hidden}
+#ui>*{pointer-events:auto}
+#ui:empty{display:none}
+.panel{background:rgba(255,255,255,.94);border-radius:28px;padding:14px 20px;box-shadow:0 8px 24px rgba(60,40,90,.25);max-width:min(940px,100%);max-height:100%;overflow-y:auto;text-align:center}
+.panel h1{font-size:30px;margin:2px 0 6px}
+.panel .say{box-shadow:none;background:#f6f0ff;margin:6px 0}
+.gmenu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.gbtn{border:0;border-radius:24px;padding:12px 14px;background:#fff;box-shadow:0 5px 0 #d9cbe8;border:2px solid #e4d7f2;font-size:22px;font-weight:800;color:#3a2d4a;display:flex;align-items:center;gap:12px;text-align:left;min-height:84px}
+.gbtn b{font-size:40px;flex:none}
+.gbtn small{display:block;font-size:15px;font-weight:700;color:#7d6d8c}
+.gbtn.main{background:#7b5cff;color:#fff;box-shadow:0 5px 0 #5a3cc0;border-color:#7b5cff}
+.gbtn.main small{color:#e6ddff}
+.gbtn.soon{background:transparent;border:3px dashed #d9cbe8;box-shadow:none;color:#9b8fa8}
+.gbtn:active{transform:translateY(3px)}
+/* Ton-Hüpfer: Stufen */
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:8px 0}
+.stg{border:0;border-radius:22px;background:#fff;box-shadow:0 5px 0 #d9cbe8;border:2px solid #e4d7f2;padding:10px 8px;font-weight:800;font-size:19px;color:#3a2d4a;min-height:132px}
+.stg b{display:block;font-size:38px}
+.stg small{display:block;font-size:14px;color:#7d6d8c;font-weight:700}
+.stg.lock{background:#eee8f3;color:#9b8fa8;box-shadow:none}
+.stg.next{outline:4px solid #ffcf2e}
+.islsel{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0}
+.islsel button{border:0;border-radius:16px;padding:6px 12px;font-size:18px;font-weight:800;background:#efe6f7;color:#5a4668}
+.islsel button.on{background:#7b5cff;color:#fff}
+/* Während des Spielens */
+#play{position:fixed;inset:0;z-index:4;pointer-events:none}
+#play .ib.big{pointer-events:auto;position:absolute;right:12px;top:64px;width:64px;height:58px;font-size:30px}
+#pGauge{position:absolute;left:50%;top:50px;transform:translateX(-50%);width:210px}
+#pGauge .gauge{width:210px}
+#pHint{position:absolute;left:50%;top:174px;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:18px;padding:6px 16px;font-size:22px;font-weight:800;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+#pHint:empty{display:none}
+#pHint .wrong{color:#c2185b}
+#pNext{position:absolute;right:10px;top:130px;background:rgba(255,255,255,.9);border-radius:18px;padding:6px 6px 2px;text-align:center;font-weight:900;font-size:26px;width:92px}
+#pNext:empty{display:none}
+#pNext svg{width:70px;height:auto;display:block;margin:0 auto}
+#pNext small{display:block;font-size:13px;color:#7d6d8c}
+/* Zauberbuch */
+.book{background:#fffaf0;border:6px solid #b07a3c;border-radius:26px;box-shadow:0 8px 0 #7a4f22,0 12px 30px rgba(60,40,20,.35);max-width:min(980px,100%)}
+.spells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.spc{border:0;border-radius:20px;background:#fff;box-shadow:0 4px 0 #e6d3b3;border:2px solid #f0e2c8;padding:10px;font-weight:800;font-size:20px;color:#3a2d4a;min-height:120px}
+.spc b{display:block;font-size:40px}
+.spc small{display:block;font-size:14px;color:#7d6d8c;font-weight:700}
+.spc.lock{background:#f3ede3;color:#a99a85;box-shadow:none}
+.spc.gold{outline:4px solid #ffcf2e}
+.spage{display:flex;gap:14px;align-items:center;text-align:left}
+/* Zauber-Seite links, rechts bleibt die Bühne mit dem Ding sichtbar */
+#ui.left{justify-content:flex-start;padding-left:max(12px,12vw)}
+.sppan{max-width:min(560px,62vw);padding:10px 16px}
+.sppan h1{font-size:26px}
+.sppan .btn{font-size:20px;padding:10px 18px}
+.sppan .btn.huge{font-size:26px;padding:14px 26px}
+.sppan .staff{max-width:100%}
+.spage .sl{flex:1;min-width:0}
+.spage .staff{max-width:520px}
+.lvl{display:inline-block;border-radius:14px;background:#efe6f7;padding:2px 10px;font-size:15px;font-weight:800;color:#5a4668;margin-left:6px;vertical-align:middle}
+.lvl.g{background:#ffe99a}
+.fings{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.fings div{text-align:center;font-weight:900;font-size:18px}
+.fings svg{width:44px;height:auto;display:block}
+.dots{font-size:40px;letter-spacing:6px}
+.dots .ok{color:#2fb35a}
+.listen{font-size:56px}
+.sres .stars{font-size:52px}
+/* Vorspann */
+.cap{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,94vw);background:rgba(255,255,255,.95);border-radius:24px;padding:12px 20px;font-size:26px;font-weight:800;box-shadow:0 6px 18px rgba(60,40,90,.3);z-index:5;text-align:center}
+.cap small{display:block;font-size:16px;color:#7d6d8c;font-weight:700;margin-top:4px}
+.skip{position:fixed;right:12px;top:62px;z-index:6}
+.pauseov{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:rgba(40,20,60,.35)}
+.cnt{font-size:120px;font-weight:900;color:#fff;text-shadow:0 4px 0 #5a3cc0}
+@media (max-height:520px){
+  .panel h1{font-size:24px}
+  .gbtn{min-height:64px;font-size:19px;padding:8px 10px}
+  .gbtn b{font-size:32px}
+  .stg{min-height:104px;font-size:17px}
+  .stg b{font-size:30px}
+  .spc{min-height:96px;font-size:18px}
+  .cap{font-size:21px;padding:8px 14px}
+  #pGauge,#pGauge .gauge{width:170px}
+  #pHint{top:150px;font-size:19px}
+  .panel{padding:8px 14px}
+  .panel .say{font-size:18px;padding:8px 12px;margin:4px 0}
+  .panel .btn{font-size:20px;padding:9px 18px;margin:4px}
+  .panel .btn.huge{font-size:24px;padding:11px 22px}
+  .gmenu{gap:8px;margin-top:4px}
+  .spells{gap:8px}
+  .fings svg{width:36px}
+  .sppan .staff svg{max-height:96px}
+  .sres .stars{font-size:40px}
+  .xtra{font-size:16px}
+  #pNext{top:120px;width:80px;font-size:22px}
+  #pNext svg{width:56px}
+}
+</style>
+</head>
+<body class="spiel">
+<div id="stage"></div>
+<div id="ghud">
+  <a class="ib" id="gHome" href="./" aria-label="Zurück zur App">🏠</a>
+  <button class="ib" id="gBack" data-act="menu" aria-label="Spiel-Menü">☰</button>
+  <span class="chip" id="gStar">⭐ 0</span><span class="chip" id="gTix">🎟️ 0</span>
+  <span class="sp"></span>
+  <span class="chip" id="gDay"></span>
+  <button class="ib" id="gSnd" data-act="snd" aria-label="Ton">🔊</button>
+</div>
+<div id="play" class="hide">
+  <div id="pGauge"></div>
+  <div id="pHint"></div>
+  <div id="pNext"></div>
+  <button class="ib big" id="pPause" data-act="pause" aria-label="Pause">⏸</button>
+</div>
+<div id="ui"></div>
+<div id="toast"></div>
+<script>window.KLMETA = {"version":"0.3.0","built":"21.11.2026 21:47","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
+   Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
+(function (root) {
+  'use strict';
+
+  /* ---------- Töne und Oehler-Griffe (Grifftabelle des Hefts, Buchseite 72; als Tatsachen übernommen) ---------- */
+  // Tasten: D Daumenloch, Ü Überblasklappe, A A-Klappe, L1-L3 / R1-R3 Finger, S b-Seitenklappe rechts, F f-Seitenklappe
+  var NOTES = {
+    'g':    { midi: 55, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    'a':    { midi: 57, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2'] },
+    'b':    { midi: 58, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2', 'S'] }, // Heft S. 72: Griff a + b-Klappe
+    'h':    { midi: 59, keys: ['D', 'L1', 'L2', 'L3', 'R1'] },
+    "c'":   { midi: 60, keys: ['D', 'L1', 'L2', 'L3'] },
+    "d'":   { midi: 62, keys: ['D', 'L1', 'L2'] },
+    "e'":   { midi: 64, keys: ['D', 'L1'] },
+    "f'":   { midi: 65, keys: ['D', 'L1', 'F'] },
+    "fis'": { midi: 66, keys: ['D'] },
+    "g'":   { midi: 67, keys: [] },
+    "a'":   { midi: 69, keys: ['A'] },
+    "b'":   { midi: 70, keys: ['A', 'Ü'] },
+    "d''":  { midi: 74, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    "e''":  { midi: 76, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2'] }
+  };
+  var KEYWORD = { D: 'Daumenloch', 'Ü': 'Überblasklappe (Daumen)', A: 'A-Klappe (Zeigefinger links)', L1: 'Zeigefinger links', L2: 'Mittelfinger links', L3: 'Ringfinger links', R1: 'Zeigefinger rechts', R2: 'Mittelfinger rechts', R3: 'Ringfinger rechts', S: 'b-Klappe rechts', F: 'f-Klappe an der Seite' };
+  var CHROMA = ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'gis', 'a', 'b', 'h'];
+  var TRANSPOSE = 2; // notiert = klingend + 2
+
+  function marks(oct) { return oct <= 3 ? '' : (oct === 4 ? "'" : "''"); }
+  function nameOfMidi(m) { var oct = Math.floor(m / 12) - 1; return CHROMA[((m % 12) + 12) % 12] + marks(oct); }
+  function fingerText(name) {
+    var k = NOTES[name].keys; if (!k.length) return 'Alles offen – kein Finger drückt!';
+    return k.map(function (x) { return KEYWORD[x]; }).join(', ');
+  }
+  // Position im Notensystem: 0 = unterste Linie (e'), 1 = erster Zwischenraum (f') …
+  function staffStep(name) {
+    var m = /^(fis|[a-h])('*)$/.exec(name); if (!m) return 0;
+    var li = { c: 0, d: 1, e: 2, f: 3, fis: 3, g: 4, a: 5, h: 6, b: 6 }[m[1]];
+    var oct = 3 + m[2].length;
+    return oct * 7 + li - (4 * 7 + 2);
+  }
+  function accidental(name) { return /^b/.test(name) ? 'flat' : (/^fis/.test(name) ? 'sharp' : ''); }
+  function concertFreq(name, a4) { return (a4 || 440) * Math.pow(2, (NOTES[name].midi - TRANSPOSE - 69) / 12); }
+  function analyzeFreq(f, a4) {
+    var m = 69 + 12 * Math.log(f / (a4 || 440)) / Math.LN2 + TRANSPOSE, n = Math.round(m);
+    return { midi: n, cents: (m - n) * 100, name: nameOfMidi(n) };
+  }
+
+  /* ---------- Tonhöhenerkennung (YIN, de Cheveigné & Kawahara 2002) ---------- */
+  function yin(buf, sr, fmin, fmax) {
+    fmin = fmin || 150; fmax = fmax || 900;
+    var x = buf, rate = sr;
+    if (sr > 30000) { // auf halbe Abtastrate verkleinern: 4x schneller, für 150-900 Hz genau genug
+      x = new Float32Array(buf.length >> 1);
+      for (var j = 0; j < x.length; j++) x[j] = (buf[2 * j] + buf[2 * j + 1]) * 0.5;
+      rate = sr / 2;
+    }
+    var W = x.length >> 1, tMin = Math.max(2, Math.floor(rate / fmax)), tMax = Math.min(W - 2, Math.ceil(rate / fmin));
+    var d = new Float32Array(tMax + 2), tau, i, s, v;
+    for (tau = 1; tau <= tMax + 1; tau++) { s = 0; for (i = 0; i < W; i++) { v = x[i] - x[i + tau]; s += v * v; } d[tau] = s; }
+    var run = 0; d[0] = 1;
+    for (tau = 1; tau <= tMax + 1; tau++) { run += d[tau]; d[tau] = run > 0 ? d[tau] * tau / run : 1; }
+    var best = -1;
+    for (tau = tMin; tau <= tMax; tau++) {
+      if (d[tau] < 0.15) { while (tau + 1 <= tMax && d[tau + 1] < d[tau]) tau++; best = tau; break; }
+    }
+    if (best < 0) {
+      var mi = tMin; for (tau = tMin; tau <= tMax; tau++) if (d[tau] < d[mi]) mi = tau;
+      if (d[mi] < 0.3) best = mi; else return null;
+    }
+    var x0 = d[best - 1], x1 = d[best], x2 = d[best + 1], den = x0 + x2 - 2 * x1, t = best;
+    if (den !== 0) t = best + (x0 - x2) / (2 * den);
+    return { f: rate / t, clarity: 1 - x1 };
+  }
+  function rms(buf) { var s = 0; for (var i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); }
+
+  /* ---------- Melodien: "e'4 d'4 c'2 | r4 …"  (1 ganze, 2 halbe, 4 Viertel, 8 Achtel, Punkt = punktiert, r = Pause) ---------- */
+  function parseMelody(str) {
+    var out = [], bar = 0;
+    str.trim().split(/\s+/).forEach(function (tok) {
+      if (tok === '|') { bar++; return; }
+      var m = /^(r|fis|[a-h])('{0,2})(1|2|4|8)(\.?)$/.exec(tok);
+      if (!m) throw new Error('Unbekannte Note: ' + tok);
+      var beats = { 1: 4, 2: 2, 4: 1, 8: 0.5 }[m[3]] * (m[4] ? 1.5 : 1);
+      out.push({ rest: m[1] === 'r', name: m[1] === 'r' ? null : m[1] + m[2], dur: +m[3], dot: !!m[4], beats: beats, bar: bar });
+    });
+    return out;
+  }
+  function barBeats(notes) { var b = []; notes.forEach(function (n) { b[n.bar] = (b[n.bar] || 0) + n.beats; }); return b; }
+
+  /* ---------- Schwierigkeit je Insel (fair: steigt mit dem Können, siehe docs/KONZEPT.md Abschnitt 6) ---------- */
+  var BANDS = [
+    { upTo: 3,  tol: 50, hold: 0.25, longSec: 4,  th: [0.50, 0.70, 0.85] },
+    { upTo: 7,  tol: 42, hold: 0.30, longSec: 6,  th: [0.60, 0.78, 0.90] },
+    { upTo: 12, tol: 35, hold: 0.35, longSec: 8,  th: [0.65, 0.82, 0.93] },
+    { upTo: 20, tol: 28, hold: 0.40, longSec: 10, th: [0.70, 0.86, 0.95] }
+  ];
+  function diff(island, tolAdj) {
+    var b = BANDS[BANDS.length - 1];
+    for (var i = 0; i < BANDS.length; i++) if (island <= BANDS[i].upTo) { b = BANDS[i]; break; }
+    return { tol: Math.max(15, Math.min(50, b.tol + (tolAdj || 0))), hold: b.hold, longSec: b.longSec, th: b.th.slice() };
+  }
+  function starsFor(score, island) { var th = diff(island).th; return score >= th[2] ? 3 : score >= th[1] ? 2 : score >= th[0] ? 1 : 0; }
+  // Auszahlung: neue Bestwert-Sterne, plus 1 Bonus-Stern für 3 Sterne bei Wiederholung (höchstens 2x pro Tag und Station).
+  // current = false: Station liegt weit zurück (nicht aktuelle/vorige Insel, keine Hausaufgabe) -> kein Wiederholungs-Bonus.
+  // So lohnt Üben immer (Fleiß-Sterne für die Zeit), das Abgrasen einer leichten alten Übung aber nicht.
+  function payout(earned, bestBefore, repeatsToday, current) {
+    var p = Math.max(0, earned - (bestBefore || 0));
+    if (p === 0 && earned === 3 && (repeatsToday || 0) < 2 && current !== false) p = 1;
+    return p;
+  }
+  // Bonus nur für aktuelle Übungen: Insel = höchste offene oder die davor, oder als Hausaufgabe markiert
+  function isCurrent(islandN, unlocked, playable, isHomework) {
+    var top = Math.min(unlocked, playable);
+    return !!isHomework || islandN >= top - 1;
+  }
+  // Hauptaufgaben (main: true) einer Insel; sind alle mit mindestens 1 Stern geschafft, öffnet sich die nächste Insel
+  function mainStations(island) { return island.st.filter(function (s) { return s.main; }); }
+  function islandPassed(island, bestOf) { var m = mainStations(island); return m.length > 0 && m.every(function (s) { return (bestOf(s.id) || 0) >= 1; }); }
+
+  /* ---------- Inseln (Reihenfolge wie Lektion 1-20 des Hefts; Inhalte selbst erstellt) ---------- */
+  // src: 'eigen' = eigene Komposition, 'trad' = gemeinfreies Volkslied (eigene Fassung)
+  var ISLANDS = [
+    { n: 1, name: 'Luftballon-Insel', icon: '🎈', topic: 'Klarinette aufbauen und atmen', notes: [], st: [
+      { id: 'L1-teile', type: 'quiz', kind: 'parts', title: 'Teile der Klarinette' },
+      { id: 'L1-atem', main: true, type: 'breath', title: 'Bauch-Atmung', rounds: 3 },
+      { id: 'L1-ton', main: true, type: 'blow', title: 'Mein erster Ton', sec: 3 }
+    ] },
+    { n: 2, name: 'Klappenwald', icon: '🌳', topic: 'Finger und Zunge', notes: ["e'"], st: [
+      { id: 'L2-e', main: true, type: 'learn', note: "e'", title: "Der Ton e'" },
+      { id: 'L2-lang', type: 'long', notes: ["e'"], title: 'Langer Ton e\'' },
+      { id: 'L2-zunge', main: true, type: 'tongue', note: "e'", count: 6, title: 'Anstoßen mit „D“' }
+    ] },
+    { n: 3, name: 'Notenstrand', icon: '🏖️', topic: "Noten lesen: e', d', c'", notes: ["e'", "d'", "c'"], st: [
+      { id: 'L3-namen', type: 'quiz', kind: 'names', title: 'Notennamen' },
+      { id: 'L3-werte', type: 'quiz', kind: 'values', title: 'Notenwerte' },
+      { id: 'L3-d', main: true, type: 'learn', note: "d'", title: "Der Ton d'" },
+      { id: 'L3-c', main: true, type: 'learn', note: "c'", title: "Der Ton c'" },
+      { id: 'L3-lang', type: 'long', notes: ["e'", "d'", "c'"], title: 'Lange Töne' },
+      { id: 'L3-zunge', type: 'tongue', note: "d'", count: 6, title: "Anstoßen d'" },
+      { id: 'L3-folge', main: true, type: 'seq', title: 'Treppchen', mel: "e'4 d'4 c'4 r4 | c'4 d'4 e'4 r4 | e'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L3-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'"], len: 1, rounds: 5 },
+      { id: 'L3-lied', type: 'song', title: 'Flauschis erstes Lied', src: 'eigen', bpm: 66, mel: "e'4 e'4 d'4 d'4 | c'1 | d'4 d'4 e'4 e'4 | d'1 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 e'4 d'4 d'4 | c'1" },
+      { id: 'L3-bronze', type: 'song', medal: 1, title: 'Muschelsuche', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 r4 | e'4 d'4 c'4 r4 | c'4 e'4 d'4 r4 | d'4 e'4 c'4 r4 | e'1 | d'1 | c'1" }
+    ] },
+    { n: 4, name: 'Hügelhoch', icon: '⛰️', topic: "Neue Töne h, f', g'", notes: ["h", "f'", "g'"], st: [
+      { id: 'L4-h', main: true, type: 'learn', note: 'h', title: 'Der Ton h' },
+      { id: 'L4-f', main: true, type: 'learn', note: "f'", title: "Der Ton f'" },
+      { id: 'L4-g', main: true, type: 'learn', note: "g'", title: "Der Ton g'" },
+      { id: 'L4-griffe', type: 'quiz', kind: 'fing', title: 'Welcher Griff?' },
+      { id: 'L4-lang', type: 'long', notes: ['h', "f'", "g'"], title: 'Lange Töne' },
+      { id: 'L4-folge1', type: 'seq', title: 'Den Hügel hinauf', mel: "c'4 d'4 e'4 f'4 | g'1 | g'4 f'4 e'4 d'4 | c'1" },
+      { id: 'L4-folge2', type: 'seq', title: 'Kleiner Schritt nach unten', mel: "h4 c'4 d'4 r4 | d'4 c'4 h4 r4 | h4 d'4 c'4 h4 | c'1" },
+      { id: 'L4-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L4-lied', type: 'song', title: 'Merrily We Roll Along', src: 'trad', bpm: 72, mel: "e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 d'4 d'4 r4 | e'4 g'4 g'4 r4 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 e'4 | d'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L4-bronze', type: 'song', medal: 1, title: 'Gipfelfahne', src: 'eigen', bpm: 72, mel: "c'4 e'4 g'4 r4 | g'4 f'4 e'4 r4 | e'4 d'4 c'4 h4 | c'1 | g'4 f'4 e'4 d'4 | e'4 f'4 g'4 r4 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L4-silber', type: 'song', medal: 2, title: 'Bergziege', src: 'eigen', bpm: 80, mel: "g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | f'4 d'4 e'4 c'4 | d'4 h4 c'4 e'4 | d'4 f'4 e'4 d'4 | c'1" }
+    ] },
+    { n: 5, name: 'Zauberwald', icon: '🪄', topic: 'Lange Töne, Zunge vor, Kinn ruhig', notes: [], st: [
+      { id: 'L5-leiter', main: true, type: 'long', notes: ["c'", "d'", "e'", "f'", "g'"], title: 'Lange-Töne-Leiter' },
+      { id: 'L5-zunge', main: true, type: 'tongue', note: "c'", count: 8, title: 'Zunge vor, Kinn ruhig' },
+      { id: 'L5-folge', main: true, type: 'seq', title: 'Zickzack', mel: "c'4 e'4 d'4 f'4 | e'4 g'4 f'4 r4 | g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'1" },
+      { id: 'L5-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L5-lied1', type: 'song', title: 'Zauberspruch', src: 'eigen', bpm: 69, mel: "e'4 c'4 e'4 c'4 | d'1 | e'4 e'4 c'4 r4 | d'1 | c'4 e'4 d'4 e'4 | c'4 d'4 e'4 r4 | e'4 d'4 c'4 d'4 | c'1" },
+      { id: 'L5-lied2', type: 'song', title: 'Hüpf-Lied', src: 'eigen', bpm: 76, mel: "c'4 r4 e'4 r4 | g'4 r4 e'4 r4 | f'4 f'4 d'4 d'4 | e'4 e'4 c'4 r4 | c'4 r4 e'4 r4 | g'4 r4 g'4 r4 | f'4 d'4 h4 d'4 | c'4 r4 r4 r4" },
+      { id: 'L5-bronze', type: 'song', medal: 1, title: 'Kletterpartie', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 f'4 | g'4 r4 r4 r4 | g'4 f'4 e'4 d'4 | c'4 r4 r4 r4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | g'4 e'4 f'4 d'4 | c'1" }
+    ] },
+    { n: 6, name: 'Brückenbach', icon: '🌉', topic: 'Halbe Note und halbe Pause', notes: [], st: [
+      { id: 'L6-werte', type: 'quiz', kind: 'values', title: 'Notenwerte mit Halber' },
+      { id: 'L6-folge', main: true, type: 'seq', title: 'Große Schritte', mel: "c'2 e'2 | g'2 r2 | f'2 d'2 | c'2 r2" },
+      { id: 'L6-lied1', main: true, type: 'song', title: 'Brückenlied', src: 'eigen', bpm: 76, mel: "e'4 e'4 d'2 | c'4 d'4 e'2 | g'4 g'4 f'2 | e'4 d'4 c'2 | e'2 g'2 | f'2 d'2 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L6-lied2', type: 'song', title: 'Hänschen klein', src: 'trad', bpm: 84, mel: "g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 d'4 e'4 f'4 | g'4 g'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1 | d'4 d'4 d'4 d'4 | d'4 e'4 f'2 | e'4 e'4 e'4 e'4 | e'4 f'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1" },
+      { id: 'L6-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 3, rounds: 4 },
+      { id: 'L6-bronze', type: 'song', medal: 1, title: 'Bachlauf', src: 'eigen', bpm: 76, mel: "g'2 e'2 | f'4 e'4 d'2 | e'2 c'2 | d'4 e'4 c'2 | g'2 g'2 | f'4 f'4 e'2 | d'4 e'4 f'4 d'4 | c'1" },
+      { id: 'L6-silber', type: 'song', medal: 2, title: 'Steinchenhüpfen', src: 'eigen', bpm: 84, mel: "c'4 e'4 g'2 | f'4 d'4 h2 | c'4 d'4 e'4 f'4 | g'2 r2 | g'4 e'4 c'2 | f'4 d'4 h2 | c'4 e'4 d'4 h4 | c'1" }
+    ] },
+    { n: 7, name: 'Walzer-Wiese', icon: '🎠', topic: '3/4-Takt, punktierte Halbe', notes: [], st: [] },
+    { n: 8, name: 'Atemberg', icon: '🏔️', topic: 'Atemzeichen, Taktnummern', notes: [], st: [] },
+    { n: 9, name: 'Puppen-Bucht', icon: '🎭', topic: "Neue Töne a und a'", notes: ['a', "a'"], st: [] },
+    { n: 10, name: 'Kuckucks-Tal', icon: '🐦', topic: 'Volkslieder im Dreier- und Vierertakt', notes: [], st: [] },
+    { n: 11, name: 'Achtel-Atoll', icon: '🦋', topic: 'Achtelnoten, Duett', notes: [], st: [] },
+    { n: 12, name: 'Sprung-Schlucht', icon: '🐇', topic: 'Achtel auf der 3, Sprünge', notes: [], st: [] },
+    { n: 13, name: 'Turmstadt', icon: '🏰', topic: 'Klammer 1 und 2, laut und leise', notes: [], st: [] },
+    { n: 14, name: 'Zirkus-Zelt', icon: '🎪', topic: 'Achtel auf der 1, Wiederholung', notes: [], st: [] },
+    { n: 15, name: 'Rumba-Riff', icon: '🪇', topic: "Achtel auf der 4, Faulenzer, tiefes b", notes: ['b'], st: [] },
+    { n: 16, name: 'Tango-Turm', icon: '💃', topic: "Vier Achtel, b'", notes: ["b'"], st: [] },
+    { n: 17, name: 'Zauberer-Zinne', icon: '🧙', topic: "Vorzeichen ♯ ♭ ♮, fis'", notes: ["fis'"], st: [] },
+    { n: 18, name: 'Brunnen-Burg', icon: '⛲', topic: "Auftakt, Überblasen: e''", notes: ["e''"], st: [] },
+    { n: 19, name: 'Hippo-Hafen', icon: '🦛', topic: 'Tiefster Ton g', notes: ['g'], st: [] },
+    { n: 20, name: 'Echo-Gipfel', icon: '📣', topic: "forte und piano, d''", notes: ["d''"], st: [] }
+  ];
+  // Tagesmissionen: 3 Aufgaben pro Tag, gleiche Auswahl für den ganzen Tag (Zufall aus dem Datum).
+  // 1. Hausaufgabe oder Hauptaufgabe der aktuellen Insel, 2. schwächster bekannter Ton 3-mal richtig, 3. andere Übungsart der aktuellen/vorigen Insel.
+  // o = { date, unlocked, playable, bestOf(id), nt (Ton-Statistik), hw (IDs) }. Rückgabe: [{k:'st', id} | {k:'note', note, need}]
+  function dayMissions(o) {
+    var seed = 0, i; for (i = 0; i < o.date.length; i++) seed = (seed * 31 + o.date.charCodeAt(i)) % 2147483647;
+    var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    var top = Math.max(1, Math.min(o.unlocked, o.playable)), I = ISLANDS[top - 1], out = [], used = [];
+    var take = function (st) { out.push({ k: 'st', id: st.id }); used.push(st.id); };
+    var hw = (o.hw || []).filter(function (id) { return station(id); });
+    var mainOpen = mainStations(I).filter(function (s) { return (o.bestOf(s.id) || 0) < 2; });
+    if (hw.length) take(station(hw[Math.floor(rnd() * hw.length)]).st);
+    else take(mainOpen.length ? mainOpen[0] : I.st[Math.floor(rnd() * I.st.length)]);
+    var known = knownNotes(top).filter(function (n) { return NOTES[n]; });
+    if (known.length) {
+      var rate = function (n) { var x = o.nt && o.nt[n]; return x && x.n ? x.ok / x.n : 0.5; };
+      var low = known.slice().sort(function (a, b) { return rate(a) - rate(b) || known.indexOf(b) - known.indexOf(a); })[0];
+      out.push({ k: 'note', note: low, need: 3 });
+    }
+    var firstType = station(out[0].id).st.type, pool = [];
+    for (i = Math.max(1, top - 1); i <= top; i++) ISLANDS[i - 1].st.forEach(function (s) { if (s.type !== 'quiz' && used.indexOf(s.id) < 0) pool.push(s); });
+    var other = pool.filter(function (s) { return s.type !== firstType; });
+    while (out.length < 3 && (other.length || pool.length)) {
+      var src = other.length ? other : pool, st = src.splice(Math.floor(rnd() * src.length), 1)[0];
+      other = other.filter(function (s) { return s.id !== st.id; }); pool = pool.filter(function (s) { return s.id !== st.id; });
+      take(st);
+    }
+    return out;
+  }
+  function knownNotes(island) { var s = []; ISLANDS.forEach(function (i) { if (i.n <= island) i.notes.forEach(function (x) { if (s.indexOf(x) < 0) s.push(x); }); }); return s; }
+  function station(id) { for (var i = 0; i < ISLANDS.length; i++) for (var j = 0; j < ISLANDS[i].st.length; j++) if (ISLANDS[i].st[j].id === id) return { isl: ISLANDS[i], st: ISLANDS[i].st[j], idx: j }; return null; }
+  // Titel eigener Verlagsstücke, die NICHT verwendet werden dürfen (Prüfung in tests/test_logic.mjs)
+  var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
+
+  /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
+  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
+  // Version 4 (v0.3.0): neues Spiel (spiel.html) mit Feld game, Eltern-Einstellung set.help (Hilfe-Stufe der Klang-Formeln)
+  var SAVE_VERSION = 4;
+  // Neuer leerer Stand. Gemeinsam für App und Spiel, damit beide dieselben Felder kennen.
+  // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
+  // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
+  // set.help: 'auto' = Spiel wählt die Hilfe-Stufe der Klang-Formeln nach Können, 1/2/3 = fest (mit Namen / nur Noten / nur hören)
+  // mis: Tagesmissionen { day, list: [{k, id|note, need, n, done}], chest }
+  // hop: altes Hüpfspiel (bleibt für die Einzeldatei), game: neues Spiel
+  function freshGame() {
+    // intro: Vorspann gesehen · spells: { id: { lv, ok: [n1, n2, n3], gold, day } } gelernte Klang-Formeln
+    // coins: Noten-Münzen · stickers: Sticker-IDs · lv/gold/boss/medals/scenes/rec: Abenteuer und Klang-Reise (ab v0.3.1)
+    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {} };
+  }
+  function freshSave() {
+    return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
+      set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
+      game: freshGame() };
+  }
+  // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
+  // Rückgabe null, wenn obj kein Spielstand dieser App ist.
+  function migrateSave(obj, fresh) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    if (obj.app === 'flauschi-klarinette' && obj.state) obj = obj.state; // Datei aus "Spielstand sichern"
+    if (typeof obj.stars !== 'number' || typeof obj.st !== 'object') return null;
+    var oldV = typeof obj.v === 'number' ? obj.v : 1;
+    var out = fresh, k;
+    for (k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      var a = obj[k], b = fresh[k];
+      if (b && typeof b === 'object' && !Array.isArray(b) && a && typeof a === 'object' && !Array.isArray(a)) { for (var j in a) b[j] = a[j]; }
+      else if (b === undefined || b === null || typeof a === typeof b || (Array.isArray(b) && Array.isArray(a))) out[k] = a;
+    }
+    out.stars = Math.max(0, Math.floor(+out.stars || 0)); out.tix = Math.max(0, Math.floor(+out.tix || 0));
+    out.unlocked = Math.max(1, Math.min(20, Math.floor(+out.unlocked || 1)));
+    if (typeof out.name !== 'string') out.name = ''; out.name = out.name.slice(0, 20);
+    // bis v2 war die Wochen-Datei überall fest "an" (Voreinstellung); ab v3 "automatisch" = auf Tablets aus
+    if (oldV < 3 && out.set && out.set.autoFile === true) out.set.autoFile = null;
+    // v4: Spiel-Feld vollständig machen; Dank für geschaffte Welten im alten Hüpfspiel (je Welt 20 Noten-Münzen, Sticker "Alter Hase")
+    var g = out.game, fg = freshGame();
+    if (!g || typeof g !== 'object' || Array.isArray(g)) g = out.game = fg;
+    g.coins = Math.max(0, Math.floor(+g.coins || 0));
+    for (k in fg) if (g[k] === undefined || g[k] === null || typeof g[k] !== typeof fg[k] || Array.isArray(g[k]) !== Array.isArray(fg[k])) g[k] = fg[k];
+    if (oldV < 4) {
+      var worlds = 0, done = out.hop && Array.isArray(out.hop.done) ? out.hop.done : [];
+      for (var w = 0; w < 4; w++) if (done.indexOf(w * 5 + 4) >= 0) worlds++;
+      if (worlds) { g.coins += worlds * 20; if (g.stickers.indexOf('althase') < 0) g.stickers.push('althase'); }
+    }
+    if (out.set && [1, 2, 3, 'auto'].indexOf(out.set.help) < 0) out.set.help = 'auto';
+    out.v = SAVE_VERSION;
+    return out;
+  }
+  // "Lina" -> "Linas", "Rex" -> "Rex'"
+  function genitive(n) { return /[sßxz]$/i.test(n) ? n + '’' : n + 's'; }
+
+  /* ---------- Gemeinsam für App und Spiel: Tonverfolgung, Übungszeit, Missionen, Sterne ---------- */
+  // Tonverfolgung: aus einer Messung { rms, pitch: {f, clarity} | null } wird ein Bild (frame) für die Übungen.
+  // T = { floor, f3 } (Grundrauschen, letzte 3 Tonhöhen für den Median). mutedUntil: solange spielt die App selbst vor.
+  function pitchTracker() { return { floor: 0.003, f3: [] }; }
+  function pitchFrame(T, m, t, dt, mutedUntil, a4) {
+    var thr = Math.max(0.006, T.floor * 3);
+    var voiced = !!(m.pitch && m.pitch.clarity > 0.8 && m.rms > thr && t > mutedUntil);
+    if (!voiced && m.rms < T.floor * 2) T.floor += (m.rms - T.floor) * 0.05; else if (m.rms < T.floor) T.floor = m.rms;
+    T.floor = Math.max(0.0005, Math.min(0.02, T.floor));
+    var a = null;
+    if (voiced) { T.f3.push(m.pitch.f); if (T.f3.length > 3) T.f3.shift(); var s = T.f3.slice().sort(function (x, y) { return x - y; }); a = analyzeFreq(s[s.length >> 1], a4); } else T.f3 = [];
+    return { t: t, dt: dt, rms: m.rms, thr: thr, loud: m.rms > thr && t > mutedUntil, voiced: voiced, a: a };
+  }
+  function dayRec(S, date) { return S.days[date] || (S.days[date] = { sec: 0, ex: 0, stars: 0, fs: 0, games: 0 }); }
+  // Echte Spielzeit (nur solange ein Ton klingt). Rückgabe: { goal: Tagesziel gerade erreicht, fleiss: Fleiß-Stern (je 5 min) }
+  function practiceTick(S, dt, date) {
+    var d = dayRec(S, date), before = Math.floor(d.sec / 300), g = S.set.goal * 60, wasBelow = d.sec < g, r = { goal: false, fleiss: false };
+    d.sec += dt;
+    if (wasBelow && d.sec >= g) r.goal = true;
+    if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; r.fleiss = true; }
+    return r;
+  }
+  // Tagesmissionen im Spielstand: 3 Aufgaben pro Tag (Auswahl in dayMissions). Jede gibt +1 Stern, alle drei die Schatztruhe (+3 Sterne, +1 Ticket).
+  function stBest(S, id) { return S.st[id] ? S.st[id].best : 0; }
+  function missionsFor(S, date, playable) {
+    if (!S.mis || S.mis.day !== date || !Array.isArray(S.mis.list)) {
+      var list = dayMissions({ date: date, unlocked: S.unlocked, playable: playable, bestOf: function (id) { return stBest(S, id); }, nt: S.nt, hw: S.hw && S.hw.ids });
+      S.mis = { day: date, list: list.map(function (m) { m.n = 0; m.done = false; m.paid = false; return m; }), chest: false };
+    }
+    return S.mis;
+  }
+  function misLabel(m) { return m.k === 'note' ? 'Ton ' + m.note + ' ' + m.need + '× richtig' : (station(m.id) ? station(m.id).st.title : '?'); }
+  // Ton-Mission zählt jeden richtig gespielten Ton
+  function misNote(S, name, date) {
+    if (!S.mis || S.mis.day !== date) return;
+    S.mis.list.forEach(function (m) { if (m.k === 'note' && !m.done && m.note === name) { m.n++; if (m.n >= m.need) m.done = true; } });
+  }
+  // Nach einer Übung: Stationsmission abhaken, fertige Missionen auszahlen, Truhe
+  function misProgress(S, id, earned, date, playable) {
+    var M = missionsFor(S, date, playable), out = { pay: 0, tix: 0, msg: [] };
+    M.list.forEach(function (m) {
+      if (!m.done && m.k === 'st' && m.id === id && earned >= 1) m.done = true;
+      if (m.done && !m.paid) { m.paid = true; out.pay++; out.msg.push('🎯 Mission geschafft: ' + misLabel(m) + ' (+1 ⭐)'); }
+    });
+    if (!M.chest && M.list.length && M.list.every(function (m) { return m.done; })) { M.chest = true; out.pay += 3; out.tix += 1; out.msg.push('🎁 Schatztruhe: alle Missionen geschafft! +3 ⭐ +1 🎟️'); }
+    return out;
+  }
+  // Ton-Statistik für den Ton-Bericht der Eltern (und die Ton-Mission)
+  function noteStat(S, name, okHit, cents, date) {
+    var n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++;
+    if (okHit) { n.ok++; misNote(S, name, date); }
+    if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; }
+  }
+  // Sterne-Abrechnung am Ende einer Übung (auch Ton-Hüpfer und Klang-Formeln im Spiel).
+  // o = { id, isl, earned, date, playable, medal }. Ändert S. Rückgabe { pay, tix, medal, extra: [Texte], current }
+  // Regeln: neue Bestwert-Sterne (payout), Start-Bonus für die ersten 3 Übungen, Abwechslungs-Stern, Tagesmissionen, Ticket ab 2 Sternen.
+  function award(S, o) {
+    var s = S.st[o.id] || (S.st[o.id] = { best: 0, n: 0, last: '', rep: 0, medal: 0 });
+    var bestBefore = s.best, rep = s.last === o.date ? s.rep : 0;
+    var hwIds = S.hw && S.hw.ids ? S.hw.ids : [], current = isCurrent(o.isl, S.unlocked, o.playable, hwIds.indexOf(o.id) >= 0);
+    var pay = payout(o.earned, bestBefore, rep, current), extra = [];
+    if (S.bonus < 3 && o.earned > 0) { pay += 1; S.bonus++; }
+    var newToday = s.last !== o.date;
+    s.best = Math.max(s.best, o.earned); s.n++; s.rep = rep + 1; s.last = o.date;
+    var medal = 0;
+    if (o.medal && o.earned >= 2 && (s.medal || 0) < o.medal) { s.medal = o.medal; medal = o.medal; }
+    var d = dayRec(S, o.date); d.ex++;
+    // Abwechslung: die dritte verschiedene Übung des Tages (mit mindestens 1 Stern) gibt einmal +1 Stern
+    if (o.earned > 0 && newToday && !d.vary && Object.keys(S.st).filter(function (id) { return S.st[id].last === o.date && S.st[id].best > 0; }).length >= 3) { d.vary = 1; pay++; extra.push('🌈 Abwechslungs-Stern: 3 verschiedene Übungen heute!'); }
+    var mm = misProgress(S, o.id, o.earned, o.date, o.playable); pay += mm.pay; extra.push.apply(extra, mm.msg);
+    d.stars += pay; S.stars += pay;
+    var tix = (o.earned >= 2 ? 1 : 0) + mm.tix; S.tix += tix;
+    return { pay: pay, tix: tix, medal: medal, extra: extra, current: current };
+  }
+
+  var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
+    missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
+    concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
+    knownNotes: knownNotes, station: station };
+  root.KL = KL;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Klarinetten-Abenteuer · Spiel-Logik ohne DOM (spiel.html). Wird von tests/test_logic.mjs geprüft.
+   Braucht KL (logic.js). Stellt KLG bereit: Klang-Formeln, Ton-Ereignisse, Formel-Erkennung (vorwärts/rückwärts),
+   Hilfe-Stufen, Ton-Hüpfer-Strecken und -Bewertung, Vorspann-Texte. Siehe docs/SPIELKONZEPT.md Abschnitte 7.2 und 7.3. */
+(function (root) {
+  'use strict';
+  var KL = root.KL;
+
+  /* ---------- Klang-Formeln (eigene Kompositionen, src: 'eigen') ---------- */
+  // notes: notierte Töne. long: Sekunden, die der letzte Ton mindestens klingen muss (lange Töne).
+  // rev: Wirkung rückwärts (null = Formel aus einem Ton, rückwärts gleich). isl: ab dieser Insel lernbar.
+  // from: Ding in der Welt, das die Formel vorspielt.
+  var SPELLS = [
+    { id: 'leuchten', name: 'Leuchten', icon: '✨', isl: 2, notes: ["e'"], long: 2, rev: null, src: 'eigen',
+      from: 'eine summende Laterne', what: 'Lässt dunkle Dinge leuchten. Ein langer Ton: tief in den Bauch atmen und ruhig halten.' },
+    { id: 'wachsen', name: 'Wachsen', icon: '🌱', isl: 3, notes: ["c'", "d'", "e'"], long: 0, rev: { name: 'Schrumpfen', icon: '🍂' }, src: 'eigen',
+      from: 'ein kleines Kleeblatt', what: 'Lässt Pflanzen und Brücken wachsen. Rückwärts gespielt schrumpft alles wieder.' },
+    { id: 'oeffnen', name: 'Öffnen', icon: '🔓', isl: 4, notes: ['h', "e'", "g'", "f'"], long: 0, rev: { name: 'Schließen', icon: '🔒' }, src: 'eigen',
+      from: 'eine pfeifende Muschel', what: 'Öffnet Türen, Truhen und Muscheln. Rückwärts gespielt geht alles wieder zu.' }
+  ];
+  function spell(id) { for (var i = 0; i < SPELLS.length; i++) if (SPELLS[i].id === id) return SPELLS[i]; return null; }
+  // Töne in Spielrichtung: dir 1 = vorwärts, -1 = rückwärts
+  function spellNotes(sp, dir) { return dir === -1 ? sp.notes.slice().reverse() : sp.notes.slice(); }
+  // Für Notenbild und Vorspielen: Viertel, langer Ton als ganze Note
+  function spellMelody(sp, dir) { return spellNotes(sp, dir).map(function (n, i, a) { return { name: n, rest: false, dur: sp.long && i === a.length - 1 ? 1 : 4, beats: sp.long && i === a.length - 1 ? 4 : 1, bar: 0, dot: false }; }); }
+  function spellsOpen(unlocked) { return SPELLS.filter(function (s) { return s.isl <= unlocked; }); }
+
+  /* ---------- Hilfe-Stufen: 1 = mit Namen und Griff, 2 = nur Noten, 3 = nur hören ---------- */
+  // rec = { ok: [n1, n2, n3] } Erfolge je Stufe. setting = 'auto' oder 1/2/3 (Elternbereich).
+  // Automatisch: nach 2 Erfolgen auf einer Stufe kommt die nächste.
+  function helpLevel(rec, setting) {
+    if (setting === 1 || setting === 2 || setting === 3) return setting;
+    var ok = rec && rec.ok ? rec.ok : [0, 0, 0];
+    return (ok[0] || 0) >= 2 ? ((ok[1] || 0) >= 2 ? 3 : 2) : 1;
+  }
+  // Erfolg eintragen. Rückgabe: { first: zum ersten Mal gelernt, gold: Gold-Siegel neu (Stufe 3 geschafft), up: neue Hilfe-Stufe }
+  function spellSuccess(game, id, lv, date, setting) {
+    var r = game.spells[id], first = !r;
+    if (!r) r = game.spells[id] = { lv: 1, ok: [0, 0, 0], gold: false, day: date };
+    var before = helpLevel(r, 'auto');
+    r.ok[lv - 1] = (r.ok[lv - 1] || 0) + 1; r.day = date;
+    var gold = lv === 3 && !r.gold; if (gold) r.gold = true;
+    var after = helpLevel(r, 'auto'); r.lv = after;
+    return { first: first, gold: gold, up: setting === 'auto' && after > before ? after : 0 };
+  }
+
+  /* ---------- Ton-Ereignisse: aus Bildern (frames) der Tonverfolgung werden einzelne Töne ---------- */
+  // Ein Ton zählt, sobald er D.hold Sekunden sauber (innerhalb D.tol Cent) klingt. Er wächst, solange er klingt (dur).
+  // Derselbe Ton noch einmal braucht eine kurze Pause (Stille oder anderer Ton) dazwischen.
+  // Ein falscher Ton (außerhalb der Toleranz, aber erkannt) zählt auch als Ereignis, damit er benannt werden kann.
+  function noteListener(D) {
+    return {
+      cur: null, hold: 0, quiet: 0, ev: null, events: [],
+      step: function (fr) {
+        var name = fr.voiced && fr.a ? fr.a.name : null, clean = !!(name && Math.abs(fr.a.cents) <= D.tol);
+        if (name) {
+          this.quiet = 0;
+          if (name === this.cur) this.hold += fr.dt; else { this.cur = name; this.hold = fr.dt; this.ev = null; }
+          if (!this.ev && this.hold >= D.hold) {
+            this.ev = { name: name, dur: this.hold, clean: clean, cs: clean ? [fr.a.cents] : [] };
+            this.events.push(this.ev); if (this.events.length > 24) this.events.shift();
+            return this.ev;
+          }
+          if (this.ev) { this.ev.dur = this.hold; if (clean) { this.ev.clean = true; this.ev.cs.push(fr.a.cents); } }
+        } else {
+          this.quiet += fr.dt;
+          if (this.quiet > 0.12) { this.cur = null; this.hold = 0; this.ev = null; }
+        }
+        return null;
+      },
+      reset: function () { this.cur = null; this.hold = 0; this.quiet = 0; this.ev = null; this.events = []; }
+    };
+  }
+
+  /* ---------- Formel spielen, angeleitet (Zauberbuch): wartet auf jeden Ton, wie die Tonfolge-Übung ---------- */
+  // Rückgabe von update(): null | { ok: Index } | { wrong: gespielter Ton, want } | { short: Ton } (langer Ton zu kurz) | { done: true }
+  function spellRun(sp, dir) {
+    var notes = spellNotes(sp, dir);
+    return {
+      notes: notes, k: 0, miss: 0, misses: notes.map(function () { return 0; }), done: false, seen: null,
+      update: function (L) {
+        if (this.done) return null;
+        var e = L.ev, want = notes[this.k], need = sp.long && this.k === notes.length - 1 ? sp.long : 0;
+        // langer Ton zu früh abgesetzt
+        if (!e && this.seen && !this.seen.used && this.seen.name === want && need) { var s = this.seen; this.seen = null; return { short: s.name, dur: s.dur, need: need }; }
+        if (!e) { this.seen = null; return null; }
+        this.seen = e;
+        if (e.used) return null;
+        if (e.name === want && e.clean) {
+          if (e.dur >= need) { e.used = true; this.k++; if (this.k >= notes.length) { this.done = true; return { done: true, ok: this.k - 1 }; } return { ok: this.k - 1 }; }
+          return null;
+        }
+        if (!e.flagged && (e.name !== want || e.dur >= 0.6)) { e.flagged = true; this.miss++; this.misses[this.k]++; return { wrong: e.name, want: want, cents: e.name === want ? 0 : null }; }
+        return null;
+      },
+      // Treffer-Anteil für die Sterne: jeder Ton 1, nach einem Fehler 0,6, nach zweien 0,4, danach 0
+      score: function () { var t = 0; this.misses.forEach(function (m) { t += [1, 0.6, 0.4][m] || 0; }); return t / notes.length; }
+    };
+  }
+
+  /* ---------- Formel frei erkennen (Klang-Reise, Formel-Stellen): die letzten Töne vergleichen ---------- */
+  // Rückgabe { sp, dir } oder null. Rückwärts nur bei Formeln mit Gegenteil (rev).
+  function matchSpell(events, list) {
+    for (var i = 0; i < list.length; i++) {
+      var sp = list[i], n = sp.notes.length; if (events.length < n) continue;
+      var last = events.slice(-n);
+      if (!last.every(function (e) { return e.clean; })) continue;
+      var names = last.map(function (e) { return e.name; }).join(' ');
+      if (names === sp.notes.join(' ') && (!sp.long || last[n - 1].dur >= sp.long)) return { sp: sp, dir: 1 };
+      if (sp.rev && names === spellNotes(sp, -1).join(' ')) return { sp: sp, dir: -1 };
+    }
+    return null;
+  }
+
+  /* ---------- Ton-Hüpfer: Strecken aus Plattformen (Ton = Höhe) ---------- */
+  // Zufall aus festem Startwert (gleiche Zahl = gleiche Strecke, Fehler nachstellbar)
+  function rng(seed) { var x = Math.abs(Math.floor(seed)) % 2147483646 + 1; return function () { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; }
+  var HOP_STAGES = [
+    { n: 1, name: 'Lange Töne', icon: '〰️', what: 'Einen Ton lange halten: Die Plattform ist eine lange Brücke.' },
+    { n: 2, name: 'Schritte', icon: '🪜', what: 'Nachbartöne nacheinander, Stufe für Stufe.' },
+    { n: 3, name: 'Sprünge', icon: '🦘', what: 'Ein Ton überspringen, z. B. c\' – e\' – g\'.' },
+    { n: 4, name: 'Lied-Pfad', icon: '🎶', what: 'Die Plattformen ergeben eine Melodie aus den Übungen.' }
+  ];
+  // Gelernte Töne bis zur Insel, tief nach hoch
+  function hopLanes(island) { return KL.knownNotes(island).filter(function (n) { return KL.NOTES[n]; }).sort(function (a, b) { return KL.NOTES[a].midi - KL.NOTES[b].midi; }); }
+  // Melodien für den Lied-Pfad: Tonfolgen und Lieder der offenen Inseln, nur Viertel und Halbe
+  function hopSongs(island) {
+    var out = [];
+    KL.ISLANDS.forEach(function (I) { if (I.n <= island) I.st.forEach(function (st) { if ((st.type === 'seq' || st.type === 'song') && st.mel) out.push({ id: st.id, title: st.title, isl: I.n, mel: st.mel, bpm: st.bpm || 72 }); }); });
+    return out;
+  }
+  function stageOpen(stage, island) {
+    var n = hopLanes(island).length;
+    return stage === 1 ? n >= 1 : stage === 2 ? n >= 2 : stage === 3 ? n >= 3 : hopSongs(island).length > 0;
+  }
+  // Strecke: { stage, island, lanes, title, plats: [{ name, t (Start in s), len (s) }], end (s) }
+  // Zwischen zwei Plattformen ist immer eine Lücke, damit Zeit zum Umgreifen bleibt.
+  function hopTrack(stage, island, seed) {
+    if (!stageOpen(stage, island)) return null;
+    var lanes = hopLanes(island), r = rng(seed || 1), plats = [], t = 2.5, title = HOP_STAGES[stage - 1].name;
+    var add = function (name, len, gap) { plats.push({ name: name, t: t, len: len }); t += len + gap; };
+    var pickI = function (n) { return Math.floor(r() * n); };
+    if (stage === 1) {
+      var prev = -1; for (var i = 0; i < 6; i++) { var k = pickI(lanes.length); if (lanes.length > 1 && k === prev) k = (k + 1) % lanes.length; prev = k; add(lanes[k], 3.2, 1.4); }
+    } else if (stage === 2) {
+      var j = pickI(lanes.length); for (var q = 0; q < 12; q++) { add(lanes[j], 1.8, 0.9); var dir = j === 0 ? 1 : j === lanes.length - 1 ? -1 : (r() < 0.5 ? -1 : 1); j += dir; }
+    } else if (stage === 3) {
+      var m = pickI(lanes.length - 2); for (var z = 0; z < 12; z++) { add(lanes[m], 1.8, 1.0); var up = m + 2 <= lanes.length - 1, dn = m - 2 >= 0; m += up && (!dn || r() < 0.5) ? 2 : -2; }
+    } else {
+      var songs = hopSongs(island), sg = songs[pickI(songs.length)], beat = 60 / Math.min(80, sg.bpm) * 1.15;
+      title = sg.title;
+      KL.parseMelody(sg.mel).forEach(function (n) {
+        var len = n.beats * beat;
+        if (n.rest) { t += len; return; }
+        add(n.name, Math.max(0.6, len - 0.35), 0.35);
+      });
+      return { stage: stage, island: island, lanes: lanes, title: title, song: sg, plats: plats, end: t + 1.5 };
+    }
+    return { stage: stage, island: island, lanes: lanes, title: title, plats: plats, end: t + 1.5 };
+  }
+  // Plattform geschafft, wenn der richtige Ton mindestens die Hälfte ihrer Länge klang (Reaktionszeit eingerechnet)
+  var HOP_NEED = 0.5;
+  function hopPlatHit(covered, len) { return covered >= len * HOP_NEED; }
+  function hopScore(plats) { if (!plats.length) return 0; var h = 0; plats.forEach(function (p) { if (hopPlatHit(p.cov || 0, p.len)) h++; }); return h / plats.length; }
+  // Stations-ID für Sterne und Bestwert (wie eine Übung): TH-<Insel>-<Stufe>
+  function hopId(island, stage) { return 'TH-' + island + '-' + stage; }
+  // Für den simulierten Spieler (Tests): welcher Ton soll zur Zeit t klingen? delay = Reaktionszeit
+  function hopWant(track, t, delay) {
+    for (var i = 0; i < track.plats.length; i++) { var p = track.plats[i]; if (t >= p.t + delay && t < p.t + p.len) return p.name; }
+    return null;
+  }
+
+  /* ---------- Vorspann (Spielkonzept Abschnitt 3) ---------- */
+  function introTexts(figure, name) {
+    return [
+      'Auf den Klang-Inseln singt alles: Bäume summen, Wellen spielen Tonleitern.',
+      'Der Misston-König mag das nicht. Seine eigene Klarinette quietscht, und alle haben gelacht. Seitdem ist er beleidigt.',
+      'Mit seinem Schief-Zepter verstimmt er die Welten. Seine Diener stehlen die Noten.',
+      '„' + figure + (name ? ' und ' + name : '') + ', nur ' + (name ? 'ihr könnt' : 'du kannst') + ' die Welten wieder stimmen!“'
+    ];
+  }
+
+  root.KLG = { SPELLS: SPELLS, spell: spell, spellNotes: spellNotes, spellMelody: spellMelody, spellsOpen: spellsOpen, helpLevel: helpLevel, spellSuccess: spellSuccess,
+    noteListener: noteListener, spellRun: spellRun, matchSpell: matchSpell, rng: rng, HOP_STAGES: HOP_STAGES, hopLanes: hopLanes, hopSongs: hopSongs, stageOpen: stageOpen,
+    hopTrack: hopTrack, HOP_NEED: HOP_NEED, hopPlatHit: hopPlatHit, hopScore: hopScore, hopId: hopId, hopWant: hopWant, introTexts: introTexts };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Klarinetten-Abenteuer · Zeichnungen für App und Spiel (alles eigene SVG, nichts aus dem Netz):
+   Figuren mit Kleidung (auch in Schichten fürs Spiel), Oehler-Griffbild, Notenzeile, Zeigerinstrument.
+   Braucht window.KL (logic.js). Stellt window.KLDRAW bereit. */
+(function () {
+'use strict';
+const KL = window.KL;
+let uid = 0; const O = '#5a4668', CR = '#fff6e6', RB = ['#ff8fa3', '#ffb86b', '#ffe66d', '#8ee08a', '#7cc8ff', '#a996ff', '#e59bff'];
+const circ = (a, attr) => a.map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" ${attr}/>`).join('');
+// Figuren: Kopf immer um (146,48), Körper um (85,128), Beine bei x 52/72/101/119 – so passt jede Kleidung auf jede Figur
+const CHARS = [
+  { id: 'alpaka', n: 'Flauschi', what: 'Regenbogen-Alpaka', leg: ['#f1e3cc', CR], hoof: '#8a6a5c' },
+  { id: 'dino', n: 'Rex', what: 'Mini-Dino', leg: ['#62b85a', '#7ccf6a'], hoof: '#3f8a3a' },
+  { id: 'fuchs', n: 'Finn', what: 'Fuchs', leg: ['#e8752a', '#ff8c3a'], hoof: '#4a3028' },
+  { id: 'robo', n: 'Robo', what: 'Roboter', leg: ['#8aa3c4', '#a9c0dd'], hoof: '#4d6382' }
+];
+const charOf = id => CHARS.find(c => c.id === id) || CHARS[0];
+const eyes = '<circle cx="136" cy="47" r="5" fill="#3a2d4a"/><circle cx="156" cy="47" r="5" fill="#3a2d4a"/><circle cx="137.6" cy="45.4" r="1.8" fill="#fff"/><circle cx="157.6" cy="45.4" r="1.8" fill="#fff"/>';
+const cheeks = c => `<circle cx="127" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/><circle cx="165" cy="57" r="4.5" fill="${c || '#ffb3c7'}"/>`;
+const BODY = {
+  alpaka: {
+    tail: st => `<circle cx="24" cy="122" r="12" fill="#ff9ec4" ${st}/><circle cx="19" cy="117" r="5" fill="#ffe66d"/><circle cx="28" cy="127" r="4.5" fill="#7cc8ff"/>`,
+    body(st, id) {
+      const body = [[48, 126, 24], [70, 112, 26], [96, 110, 27], [119, 119, 25], [121, 140, 22], [96, 146, 26], [68, 147, 25], [46, 141, 22]], neck = [[140, 104, 19], [143, 88, 17], [145, 72, 16]];
+      let s = circ(body.concat(neck), `fill="${O}" stroke="${O}" stroke-width="6"`) + circ(neck, `fill="${CR}"`);
+      s += `<clipPath id="${id}">${circ(body, '')}</clipPath><g clip-path="url(#${id})"><g transform="rotate(-20 85 128)">`;
+      RB.forEach((c, i) => { s += `<rect x="${2 + i * 25}" y="30" width="25.5" height="200" fill="${c}"/>`; });
+      return s + '</g></g>';
+    },
+    head(st) {
+      let s = `<ellipse cx="127" cy="26" rx="7" ry="13" transform="rotate(-18 127 26)" fill="${CR}" ${st}/><ellipse cx="165" cy="26" rx="7" ry="13" transform="rotate(18 165 26)" fill="${CR}" ${st}/>`;
+      s += '<ellipse cx="127" cy="27" rx="3" ry="7" transform="rotate(-18 127 27)" fill="#ffb3c7"/><ellipse cx="165" cy="27" rx="3" ry="7" transform="rotate(18 165 27)" fill="#ffb3c7"/>';
+      s += `<ellipse cx="146" cy="48" rx="26" ry="22" fill="${CR}" ${st}/>`;
+      s += `<circle cx="135" cy="29" r="8" fill="#ff8fa3" ${st}/><circle cx="157" cy="29" r="8" fill="#7cc8ff" ${st}/><circle cx="146" cy="25" r="9.5" fill="#ffe66d" ${st}/>`;
+      s += cheeks() + eyes;
+      return s + `<ellipse cx="146" cy="59" rx="12" ry="8.5" fill="#fff" stroke="${O}" stroke-width="2.5"/><path d="M142.5 55.5 q3.5 3.5 7 0 M146 57.5 v3 M141 61 q5 4.5 10 0" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+  },
+  dino: {
+    tail: st => `<path d="M58 112 Q24 116 2 154 Q30 146 60 148 Z" fill="#7ccf6a" ${st}/>` +
+      [[52, 102], [72, 92], [94, 89], [114, 95]].map(p => `<path d="M${p[0] - 10} ${p[1] + 8} L${p[0]} ${p[1] - 12} L${p[0] + 10} ${p[1] + 8} Z" fill="#ffb03a" ${st}/>`).join(''),
+    body: st => `<path d="M114 116 Q124 86 132 64 L162 66 Q152 96 146 124 Z" fill="#7ccf6a" ${st}/><ellipse cx="85" cy="128" rx="52" ry="33" fill="#7ccf6a" ${st}/><ellipse cx="92" cy="140" rx="32" ry="15" fill="#d9f5b5"/>` +
+      '<g fill="#5fb055"><circle cx="62" cy="116" r="4"/><circle cx="80" cy="108" r="3"/><circle cx="104" cy="112" r="3.5"/></g>',
+    head: st => `<circle cx="134" cy="25" r="5" fill="#ffb03a" ${st}/><circle cx="158" cy="25" r="5" fill="#ffb03a" ${st}/><ellipse cx="148" cy="47" rx="30" ry="24" fill="#7ccf6a" ${st}/>` +
+      cheeks('#ff9fb5') + eyes + `<circle cx="170" cy="50" r="1.8" fill="${O}"/><path d="M138 60 q9 7 18 0" fill="none" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M143 62 l2 4 l2 -3.5 M151 62 l2 4 l2 -4" fill="#fff" stroke="${O}" stroke-width="1.2"/>`
+  },
+  fuchs: {
+    tail: st => `<path d="M54 116 Q8 92 4 136 Q6 172 50 150 Z" fill="#ff8c3a" ${st}/><path d="M8 124 Q0 142 10 160 Q24 156 22 138 Q18 126 8 124 Z" fill="#fff6e6" ${st}/>`,
+    body: st => `<path d="M106 120 Q118 90 128 64 L164 66 Q160 100 150 128 Z" fill="#ff8c3a" ${st}/><ellipse cx="85" cy="128" rx="50" ry="31" fill="#ff8c3a" ${st}/><path d="M138 66 Q132 96 120 128 Q134 136 144 124 Q150 98 154 68 Z" fill="#fff6e6"/>`,
+    head: st => `<path d="M122 38 L126 2 L144 26 Z" fill="#ff8c3a" ${st}/><path d="M170 38 L166 2 L148 26 Z" fill="#ff8c3a" ${st}/><path d="M128 28 L129 12 L137 24 Z M164 28 L163 12 L155 24 Z" fill="#4a3028"/>` +
+      `<ellipse cx="146" cy="48" rx="28" ry="22" fill="#ff8c3a" ${st}/><path d="M124 52 Q146 42 168 52 Q162 70 146 71 Q130 70 124 52 Z" fill="#fff6e6"/>` + eyes +
+      `<ellipse cx="146" cy="56" rx="4.5" ry="3.5" fill="#3a2d4a"/><path d="M140 62 q6 5 12 0" fill="none" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>`
+  },
+  robo: {
+    tail: st => `<path d="M42 126 Q16 124 18 100" fill="none" stroke="#4d6382" stroke-width="5" stroke-linecap="round"/><rect x="10" y="88" width="16" height="13" rx="3" fill="#ffcf2e" ${st}/><path d="M14 88 v-6 M22 88 v-6" stroke="${O}" stroke-width="3"/>`,
+    body: st => `<rect x="136" y="66" width="20" height="40" rx="4" fill="#8aa3c4" ${st}/><path d="M138 78 h16 M138 88 h16" stroke="${O}" stroke-width="2"/><rect x="36" y="98" width="106" height="58" rx="16" fill="#a9c0dd" ${st}/>` +
+      `<rect x="54" y="110" width="58" height="30" rx="8" fill="#e8f1ff" stroke="${O}" stroke-width="2.5"/><circle cx="68" cy="125" r="5" fill="#ff5a8a"/><circle cx="83" cy="125" r="5" fill="#ffcf2e"/><circle cx="98" cy="125" r="5" fill="#2fb35a"/><path d="M120 112 v28" stroke="${O}" stroke-width="2.5" stroke-dasharray="4 4"/>`,
+    head: st => `<path d="M146 26 V12" stroke="${O}" stroke-width="3"/><circle cx="146" cy="9" r="5.5" fill="#ff5a8a" ${st}/><circle cx="117" cy="48" r="6" fill="#ffcf2e" ${st}/><circle cx="175" cy="48" r="6" fill="#ffcf2e" ${st}/>` +
+      `<rect x="119" y="25" width="54" height="46" rx="13" fill="#a9c0dd" ${st}/><rect x="125" y="36" width="42" height="22" rx="10" fill="#e8f1ff" stroke="${O}" stroke-width="2"/>` + eyes + cheeks() +
+      `<path d="M137 63 h18" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/><path d="M141 61 v4 M146 61 v4 M151 61 v4" stroke="${O}" stroke-width="1.5"/>`
+  }
+};
+// Figur in Schichten (gleiche Koordinaten, viewBox -2 -36 204 246). Das Spiel bewegt die Schichten einzeln (Laufen, Springen).
+function charLayers(cid, w) {
+  w = w || {}; const c = charOf(cid), B = BODY[c.id], id = 'bc' + (++uid), st = `stroke="${O}" stroke-width="3" stroke-linejoin="round"`; const L = {}; let s = '';
+  if (w.fx === 'sparkle') s += '<g fill="#ffcf2e" font-size="22" font-weight="800"><text class="tw" x="4" y="40">✦</text><text class="tw b" x="176" y="96">✦</text><text class="tw c" x="6" y="196">✦</text><text class="tw b" x="96" y="-14">✦</text></g>';
+  if (w.fx === 'notes') s += '<g fill="#7b5cff" font-size="26" font-weight="800"><text class="tw" x="2" y="44">♪</text><text class="tw b" x="178" y="100">♫</text><text class="tw c" x="90" y="-12">♪</text><text class="tw" x="8" y="196">♫</text></g>';
+  L.fx = s; s = '';
+  if (w.back === 'wings') s += `<path d="M86 104 Q66 46 26 58 Q44 74 34 92 Q60 88 86 112 Z" fill="#fff" ${st}/><path d="M100 102 Q96 40 58 40 Q72 60 62 76 Q86 78 100 108 Z" fill="#eaf6ff" ${st}/>`;
+  L.wings = s; s = '';
+  s += B.tail(st);
+  if (w.tail === 'tailbow') s += `<path d="M24 108 l-11 -8 v15 Z M24 108 l11 -8 v15 Z" fill="#ff5a8a" ${st}/><circle cx="24" cy="108" r="4" fill="#ffd23f" ${st}/>`;
+  L.tail = s; s = '';
+  L.legs = [];
+  [52, 72, 101, 119].forEach((x, i) => { s = '';
+    s += `<rect x="${x}" y="150" width="14" height="52" rx="7" fill="${c.leg[i % 2]}" ${st}/><rect x="${x}" y="192" width="14" height="10" rx="4" fill="${c.hoof}" ${st}/>`;
+    if (w.feet === 'boots') s += `<path d="M${x - 2} 178 h18 v14 h5 q5 0 5 6 v5 h-28 Z" fill="#ffd23f" ${st}/>`;
+    if (w.feet === 'turbo') s += `<path d="M${x - 2} 180 h18 v12 h6 q4 0 4 5 v6 h-28 Z" fill="#e0483e" ${st}/><path d="M${x - 4} 196 l-9 -3 l4 6 l-6 3 h11 Z" fill="#ffb86b"/>`;
+    L.legs.push(s);
+  });
+  s = '';
+  s += B.body(st, id);
+  L.body = s; s = '';
+  if (w.back === 'cape') s += `<path d="M136 96 Q84 80 28 100 Q16 128 26 156 Q82 134 138 126 Z" fill="#e0483e" ${st}/><text x="74" y="128" font-size="26" fill="#ffd23f">★</text>`;
+  if (w.back === 'blanket') s += `<path d="M64 90 Q92 82 118 90 L120 138 Q92 148 62 138 Z" fill="#7b5cff" ${st}/><path d="M68 106 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8" fill="none" stroke="#ffe66d" stroke-width="3.5"/>`;
+  L.cape = s; s = '';
+  if (w.friend === 'chick') s += `<circle cx="82" cy="78" r="12" fill="#ffe45c" ${st}/><circle cx="93" cy="65" r="8.5" fill="#ffe45c" ${st}/><path d="M100 63 l8 3 l-8 3 Z" fill="#ff8a3d" ${st}/><circle cx="95" cy="63" r="1.8" fill="#333"/>`;
+  L.chick = s; s = '';
+  s += B.head(st);
+  if (w.eyes === 'shades') s += `<rect x="124" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/><rect x="147" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/>`;
+  if (w.eyes === 'hearts') [135, 157].forEach(x => { s += `<path transform="translate(${x} 49) scale(1.25)" d="M0 5 C-11 -3 -6 -11 0 -5 C6 -11 11 -3 0 5 Z" fill="#ff5a8a" fill-opacity=".85" stroke="${O}" stroke-width="2"/>`; });
+  if (w.eyes === 'starglasses') [135, 157].forEach(x => { s += `<path transform="translate(${x} 47)" d="M0 -11 L3 -3 L11 -3 L5 2 L7 10 L0 5 L-7 10 L-5 2 L-11 -3 L-3 -3 Z" fill="#ffd23f" ${st}/>`; });
+  L.head = s; s = '';
+  if (w.neck === 'scarf') s += `<path d="M129 82 l-4 26 l12 2 l3 -24 Z" fill="#ff5a5a" ${st}/><path d="M127 70 q19 10 38 0 l1 13 q-20 10 -40 0 Z" fill="#ff5a5a" ${st}/>`;
+  if (w.neck === 'bow') s += `<path d="M146 78 l-15 -9 v18 Z M146 78 l15 -9 v18 Z" fill="#7b5cff" ${st}/><circle cx="146" cy="78" r="4.5" fill="#ffd23f" ${st}/>`;
+  if (w.neck === 'bell') s += `<path d="M129 73 q17 10 34 0" stroke="#e0483e" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="146" cy="85" r="7.5" fill="#ffd23f" ${st}/>`;
+  L.neck = s; s = '';
+  if (w.hat === 'party') s += `<path d="M146 -18 L127 26 L165 26 Z" fill="#ff6fa5" ${st}/><circle cx="146" cy="-19" r="6.5" fill="#ffe66d" ${st}/>`;
+  if (w.hat === 'crown') s += `<path d="M126 28 L123 4 L136 16 L146 -3 L156 16 L169 4 L166 28 Z" fill="#ffd23f" ${st}/><circle cx="146" cy="18" r="4" fill="#ff5a8a"/>`;
+  if (w.hat === 'flowers') [[124, 32, '#ff8fa3'], [134, 25, '#fff'], [146, 21, '#e59bff'], [158, 25, '#fff'], [168, 32, '#ff8fa3']].forEach(f => { s += `<circle cx="${f[0]}" cy="${f[1]}" r="7" fill="${f[2]}" stroke="${O}" stroke-width="2.5"/><circle cx="${f[0]}" cy="${f[1]}" r="2.6" fill="#ffcf2e"/>`; });
+  if (w.hat === 'wizard') s += `<path d="M150 -30 L123 24 L169 24 Z" fill="#6b4bd6" ${st}/><ellipse cx="146" cy="25" rx="33" ry="7.5" fill="#5a3cc0" ${st}/><text x="138" y="14" font-size="15" fill="#ffe66d">★</text>`;
+  if (w.hat === 'helmet') s += `<path d="M120 32 Q146 -10 172 32 Z" fill="#ff5a5a" ${st}/><rect x="118" y="27" width="56" height="8" rx="4" fill="#ffd23f" ${st}/><path d="M140 8 q6 -6 12 0" stroke="#fff" stroke-width="4" fill="none"/>`;
+  if (w.hat === 'phones') s += `<path d="M122 38 Q146 -6 170 38" fill="none" stroke="${O}" stroke-width="7"/><rect x="113" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/><rect x="165" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/>`;
+  if (w.hat === 'beret') s += `<ellipse cx="148" cy="22" rx="30" ry="11" transform="rotate(-8 148 22)" fill="#2b4c9b" ${st}/><path d="M150 11 v-7" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
+  L.hat = s; s = '';
+  if (w.friend === 'fly') s += `<g transform="translate(184 6)"><ellipse cx="-7" cy="-3" rx="8" ry="10" fill="#ff8fa3" ${st}/><ellipse cx="7" cy="-3" rx="8" ry="10" fill="#7cc8ff" ${st}/></g>`;
+  if (w.friend === 'magnet') s += `<g transform="translate(176 -6)"><path d="M0 0 v16 a11 11 0 0 0 22 0 v-16 h-7 v16 a4 4 0 0 1 -8 0 v-16 Z" fill="#e0483e" ${st}/><rect x="0" y="-6" width="7" height="7" fill="#ccc" ${st}/><rect x="15" y="-6" width="7" height="7" fill="#ccc" ${st}/></g>`;
+
+  L.friend = s;
+  return L;
+}
+// Schicht-Reihenfolge von hinten nach vorne; Hut gehört zum Kopf
+const LAYER_ORDER = ['fx', 'wings', 'tail', 'legs', 'body', 'cape', 'chick', 'head', 'hat', 'neck', 'friend'];
+function charInner(cid, w) { const L = charLayers(cid, w); return LAYER_ORDER.map(k => k === 'legs' ? L.legs.join('') : L[k]).join(''); }
+
+// Oehler-Griffbild: links Überblasklappe + Daumenloch, rechts A-Klappe und sechs Tonlöcher, Seitenklappen F und S
+function fingSVG(name) {
+  // Anordnung wie Grifftabelle Heft S. 72: Daumenfeld (Überblasklappe über Daumenloch) links oben, A-Klappe auf der Säule,
+  // vier Seitenklappen links zwischen L3 und R1 (f' = dritte), b-Klappe quer zwischen R2 und R3
+  const k = KL.NOTES[name].keys, on = x => k.indexOf(x) >= 0, F = c => on(c) ? '#ff4f8b' : '#fff', st = 'stroke="#5a4668" stroke-width="3"', lab = 'font-size="15" font-weight="800" fill="#5a4668"';
+  return `<svg viewBox="0 0 112 250" xmlns="http://www.w3.org/2000/svg"><rect x="58" y="6" width="30" height="238" rx="14" fill="#3a2d4a" opacity=".1"/>
+  <text x="1" y="13" ${lab}>Daumen</text><path d="M6 20 V86 M34 20 V86" stroke="#5a4668" stroke-width="3"/>
+  <ellipse cx="20" cy="36" rx="7" ry="12" fill="${F('Ü')}" ${st}/><circle cx="20" cy="68" r="11" fill="${F('D')}" ${st}/>
+  <path d="M73 6 v6" stroke="#5a4668" stroke-width="4"/><ellipse cx="73" cy="23" rx="7" ry="11" fill="${F('A')}" ${st}/>
+  <circle cx="73" cy="54" r="12" fill="${F('L1')}" ${st}/><circle cx="73" cy="84" r="12" fill="${F('L2')}" ${st}/><circle cx="73" cy="114" r="12" fill="${F('L3')}" ${st}/>
+  <circle cx="44" cy="103" r="6" fill="#fff" ${st}/><circle cx="44" cy="117" r="6" fill="#fff" ${st}/><ellipse cx="44" cy="132" rx="6.5" ry="7.5" fill="${F('F')}" ${st}/><ellipse cx="44" cy="153" rx="6" ry="11" fill="#fff" ${st}/>
+  <line x1="56" y1="135" x2="90" y2="135" stroke="#5a4668" stroke-width="3"/>
+  <circle cx="73" cy="156" r="12" fill="${F('R1')}" ${st}/><circle cx="73" cy="186" r="12" fill="${F('R2')}" ${st}/><ellipse cx="46" cy="207" rx="13" ry="5.5" fill="${F('S')}" ${st}/><circle cx="73" cy="228" r="12" fill="${F('R3')}" ${st}/>
+  <text ${lab} transform="translate(96 62) rotate(90)">links</text><text ${lab} transform="translate(96 164) rotate(90)">rechts</text></svg>`;
+}
+// Kleine Klarinette als Symbol (statt Trompeten- oder Saxophon-Emoji)
+const CLAR_ICON = '<svg class="ci" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(40 20 20)"><path d="M18.5 0 h3 l.6 6 h-4.2 Z" fill="#2b2333"/><rect x="17" y="6" width="6" height="26" rx="2" fill="#2b2333"/><path d="M17 31 h6 l4 8 h-14 Z" fill="#2b2333"/><g fill="#c9c9d2"><rect x="16.5" y="9" width="7" height="2"/><rect x="16.5" y="19" width="7" height="2"/><circle cx="20" cy="14" r="1.6"/><circle cx="20" cy="24" r="1.6"/><circle cx="20" cy="28" r="1.6"/></g></g></svg>';
+// Notenzeile(n). notes: Ergebnis von KL.parseMelody. o.per Takte je Zeile, o.single = ein Einzelton ohne Taktstriche
+const CLEF = '<path d="M31 120 C27 132 45 134 43 120 L37 24 C37 13 49 14 47 27 C45 41 22 52 22 76 C22 97 51 101 55 85 C58 71 38 65 32 78 C29 88 38 94 44 89" fill="none" stroke="#3a2d4a" stroke-width="3.6" stroke-linecap="round"/>';
+function noteG(n, i, x) {
+  let g = '';
+  if (n.rest) {
+    if (n.dur === 1) g = `<rect x="${x - 9}" y="54" width="18" height="7"/>`;
+    else if (n.dur === 2) g = `<rect x="${x - 9}" y="61" width="18" height="7"/>`;
+    else g = `<path d="M${x - 3} 52 l8 9 l-8 9 l8 9 q-10 -3 -6 8" fill="none" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return `<g class="n" id="n${i}">${g}</g>`;
+  }
+  const s = KL.staffStep(n.name), y = 96 - s * 7;
+  for (let l = -2; l >= s; l -= 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  for (let l = 10; l <= s; l += 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  const acc = KL.accidental(n.name), ax = x - 22;
+  if (acc === 'flat') g += `<path d="M${ax - 3} ${y - 20} V${y + 5} C${ax + 9} ${y - 2} ${ax + 7} ${y - 11} ${ax - 3} ${y - 3}" fill="none" stroke-width="2.4"/>`;
+  if (acc === 'sharp') g += `<path d="M${ax - 3} ${y - 14}V${y + 14}M${ax + 3} ${y - 16}V${y + 12}" stroke-width="1.8"/><path d="M${ax - 8} ${y - 3}L${ax + 8} ${y - 7}M${ax - 8} ${y + 6}L${ax + 8} ${y + 2}" stroke-width="4"/>`;
+  g += `<ellipse cx="${x}" cy="${y}" rx="8.6" ry="6.3" transform="rotate(-20 ${x} ${y})" stroke-width="2.4"${n.dur <= 2 ? ' class="hol"' : ''}/>`;
+  if (n.dur > 1) { const up = s < 4, sx = up ? x + 7.6 : x - 7.6; g += `<line x1="${sx}" x2="${sx}" y1="${y}" y2="${y + (up ? -44 : 44)}" stroke-width="2.4"/>`; if (n.dur === 8) g += `<path d="M${sx} ${y + (up ? -44 : 44)} q12 ${up ? 10 : -10} 8 ${up ? 26 : -26}" fill="none" stroke-width="2.6"/>`; }
+  if (n.dot) g += `<circle cx="${x + 15}" cy="${y + (s % 2 === 0 ? -5 : 0)}" r="2.8" stroke="none"/>`;
+  return `<g class="n" id="n${i}">${g}</g>`;
+}
+function staffSVG(notes, o) {
+  o = o || {}; const W = o.single ? 240 : 1000, lines = [], bars = [];
+  notes.forEach((n, i) => { (bars[n.bar] = bars[n.bar] || []).push([n, i]); });
+  const per = o.per || 4; for (let i = 0; i < bars.length; i += per) lines.push(bars.slice(i, i + per));
+  return lines.map((ln, li) => {
+    const x0 = li === 0 ? 112 : 70, bw = (W - 6 - x0) / per;
+    // kurze letzte Zeile nicht strecken: gleiche Taktbreite, schmaleres Bild
+    const LW = !o.single && li > 0 && ln.length < per ? Math.round(x0 + ln.length * bw + 6) : W;
+    let g = ''; for (let k = 0; k < 5; k++) g += `<line x1="6" x2="${LW - 4}" y1="${40 + k * 14}" y2="${40 + k * 14}" stroke="#8d7f9a" stroke-width="2"/>`;
+    g += CLEF;
+    if (o.single) { const [n, i] = ln[0][0]; g += noteG(n, i, 150); }
+    else {
+      if (li === 0) g += '<text x="86" y="67" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text><text x="86" y="95" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text>';
+      ln.forEach((bar, bi) => {
+        const bx = x0 + bi * bw; let pos = 0;
+        bar.forEach(([n, i]) => { const x = bx + 24 + (pos / 4) * (bw - 36) + (n.beats === 4 ? (bw - 36) * 0.3 : 0); g += noteG(n, i, x); pos += n.beats; });
+        const last = li === lines.length - 1 && bi === ln.length - 1;
+        g += `<line x1="${bx + bw}" x2="${bx + bw}" y1="40" y2="96" stroke="#5a4668" stroke-width="${last ? 6 : 2}"/>`;
+      });
+    }
+    return `<svg viewBox="0 0 ${LW} 150" xmlns="http://www.w3.org/2000/svg"${LW < W ? ` style="width:${(LW / W * 100).toFixed(1)}%"` : ''}>${g}</svg>`;
+  }).join('');
+}
+const single = name => staffSVG([{ name, dur: 1, beats: 4, bar: 0 }], { single: true });
+
+// Zeigerinstrument: −50 … +50 Cent auf einem Halbkreis (±75°), grüner Bereich = erlaubte Abweichung (tol in Cent)
+// hold = true: äußerer Bogen füllt sich, solange der Ton gehalten wird (holdP)
+let ND = null;
+function gaugeSVG(tol, big, hold) {
+  const R = 118, C = 150;
+  const pt = (c, r) => { const a = c / 50 * 75 * Math.PI / 180; return [(C + r * Math.sin(a)).toFixed(1), (C - r * Math.cos(a)).toFixed(1)]; };
+  const arc = (c1, c2, col, w, r, extra) => { r = r || R; const p = pt(c1, r), q = pt(c2, r); return `<path d="M${p} A${r} ${r} 0 0 1 ${q}" fill="none" stroke="${col}" stroke-width="${w}"${extra || ''}/>`; };
+  ND = null;
+  const hp = hold ? arc(-50, 50, '#efe6f7', 12, 142, ' stroke-linecap="round"') + arc(-50, 50, '#7b5cff', 12, 142, ' id="hp" pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"') : '';
+  let ticks = ''; for (let c = -50; c <= 50; c += 10) { const p = pt(c, R - 20), q = pt(c, R - (c % 50 ? 30 : 36)); ticks += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#3a2d4a" stroke-width="${c ? 2 : 4}"/>`; }
+  return `<svg class="gauge${big ? ' big' : ''}" viewBox="0 0 300 172" role="img" aria-label="Zeiger: zu tief, genau, zu hoch">${hp}${tol < 50 ? arc(-50, -tol, '#ffb3c7', 22) + arc(tol, 50, '#ffb3c7', 22) : ''}${arc(-Math.min(tol, 50), Math.min(tol, 50), '#a6e9a0', 22)}${tol > 10 ? arc(-10, 10, '#3fbf4f', 22) : ''}${ticks}
+  <text x="22" y="168" font-size="20" font-weight="800" fill="#c2185b">tiefer</text><text x="278" y="168" font-size="20" font-weight="800" fill="#c2185b" text-anchor="end">höher</text>
+  <text id="gw" x="150" y="118" font-size="28" font-weight="900" fill="#c2185b" text-anchor="middle"></text><g id="nd" class="nd off" style="transform:rotate(0deg)"><path d="M146 150 L150 ${C - R + 6} L154 150 Z" fill="#3a2d4a"/></g><circle cx="150" cy="150" r="12" fill="#3a2d4a"/><circle cx="150" cy="150" r="5" fill="#fff"/></svg>`;
+}
+// c in Cent; null = kein Ton (Zeiger blass in der Mitte)
+// Anzeige leicht geglättet (nur die Anzeige, nicht die Bewertung); Anschlag ±50 = falscher Ton, springt sofort
+function needle(c) {
+  const e = document.getElementById('nd'); if (!e) return; const on = c != null && isFinite(c); e.classList.toggle('off', !on);
+  if (!on) { ND = null; e.style.transform = 'rotate(0deg)'; return; }
+  c = Math.max(-50, Math.min(50, c)); ND = ND == null || Math.abs(c) >= 50 || Math.abs(ND) >= 50 ? c : ND + (c - ND) * 0.35;
+  e.style.transform = `rotate(${ND / 50 * 75}deg)`;
+}
+// Falscher Ton im Instrument: "du: d'" (leer = ausblenden)
+function gaugeWrong(name) { const e = document.getElementById('gw'); if (e && e.textContent !== (name ? 'du: ' + name : '')) e.textContent = name ? 'du: ' + name : ''; }
+function holdP(f) { const e = document.getElementById('hp'); if (e) e.setAttribute('stroke-dasharray', `${Math.max(0, Math.min(1, f)) * 100} 100`); }
+
+window.KLDRAW = { CHARS, charOf, charLayers, charInner, LAYER_ORDER, VIEWBOX: '-2 -36 204 246', fingSVG, CLAR_ICON, staffSVG, single, gaugeSVG, needle, gaugeWrong, holdP };
+})();
+</script>
+<script src="vendor/phaser-4.2.1/phaser.min.js"></script>
+<script>/* Klarinetten-Abenteuer · Spielseite spiel.html (Phase 4, v0.3): Vorspann, Ton-Hüpfer, Zauberbuch mit Klang-Formeln.
+   Grafik mit Phaser (vendor/phaser-4.2.1), Figuren aus Teilen (src/draw.js), Logik in src/game_logic.js (KLG) und src/logic.js (KL).
+   Gleicher Spielstand wie die App (Schlüssel flauschi_klarinette_v1), gleiche Sterne-Regeln (KL.award).
+   Testhilfen: ?demo=menu|intro|hop|book|spell  &isl=5 &stage=2 &spell=wachsen &dir=-1  &sim=1 &auto=1 &speed=3 &go=1 &wrong=1 &char= &name= &wear=hat:wizard,back:wings &seed=
+   Aus der App: ?go=hop&isl=5 · ?go=book */
+(function () {
+'use strict';
+const KL = window.KL, KLG = window.KLG, DR = window.KLDRAW, $ = id => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const SIM = Q.has('sim'), AUTO = Q.has('auto'), SPEED = +(Q.get('speed') || 1), DEMO = Q.get('demo');
+const now = () => performance.now() / 1000 * SPEED;
+const KEY = 'flauschi_klarinette_v1';
+const META = window.KLMETA || { version: '0.0.0' };
+const PLAYABLE = KL.ISLANDS.filter(i => i.st.length).length;
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const TABLET = /Silk|Android|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+if (Q.has('wrong')) window.KLWRONG = true;
+
+/* ================= Spielstand (derselbe wie in der App) ================= */
+function load() {
+  let raw = null; try { raw = localStorage.getItem(KEY); } catch (e) {}
+  if (!raw) return KL.freshSave();
+  try {
+    const old = JSON.parse(raw), m = KL.migrateSave(old, KL.freshSave());
+    if (m) { if (old.v !== KL.SAVE_VERSION) try { localStorage.setItem(KEY + '_vor_update_v' + old.v, raw); } catch (e) {} return m; }
+  } catch (e) {}
+  try { localStorage.setItem(KEY + '_unlesbar_' + Date.now(), raw); } catch (e) {}
+  return KL.freshSave();
+}
+let S = load(), lastJ = JSON.stringify(S);
+let save = () => { try { const j = JSON.stringify(S); localStorage.setItem(KEY, j); lastJ = j; } catch (e) {} };
+const saveIfChanged = () => { if (JSON.stringify(S) !== lastJ) save(); };
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveIfChanged(); });
+window.addEventListener('pagehide', saveIfChanged);
+if (DEMO) {
+  S = KL.freshSave(); save = () => {}; S.unlocked = +(Q.get('unl') || 6); S.char = Q.get('char') || 'alpaka'; S.name = Q.get('name') || ''; S.game.intro = true;
+  (Q.get('wear') || '').split(',').forEach(x => { const [k, v] = x.split(':'); if (k && v) S.wear[k] = v; }); // z. B. &wear=hat:wizard,back:wings
+  if (DEMO === 'book' || DEMO === 'spell') { S.game.spells = { leuchten: { lv: 3, ok: [2, 2, 1], gold: true, day: '' }, wachsen: { lv: 2, ok: [2, 0, 0], gold: false, day: '' } }; }
+}
+const CHAR = DR.charOf(S.char), CN = CHAR.n;
+const cm = () => S.name ? ', ' + esc(S.name) : '';
+
+/* ================= Kopfzeile, Meldungen ================= */
+function hud() {
+  const d = KL.dayRec(S, today());
+  $('gStar').textContent = '⭐ ' + S.stars; $('gTix').textContent = '🎟️ ' + S.tix;
+  $('gDay').textContent = '⏱ ' + Math.floor(d.sec / 60) + '/' + S.set.goal + ' min';
+  $('gSnd').textContent = S.set.mute ? '🔇' : '🔊';
+}
+let toastT = 0;
+function toast(t, ms) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { e.style.display = 'none'; }, ms || 2600); }
+function confetti() { const e = ['⭐', '🎵', '🌈', '💜', '🎉', '✨', '🎶']; for (let i = 0; i < 18; i++) { const s = document.createElement('span'); s.className = 'conf'; s.textContent = pick(e); s.style.left = (3 + Math.random() * 92) + '%'; s.style.animationDelay = Math.random() * 0.6 + 's'; document.body.appendChild(s); setTimeout(() => s.remove(), 3400); } }
+const starStr = n => [0, 1, 2].map(i => `<span class="${i < n ? '' : 'off'}">⭐</span>`).join('');
+
+/* ================= Ton-Ausgabe (Synthese wie in der App, keine Audiodateien) ================= */
+let AC = null, WAVE = null, MUTE_UNTIL = 0;
+const PLAYING = { osc: [], tm: [], end: 0 };
+function ac() {
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    const amp = [0, 1, 0, 0.75, 0, 0.5, 0, 0.14, 0, 0.5, 0, 0.12, 0, 0.17];
+    WAVE = AC.createPeriodicWave(new Float32Array(amp.length), new Float32Array(amp));
+  }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function blip(f, t0, d, type, vol) {
+  if (S.set.mute) return;
+  try {
+    const a = ac(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
+    o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol || 0.15, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.03);
+  } catch (e) {}
+}
+function tone(f, t0, d, vol, wave) { // f klingend, Zeiten in echten Sekunden
+  try {
+    const a = ac(), o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + t0;
+    if (wave) o.type = wave; else o.setPeriodicWave(WAVE);
+    o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = 2600; fl.Q.value = 0.7;
+    const v = S.set.mute ? 0.0001 : (vol || 0.22);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.05); g.gain.setValueAtTime(v * 0.85, t + Math.max(0.06, d - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + d);
+    o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.05); PLAYING.osc.push(o);
+  } catch (e) {}
+}
+function stopPlay() { PLAYING.osc.forEach(o => { try { o.stop(); } catch (e) {} }); PLAYING.tm.forEach(clearTimeout); PLAYING.osc = []; PLAYING.tm = []; PLAYING.end = 0; MUTE_UNTIL = Math.min(MUTE_UNTIL, now() + 0.15); }
+// items: [{ name|null, beats }]. Das Mikrofon hört solange weg. bass: einfache Begleitung (Grundton tief). Rückgabe: Dauer in Spielzeit-Sekunden
+function playNotes(items, bpm, onNote, bass) {
+  stopPlay();
+  const spb = 60 / bpm; let t = 0;
+  items.forEach((it, i) => {
+    const d = it.beats * spb;
+    if (it.name) tone(KL.concertFreq(it.name, S.set.a4), t / SPEED, Math.max(0.12, d * 0.92) / SPEED);
+    if (bass && it.name && Math.round(t / spb) % 2 === 0) tone(KL.concertFreq(it.name, S.set.a4) / 2, t / SPEED, Math.max(0.2, d * 1.6) / SPEED, 0.08, 'triangle');
+    if (onNote) PLAYING.tm.push(setTimeout(() => onNote(i), t * 1000 / SPEED));
+    t += d;
+  });
+  MUTE_UNTIL = now() + t + 0.25; PLAYING.end = now() + t;
+  return t;
+}
+const isPlaying = () => now() < PLAYING.end;
+const sOk = () => { blip(660, 0, 0.12); blip(880, 0.1, 0.18); };
+const sBad = () => blip(220, 0, 0.25, 'triangle', 0.1);
+const sStar = () => [523, 659, 784, 1047].forEach((f, i) => blip(f, i * 0.1, 0.22));
+const sCoin = () => blip(1320, 0, 0.07, 'square', 0.03);
+
+/* ================= Mikrofon und Tonverfolgung (YIN aus logic.js) ================= */
+const MIC = Object.assign(KL.pitchTracker(), { ok: false, err: '', an: null, buf: null });
+let LOOP = null, LAST = 0, LISTEN = null, RUNNING = false, WANT = null, LASTSAVE = 0;
+async function micOn() {
+  if (MIC.ok) return true;
+  if (SIM) { MIC.ok = true; loop(); return true; }
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: 'NoSecureContext' };
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const a = ac(), src = a.createMediaStreamSource(stream), an = a.createAnalyser(); an.fftSize = 2048; src.connect(an);
+    MIC.an = an; MIC.buf = new Float32Array(2048); MIC.ok = true; loop(); return true;
+  } catch (e) { MIC.err = e && e.name ? e.name : String(e); return false; }
+}
+function micWhy() {
+  const e = MIC.err;
+  if (e === 'NotFoundError' || e === 'OverconstrainedError') return 'Ich finde kein Mikrofon an diesem Gerät.';
+  if (e === 'NotAllowedError' || e === 'SecurityError') return 'Das Mikrofon ist gesperrt. Bitte tippe auf das Schloss oben neben der Adresse und erlaube das Mikrofon.';
+  if (e === 'NotReadableError' || e === 'AbortError') return 'Das Mikrofon wird gerade von einem anderen Programm benutzt.';
+  if (!window.isSecureContext || e === 'NoSecureContext') return 'Dieser Browser gibt das Mikrofon hier nicht frei (die Seite muss über https laufen).';
+  return 'Bitte erlaube das Mikrofon, wenn der Browser fragt.';
+}
+function loop() { if (!LOOP) { LAST = now(); LOOP = setInterval(tick, 30); } }
+function measure() {
+  if (SIM) {
+    let w = window.KLSIM || { f: 0, rms: 0 };
+    if (AUTO && WANT) { const n = WANT(); w = n ? { f: KL.concertFreq(n, S.set.a4), rms: 0.08 } : { f: 0, rms: 0 }; }
+    if (window.KLWRONG && w.f) w = { f: w.f * 1.1225, rms: w.rms };
+    return { rms: w.rms || 0, pitch: w.f ? { f: w.f, clarity: 0.97 } : null };
+  }
+  MIC.an.getFloatTimeDomainData(MIC.buf);
+  const r = KL.rms(MIC.buf);
+  return { rms: r, pitch: r > 0.004 ? KL.yin(MIC.buf, AC.sampleRate, 150, 900) : null };
+}
+function tick() {
+  const t = now(), dt = Math.min(0.2, t - LAST); LAST = t;
+  const fr = KL.pitchFrame(MIC, measure(), t, dt, MUTE_UNTIL, S.set.a4);
+  if (fr.voiced && RUNNING) {
+    const r = KL.practiceTick(S, dt / SPEED, today());
+    if (r.goal) { save(); confetti(); toast('🎉 Tagesziel geschafft' + (S.name ? ', ' + S.name : '') + '! ' + S.set.goal + ' Minuten Klarinette – super!', 4000); }
+    if (r.fleiss) { save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); }
+    if (t - LASTSAVE > 10) { LASTSAVE = t; save(); hud(); }
+  }
+  if (LISTEN) LISTEN(fr);
+}
+let WL = null; function wake() { try { if (navigator.wakeLock && !WL) navigator.wakeLock.request('screen').then(w => { WL = w; w.addEventListener('release', () => { WL = null; }); }).catch(() => {}); } catch (e) {} }
+// Vollbild auf dem Tablet wie in der App (braucht ein Tippen)
+function fullOn() {
+  const m = S.set.full || 'auto'; if (m === 'off' || (m === 'auto' && !TABLET) || DEMO || SIM) return;
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) return;
+  try { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+}
+document.addEventListener('pointerup', fullOn, true);
+
+/* ================= Bilder: SVG -> Textur (alles eigene Zeichnungen) ================= */
+function svgCanvas(svg, w, h) {
+  return new Promise(ok => {
+    const img = new Image(), c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h);
+    img.onload = () => { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); ok(c); };
+    img.onerror = () => ok(c);
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+function canvas2d(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
+const OL = '#5a4668';
+// Misston-König (eigene Figur): runder Bauch, lila Umhang, schiefe Krone, eigene quietschende Klarinette
+const KING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260"><g stroke="${OL}" stroke-width="4" stroke-linejoin="round">
+<path d="M40 250 Q30 150 110 120 Q190 150 180 250 Z" fill="#8a4fd6"/><path d="M70 250 Q76 170 110 150 Q144 170 150 250 Z" fill="#c9a6ff"/>
+<circle cx="110" cy="170" r="6" fill="#ffd23f"/><circle cx="110" cy="200" r="6" fill="#ffd23f"/><circle cx="110" cy="230" r="6" fill="#ffd23f"/>
+<ellipse cx="110" cy="92" rx="48" ry="44" fill="#ffe0c2"/>
+<path d="M66 50 L62 18 L82 34 L100 8 L116 32 L138 10 L146 40 Z" transform="rotate(-14 104 30)" fill="#ffd23f"/><circle cx="96" cy="22" r="5" fill="#ff5a8a" transform="rotate(-14 104 30)"/>
+<path d="M84 76 q8 -7 16 0 M122 72 q8 -5 16 2" fill="none" stroke-width="4"/>
+<circle cx="92" cy="86" r="5" fill="#3a2d4a" stroke="none"/><circle cx="128" cy="86" r="5" fill="#3a2d4a" stroke="none"/>
+<path d="M80 108 q30 -14 60 0 q-14 10 -30 4 q-16 6 -30 -4 Z" fill="#7a4a2a"/>
+<path d="M98 122 q12 -6 24 0" fill="none" stroke-width="4"/><circle cx="80" cy="100" r="6" fill="#ffb3c7" stroke="none"/><circle cx="140" cy="100" r="6" fill="#ffb3c7" stroke="none"/>
+<g transform="translate(112 118) rotate(-32)"><rect x="-6" y="0" width="12" height="84" rx="4" fill="#2b2333"/><path d="M-8 82 h16 l8 18 h-32 Z" fill="#2b2333"/><circle cx="0" cy="26" r="2.5" fill="#c9c9d2" stroke="none"/><circle cx="0" cy="46" r="2.5" fill="#c9c9d2" stroke="none"/></g>
+</g></svg>`;
+// Quietschi (Diener des Königs): rund, große Augen, offener Schnabel
+const SQUEAK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke="${OL}" stroke-width="4" stroke-linejoin="round">
+<ellipse cx="50" cy="56" rx="34" ry="30" fill="#c7b8d9"/><path d="M30 30 L36 12 L46 28 Z M54 28 L64 12 L70 30 Z" fill="#c7b8d9"/>
+<circle cx="38" cy="50" r="10" fill="#fff"/><circle cx="62" cy="50" r="10" fill="#fff"/><circle cx="40" cy="52" r="4.5" fill="#3a2d4a" stroke="none"/><circle cx="60" cy="52" r="4.5" fill="#3a2d4a" stroke="none"/>
+<path d="M42 66 L50 80 L58 66 Z" fill="#ffb03a"/><path d="M34 86 v8 M66 86 v8" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+// Laterne (Leuchten), Truhe (Öffnen) und Deckel
+const LANTERN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 260"><g stroke="${OL}" stroke-width="4" stroke-linejoin="round">
+<rect x="54" y="90" width="12" height="166" rx="5" fill="#6b5a7a"/><path d="M30 46 h60 l-8 -16 h-44 Z" fill="#6b5a7a"/><rect x="34" y="46" width="52" height="54" rx="10" fill="#fff6c9"/>
+<path d="M60 22 v8" stroke-width="5"/><circle cx="60" cy="18" r="6" fill="#6b5a7a"/><rect x="40" y="100" width="40" height="10" rx="4" fill="#6b5a7a"/></g></svg>`;
+const CHEST_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120"><g stroke="${OL}" stroke-width="5" stroke-linejoin="round">
+<rect x="10" y="10" width="180" height="100" rx="12" fill="#c98a4b"/><rect x="10" y="40" width="180" height="14" fill="#ffd23f"/><rect x="88" y="34" width="24" height="30" rx="5" fill="#ffd23f"/><circle cx="100" cy="48" r="4" fill="${OL}"/>
+<path d="M40 10 v100 M160 10 v100" stroke-width="4" fill="none"/></g></svg>`;
+const LID_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 70"><g stroke="${OL}" stroke-width="5" stroke-linejoin="round">
+<path d="M10 64 Q10 6 100 6 Q190 6 190 64 Z" fill="#d99a5b"/><path d="M40 64 Q40 12 60 9 M160 64 Q160 12 140 9" stroke-width="4" fill="none"/><rect x="86" y="44" width="28" height="20" rx="5" fill="#ffd23f"/></g></svg>`;
+const NOTE_COL = { c: 0xff6b6b, d: 0xffa94d, e: 0xffd43b, f: 0x69db7c, g: 0x4dabf7, a: 0x38d9a9, h: 0x9775fa, b: 0xf783ac, fis: 0x8ce99a };
+const noteCol = n => NOTE_COL[(n.match(/^(fis|[a-h])/) || [, 'c'])[1]] || 0xcccccc;
+const K0 = 0.8, VB = { x: -2, y: -36, w: 204, h: 246 };
+// Drehpunkte der Teile in Figur-Koordinaten (Kopf um 146/48, Körper um 85/128, Beine oben bei y 152)
+const PIV = { fx: [100, 90], wings: [92, 104], tail: [52, 124], legs: [[59, 154], [79, 154], [108, 154], [126, 154]], body: [85, 130], cape: [85, 130], chick: [85, 130], head: [138, 84], hat: [138, 84], neck: [138, 84], friend: [176, 10] };
+const TEX = {}; // Schlüssel -> Canvas
+async function buildTextures() {
+  const L = DR.charLayers(S.char, S.wear), jobs = [], w = VB.w * K0, h = VB.h * K0;
+  const wrap = inner => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${DR.VIEWBOX}">${inner}</svg>`;
+  DR.LAYER_ORDER.forEach(k => {
+    if (k === 'legs') L.legs.forEach((s, i) => jobs.push(svgCanvas(wrap(s), w, h).then(c => { TEX['f_leg' + i] = c; })));
+    else if (L[k]) jobs.push(svgCanvas(wrap(L[k]), w, h).then(c => { TEX['f_' + k] = c; }));
+  });
+  jobs.push(svgCanvas(KING_SVG, 220, 260).then(c => { TEX.king = c; }), svgCanvas(SQUEAK_SVG, 100, 100).then(c => { TEX.squeak = c; }),
+    svgCanvas(LANTERN_SVG, 120, 260).then(c => { TEX.lantern = c; }), svgCanvas(CHEST_SVG, 200, 120).then(c => { TEX.chest = c; }), svgCanvas(LID_SVG, 200, 70).then(c => { TEX.lid = c; }));
+  // kleine Bilder direkt gemalt
+  TEX.coin = canvas2d(32, 32, (g) => { g.fillStyle = '#ffcf2e'; g.strokeStyle = '#c98a00'; g.lineWidth = 3; g.beginPath(); g.arc(16, 16, 13, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#8a5a00'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('♪', 16, 17); });
+  TEX.hills = canvas2d(512, 170, (g, W, H) => {
+    g.fillStyle = '#9be38f'; g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, 70 + 30 * Math.sin(x / W * Math.PI * 2) + 18 * Math.sin(x / W * Math.PI * 6)); g.lineTo(W, H); g.fill();
+    g.fillStyle = '#7fd36f'; g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, 110 + 20 * Math.sin(x / W * Math.PI * 4 + 1)); g.lineTo(W, H); g.fill();
+  });
+  TEX.ground = canvas2d(128, 64, (g) => { g.fillStyle = '#a0703c'; g.fillRect(0, 0, 128, 64); g.fillStyle = '#6cc04a'; g.fillRect(0, 0, 128, 16); g.fillStyle = '#8b5a2b'; [[14, 30], [60, 44], [100, 28], [36, 52], [84, 56]].forEach(p => { g.beginPath(); g.arc(p[0], p[1], 4, 0, 7); g.fill(); }); g.fillStyle = '#5aa83c'; for (let x = 0; x < 128; x += 16) { g.beginPath(); g.moveTo(x, 16); g.lineTo(x + 8, 8); g.lineTo(x + 16, 16); g.fill(); } });
+  TEX.cloud = canvas2d(170, 80, (g) => { g.fillStyle = '#fff'; [[50, 46, 30], [88, 36, 34], [126, 48, 28], [84, 56, 26]].forEach(c => { g.beginPath(); g.arc(c[0], c[1], c[2], 0, 7); g.fill(); }); });
+  TEX.spark = canvas2d(24, 24, (g) => { g.fillStyle = '#ffe66d'; g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 4 : 11, a = i / 10 * Math.PI * 2 - Math.PI / 2; g.lineTo(12 + r * Math.cos(a), 12 + r * Math.sin(a)); } g.fill(); });
+  TEX.glow = canvas2d(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,240,150,1)'); gr.addColorStop(1, 'rgba(255,240,150,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
+  await Promise.all(jobs);
+}
+function addTextures(scene) { for (const k in TEX) if (!scene.textures.exists(k)) scene.textures.addCanvas(k, TEX[k]); }
+
+/* ================= Figur aus Teilen (Phaser-Container) ================= */
+function makeFig(scene, x, y, scale) {
+  const c = scene.add.container(x, y), g = scene.add.container(0, 0); c.add(g);
+  const P = { legs: [] };
+  const part = (tex, pv) => { if (!scene.textures.exists(tex)) return null; const im = scene.add.image((pv[0] - 85) * K0, (pv[1] - 202) * K0, tex).setOrigin((pv[0] - VB.x) / VB.w, (pv[1] - VB.y) / VB.h); g.add(im); return im; };
+  DR.LAYER_ORDER.forEach(k => {
+    if (k === 'legs') [0, 1, 2, 3].forEach(i => { P.legs[i] = part('f_leg' + i, PIV.legs[i]); });
+    else P[k] = part('f_' + k, PIV[k]);
+  });
+  c.setScale(scale || 0.5); c.P = P; c.g = g;
+  // mode: 'idle' | 'run' | 'float' | 'cheer'
+  c.pose = (t, mode) => {
+    const L = P.legs, rot = (im, r) => { if (im) im.rotation = r; };
+    if (mode === 'run') { const a = Math.sin(t * 11); [0, 2].forEach(i => rot(L[i], a * 0.5)); [1, 3].forEach(i => rot(L[i], -a * 0.5)); g.y = -Math.abs(Math.cos(t * 11)) * 6; g.scaleY = 1; rot(P.head, Math.sin(t * 11) * 0.04); }
+    else if (mode === 'float') { [0, 2].forEach(i => rot(L[i], 0.35)); [1, 3].forEach(i => rot(L[i], -0.25)); g.y = Math.sin(t * 4) * 3; g.scaleY = 1; rot(P.head, -0.05); }
+    else if (mode === 'cheer') { const a = Math.abs(Math.sin(t * 6)); L.forEach((l, i) => rot(l, (i % 2 ? -1 : 1) * a * 0.5)); g.y = -a * 34; rot(P.head, Math.sin(t * 6) * 0.15); }
+    else { L.forEach(l => rot(l, 0)); g.y = 0; g.scaleY = 1 + Math.sin(t * 2.5) * 0.015; rot(P.head, Math.sin(t * 1.7) * 0.05); }
+    rot(P.hat, P.head ? P.head.rotation : 0); rot(P.neck, P.head ? P.head.rotation * 0.6 : 0);
+    rot(P.tail, Math.sin(t * (mode === 'run' ? 9 : 3)) * (mode === 'run' ? 0.3 : 0.18));
+    rot(P.wings, Math.sin(t * 14) * (mode === 'float' ? 0.25 : 0.06));
+    if (P.friend) P.friend.y = (PIV.friend[1] - 202) * K0 + Math.sin(t * 3) * 8;
+    if (P.fx) P.fx.alpha = 0.7 + Math.sin(t * 4) * 0.3;
+  };
+  return c;
+}
+
+/* ================= Phaser-Szenen ================= */
+const P4 = window.Phaser;
+let GAME = null, READY = null;
+const W = () => GAME ? GAME.scale.width : innerWidth, H = () => GAME ? GAME.scale.height : innerHeight;
+function sky(scene, top, bottom) {
+  const g = scene.add.graphics(); g.fillGradientStyle(top, top, bottom, bottom, 1); g.fillRect(0, 0, 4000, 3000); g.setScrollFactor(0); return g;
+}
+class Boot extends P4.Scene {
+  constructor() { super('Boot'); }
+  create() { addTextures(this); if (READY) READY(); }
+}
+// Hintergrund für Menü, Ton-Hüpfer-Auswahl und Zauberbuch: Wiese mit Figur
+class Bg extends P4.Scene {
+  constructor() { super('Bg'); }
+  create() {
+    sky(this, 0x9fdcff, 0xe9f8ff);
+    this.cl = [0, 1, 2].map(i => this.add.image(200 + i * 380, 60 + i * 34, 'cloud').setAlpha(0.9));
+    this.hills = this.add.tileSprite(0, 0, 4000, 170, 'hills').setOrigin(0, 0);
+    this.ground = this.add.tileSprite(0, 0, 4000, 64, 'ground').setOrigin(0, 0);
+    this.fig = makeFig(this, 0, 0, 0.62); this.t = 0;
+    this.notes = [];
+    for (let i = 0; i < 5; i++) { const n = this.add.text(0, 0, i % 2 ? '♪' : '♫', { fontFamily: 'sans-serif', fontSize: '34px', color: '#7b5cff', fontStyle: 'bold' }).setAlpha(0); this.notes.push(n); }
+  }
+  update(time, delta) {
+    const dt = delta / 1000; this.t += dt; const w = W(), h = H();
+    this.hills.y = h - 64 - 150; this.ground.y = h - 64;
+    this.cl.forEach((c, i) => { c.x -= (8 + i * 4) * dt; if (c.x < -100) c.x = w + 100; });
+    const fx = Math.max(60, Math.min(150, (w - 740) / 2 - 40)); this.fig.setPosition(fx, h - 58); this.fig.pose(this.t, 'idle');
+    this.notes.forEach((n, i) => { const p = ((this.t * 0.35 + i / 5) % 1); n.setPosition(fx + 40 + Math.sin(p * 6 + i) * 20, h - 180 - p * 160); n.setAlpha(Math.sin(p * Math.PI) * 0.8); });
+  }
+}
+// Vorspann: 4 Bilder
+class Intro extends P4.Scene {
+  constructor() { super('Intro'); }
+  init(d) { this.i = d.i || 0; }
+  create() {
+    const i = this.i, w = W(), h = H(); this.t = 0; this.fl = [];
+    const float = (txt, x, y, col, size) => { const o = this.add.text(x, y, txt, { fontFamily: 'sans-serif', fontSize: (size || 40) + 'px', color: col || '#7b5cff', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5); o.by = y; o.ph = Math.random() * 6; this.fl.push(o); return o; };
+    if (i === 0) {
+      sky(this, 0x7fd0ff, 0xd8f4ff);
+      const g = this.add.graphics();
+      g.fillStyle(0x3fa9f5).fillRect(0, h * 0.62, w, h); g.fillStyle(0xffe08a).fillEllipse(w * 0.5, h * 0.66, w * 0.8, 120); g.fillStyle(0x8ee08a).fillEllipse(w * 0.5, h * 0.6, w * 0.7, 120);
+      [0.3, 0.5, 0.7].forEach((fx, k) => {
+        const x = w * fx, y = h * 0.52 - (k === 1 ? 30 : 0);
+        g.fillStyle(0x8b5a2b).fillRect(x - 10, y, 20, 60); g.fillStyle([0x5fbf4f, 0x4fae5a, 0x6cc04a][k]).fillCircle(x, y - 20, 56);
+        g.fillStyle(0x3a2d4a).fillCircle(x - 16, y - 28, 6).fillCircle(x + 16, y - 28, 6).fillEllipse(x, y - 4, 22, 18 + k * 4);
+        float(k % 2 ? '♫' : '♪', x + 40, y - 90, ['#ff4f8b', '#7b5cff', '#2fb35a'][k]);
+      });
+      this.waves = this.add.graphics();
+    } else if (i === 1) {
+      sky(this, 0xd9c2ff, 0xfff0fb);
+      this.add.image(w * 0.5, h * 0.55, 'king').setScale(Math.min(1.25, h / 400));
+      float('QUIEK!', w * 0.68, h * 0.3, '#c2185b', 46); float('hihi', w * 0.18, h * 0.42, '#7d6d8c', 30); float('haha', w * 0.84, h * 0.6, '#7d6d8c', 30);
+      const my = Math.min(h * 0.72, h - 170); [0.12, 0.88].forEach(fx => { const s = this.add.image(w * fx, my, 'squeak').setScale(0.9); this.fl.push(Object.assign(s, { by: my, ph: fx * 9 })); });
+    } else if (i === 2) {
+      sky(this, 0x9a93ad, 0xd7d2e2);
+      const g = this.add.graphics(); g.fillStyle(0x7b7390).fillEllipse(w * 0.5, h * 0.3, w * 0.9, 120).fillEllipse(w * 0.2, h * 0.22, 260, 90).fillEllipse(w * 0.8, h * 0.24, 280, 90);
+      g.fillStyle(0x9aa58f).fillRect(0, h * 0.78, w, h);
+      this.add.image(w * 0.5, h * 0.42, 'king').setScale(Math.min(0.85, h / 560));
+      g.lineStyle(8, 0xffd23f).beginPath(); g.moveTo(w * 0.62, h * 0.18); g.lineTo(w * 0.66, h * 0.3); g.lineTo(w * 0.6, h * 0.36); g.lineTo(w * 0.65, h * 0.6); g.strokePath();
+      const my = Math.min(h * 0.8, h - 170); [0.14, 0.28, 0.74, 0.88].forEach((fx, k) => { const s = this.add.image(w * fx, my, 'squeak').setScale(0.7); this.fl.push(Object.assign(s, { by: my, ph: k })); float('♪', w * fx + 26, my - 50, '#ffffff', 36); });
+    } else {
+      sky(this, 0xffd1f0, 0xe6f7ff);
+      const g = this.add.graphics(); [0xff8fa3, 0xffb86b, 0xffe66d, 0x8ee08a, 0x7cc8ff, 0xa996ff].forEach((c, k) => { g.lineStyle(18, c, 0.85).beginPath(); g.arc(w * 0.5, h * 0.95, w * 0.42 - k * 18, Math.PI, 0); g.strokePath(); });
+      this.fig = makeFig(this, w * 0.5, h * 0.8, Math.min(1.0, h / 460));
+      ['♪', '♫', '♪', '♫'].forEach((n, k) => float(n, w * (0.25 + k * 0.17), h * 0.25 + (k % 2) * 40, ['#ff4f8b', '#7b5cff', '#2fb35a', '#ffb03a'][k], 46));
+    }
+    this.input.on('pointerdown', () => UI.introNext());
+  }
+  update(time, delta) {
+    this.t += delta / 1000;
+    this.fl.forEach(o => { o.y = o.by + Math.sin(this.t * 2 + o.ph) * 10; });
+    if (this.waves) { const w = W(), h = H(); this.waves.clear().lineStyle(4, 0xffffff, 0.8); for (let k = 0; k < 6; k++) { const x = ((k * 190 + this.t * 40) % (w + 200)) - 100; this.waves.beginPath(); this.waves.arc(x, h * 0.86 + (k % 2) * 30, 22, Math.PI * 1.1, Math.PI * 1.9); this.waves.strokePath(); } }
+    if (this.fig) this.fig.pose(this.t, 'cheer');
+  }
+}
+
+/* ----- Ton-Hüpfer: Ton = Höhe. Die Welt läuft, die Figur springt auf die Höhe des gespielten Tons. ----- */
+const HOP = { on: false, paused: false, t: 0, fr: null, track: null, D: null, quiet: 0, resume: 0, wrongT: 0, wrongN: '', coins: 0, coinsAll: 0, hint: '', nextN: '' };
+const HOP_V = 170; // Bildpunkte pro Sekunde (bei 1024 Breite)
+class Hop extends P4.Scene {
+  constructor() { super('Hop'); }
+  create() {
+    sky(this, 0x9fdcff, 0xf0fbff);
+    this.cl = [0, 1, 2, 3].map(i => this.add.image(100 + i * 330, 90 + (i % 2) * 40, 'cloud').setAlpha(0.85));
+    this.hills = this.add.tileSprite(0, 0, 4000, 170, 'hills').setOrigin(0, 0);
+    this.ground = this.add.tileSprite(0, 0, 4000, 64, 'ground').setOrigin(0, 0);
+    this.gl = this.add.graphics(); this.gp = this.add.graphics();
+    const tr = HOP.track;
+    this.lab = tr.lanes.map(n => this.add.text(0, 0, n, { fontFamily: 'sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#3a2d4a', stroke: '#ffffff', strokeThickness: 6 }).setOrigin(0, 0.5).setDepth(5));
+    this.ptx = tr.plats.map(p => this.add.text(0, 0, p.name, { fontFamily: 'sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#3a2d4a' }).setOrigin(0.5, 0));
+    tr.plats.forEach(p => { p.coins = []; const n = Math.max(1, Math.round(p.len / 0.45)); for (let j = 0; j < n; j++) p.coins.push({ at: p.t + (j + 0.5) * p.len / n, got: false, im: this.add.image(0, 0, 'coin').setScale(0.8) }); });
+    HOP.coinsAll = tr.plats.reduce((a, p) => a + p.coins.length, 0);
+    this.fig = makeFig(this, 0, 0, 0.42); this.y = null; this.tt = 0; this.mode = 'idle';
+    this.flag = this.add.text(0, 0, '🏁', { fontSize: '64px' }).setOrigin(0.5, 1);
+  }
+  geo() {
+    const w = W(), h = H(), n = HOP.track.lanes.length, gy = h - 64, top = Math.min(200, h * 0.36), bottom = gy - 64;
+    const sp = n > 1 ? Math.min(76, (bottom - top) / (n - 1)) : 0;
+    return { w, h, gy, figX: Math.max(150, w * 0.26), laneY: i => bottom - i * sp, v: HOP_V * Math.max(0.8, w / 1024) };
+  }
+  // Bahn zum gespielten Ton; Töne außerhalb der Bahnen landen am Rand (unten bzw. oben)
+  laneOf(a) {
+    const L = HOP.track.lanes, i = L.indexOf(a.name); if (i >= 0) return i;
+    return a.midi < KL.NOTES[L[0]].midi ? 0 : L.length - 1;
+  }
+  update(time, delta) {
+    const dt = Math.min(0.05, delta / 1000) * SPEED, G = this.geo(), tr = HOP.track; this.tt += dt;
+    if (HOP.on && !HOP.paused) HOP.t += dt;
+    const t = HOP.t, moving = HOP.on && !HOP.paused;
+    this.hills.y = G.h - 64 - 150; this.ground.y = G.gy;
+    if (moving) { this.hills.tilePositionX += 30 * dt; this.ground.tilePositionX += G.v * dt; this.cl.forEach((c, i) => { c.x -= (10 + i * 3) * dt; if (c.x < -100) c.x = G.w + 100; }); }
+    // Bahnen mit Notennamen am Rand
+    this.gl.clear();
+    tr.lanes.forEach((n, i) => { const y = G.laneY(i); this.gl.lineStyle(2, noteCol(n), 0.35); for (let x = 70; x < G.w; x += 28) { this.gl.beginPath(); this.gl.moveTo(x, y); this.gl.lineTo(x + 14, y); this.gl.strokePath(); } this.gl.fillStyle(noteCol(n), 1).fillCircle(20, y, 9); this.lab[i].setPosition(34, y); });
+    // Plattformen und Münzen
+    this.gp.clear();
+    tr.plats.forEach((p, i) => {
+      const x = G.figX + (p.t - t) * G.v, wd = p.len * G.v, y = G.laneY(tr.lanes.indexOf(p.name)), vis = x < G.w + 40 && x + wd > -40;
+      this.ptx[i].setVisible(vis); p.coins.forEach(c => c.im.setVisible(vis && !c.got));
+      if (!vis) return;
+      const col = noteCol(p.name), a = p.done && !p.hit ? 0.4 : 1;
+      this.gp.fillStyle(0x5a4668, 0.25 * a).fillRoundedRect(x + 3, y + 5, wd, 18, 9);
+      this.gp.fillStyle(col, a).fillRoundedRect(x, y, wd, 18, 9);
+      if (p.hit) this.gp.lineStyle(4, 0xffcf2e, 1).strokeRoundedRect(x - 2, y - 2, wd + 4, 22, 10);
+      this.ptx[i].setPosition(x + Math.min(wd / 2, 40), y + 20).setAlpha(a);
+      p.coins.forEach(c => { if (!c.got) c.im.setPosition(G.figX + (c.at - t) * G.v, y - 26 + Math.sin(this.tt * 4 + c.at) * 3); });
+    });
+    const fx = G.figX + (tr.end - 0.8 - t) * G.v; this.flag.setPosition(fx, G.gy + 4).setVisible(fx < G.w + 60);
+    // Figur: Ton = Höhe; Stille = langsam nach unten gleiten (der Boden ist sicher)
+    const fr = HOP.fr; let ty = G.gy;
+    if (fr && fr.voiced && fr.a) { const li = this.laneOf(fr.a); if (li >= 0) ty = G.laneY(li); }
+    if (this.y == null) this.y = G.gy;
+    if (fr && fr.voiced && fr.a && ty < G.gy) this.y += (ty - this.y) * Math.min(1, dt * 14); else this.y = Math.min(G.gy, this.y + 150 * dt);
+    this.mode = !HOP.on && HOP.done ? 'cheer' : this.y >= G.gy - 1 ? (moving ? 'run' : 'idle') : 'float';
+    this.fig.setPosition(G.figX, this.y); this.fig.pose(this.tt, this.mode);
+  }
+  coinFx(c) { if (!c.im) return; this.tweens.add({ targets: c.im, y: c.im.y - 40, alpha: 0, duration: 400, onComplete: () => c.im.setVisible(false) }); }
+}
+
+/* ----- Zauber-Bühne: Figur und ein Ding, das die Klang-Formel kennt (Laterne, Pflanze, Truhe) ----- */
+class Spell extends P4.Scene {
+  constructor() { super('Spell'); }
+  init(d) { this.sp = d.sp; this.dir = d.dir || 1; }
+  create() {
+    const w = W(), h = H(), id = this.sp.id; this.t = 0; this.mode = 'idle';
+    sky(this, 0xb9e6ff, 0xf3fbff);
+    this.add.tileSprite(0, h - 64 - 150, 4000, 170, 'hills').setOrigin(0, 0); this.add.tileSprite(0, h - 64, 4000, 64, 'ground').setOrigin(0, 0);
+    this.fig = makeFig(this, Math.max(55, w * 0.06), h - 58, 0.5);
+    const px = w * 0.84, gy = h - 60; this.px = px; this.gy = gy;
+    this.dark = this.add.rectangle(0, 0, 4000, 3000, 0x1b1030, id === 'leuchten' ? 0.45 : 0).setOrigin(0, 0);
+    if (id === 'leuchten') {
+      this.glow = this.add.image(px, gy - 216, 'glow').setScale(3).setAlpha(0); this.prop = this.add.image(px, gy, 'lantern').setOrigin(0.5, 1).setScale(0.9);
+    } else if (id === 'wachsen') {
+      this.prop = this.add.container(px, gy); const g = this.add.graphics();
+      g.fillStyle(0x4caf50).fillRect(-7, -200, 14, 200); g.fillStyle(0x6cc04a).fillEllipse(-36, -80, 64, 26).fillEllipse(36, -130, 64, 26);
+      g.fillStyle(0xff8fa3); for (let k = 0; k < 6; k++) g.fillCircle(Math.cos(k / 6 * Math.PI * 2) * 28, -210 + Math.sin(k / 6 * Math.PI * 2) * 28, 20);
+      g.fillStyle(0xffd23f).fillCircle(0, -210, 18); this.prop.add(g);
+      this.grow = this.dir === 1 ? 0.25 : 1; this.prop.setScale(this.grow);
+    } else {
+      this.prop = this.add.image(px, gy, 'chest').setOrigin(0.5, 1); this.lid = this.add.image(px + 100, gy - 116, 'lid').setOrigin(1, 1); // Scharnier hinten rechts
+      this.open = this.dir === -1; this.lid.rotation = this.open ? 1.15 : 0;
+      if (this.open) this.gold = this.add.image(px, gy - 130, 'glow').setScale(1.4).setAlpha(0.9);
+    }
+    this.fly = [];
+  }
+  // Ding singt vor: Noten fliegen heraus
+  sing(n) { const o = this.add.text(this.px + (Math.random() - 0.5) * 60, this.gy - 200, n % 2 ? '♫' : '♪', { fontFamily: 'sans-serif', fontSize: '40px', color: '#7b5cff', fontStyle: 'bold', stroke: '#fff', strokeThickness: 5 }).setOrigin(0.5); this.tweens.add({ targets: o, y: o.y - 90, x: o.x - 60, alpha: 0, duration: 1200, onComplete: () => o.destroy() }); }
+  // ein richtiger Ton: kleiner Glitzer und ein Stück Wirkung
+  step(k, n) {
+    const s = this.add.image(this.px + (Math.random() - 0.5) * 80, this.gy - 120 - Math.random() * 80, 'spark').setScale(1.6);
+    this.tweens.add({ targets: s, scale: 0, angle: 180, duration: 700, onComplete: () => s.destroy() });
+    const f = (k + 1) / n;
+    if (this.sp.id === 'leuchten' && this.glow) this.glow.setAlpha(0.15);
+    if (this.sp.id === 'wachsen') { const g = this.dir === 1 ? 0.25 + 0.4 * f : 1 - 0.5 * f; this.tweens.add({ targets: this.prop, scale: g, duration: 300 }); }
+    if (this.sp.id === 'oeffnen') this.tweens.add({ targets: this.prop, x: this.px + 6, duration: 60, yoyo: true, repeat: 2 });
+  }
+  // Wirkung der ganzen Formel
+  done() {
+    const id = this.sp.id; this.mode = 'cheer';
+    if (id === 'leuchten') { this.tweens.add({ targets: this.glow, alpha: 1, scale: 4, duration: 900 }); this.tweens.add({ targets: this.dark, alpha: 0, duration: 1200 }); }
+    if (id === 'wachsen') this.tweens.add({ targets: this.prop, scale: this.dir === 1 ? 1.15 : 0.15, duration: 900, ease: 'Back.easeOut' });
+    if (id === 'oeffnen') {
+      this.tweens.add({ targets: this.lid, rotation: this.dir === 1 ? 1.15 : 0, duration: 700, ease: 'Back.easeOut' });
+      if (this.dir === 1) { this.gold = this.add.image(this.px, this.gy - 130, 'glow').setScale(0.2).setAlpha(0); this.tweens.add({ targets: this.gold, scale: 1.6, alpha: 1, duration: 900 }); }
+      else if (this.gold) this.tweens.add({ targets: this.gold, alpha: 0, duration: 400 });
+    }
+    for (let i = 0; i < 12; i++) { const s = this.add.image(this.px, this.gy - 150, 'spark').setScale(1.4); this.tweens.add({ targets: s, x: this.px + Math.cos(i / 12 * 6.28) * 160, y: this.gy - 150 + Math.sin(i / 12 * 6.28) * 120, alpha: 0, duration: 1100, onComplete: () => s.destroy() }); }
+  }
+  update(time, delta) {
+    this.t += delta / 1000; this.fig.pose(this.t, this.mode);
+    if (this.glow && this.mode === 'cheer') this.glow.alpha = 0.85 + Math.sin(this.t * 3) * 0.15;
+  }
+}
+function scene(key, data) {
+  const sm = GAME.scene;
+  ['Bg', 'Intro', 'Hop', 'Spell'].forEach(k => { if (k !== key && (sm.isActive(k) || sm.isPaused(k))) sm.stop(k); });
+  sm.start(key, data || {});
+}
+const sceneObj = key => GAME && GAME.scene.isActive(key) ? GAME.scene.getScene(key) : null;
+
+/* ================= Oberfläche (HTML über dem Spielbild) ================= */
+const ui = (html, cls) => { $('ui').innerHTML = html || ''; $('ui').className = cls || ''; };
+const UI = {};
+let SCREEN = 'menu';
+function stopAll() { LISTEN = null; RUNNING = false; WANT = null; stopPlay(); HOP.on = false; $('play').classList.add('hide'); }
+
+/* ----- Menü ----- */
+function menu() {
+  stopAll(); SCREEN = 'menu'; scene('Bg'); hud();
+  const top = Math.min(S.unlocked, PLAYABLE), hopOk = KLG.stageOpen(1, top), nsp = KLG.spellsOpen(S.unlocked).length, learned = Object.keys(S.game.spells).length;
+  ui(`<div class="panel" style="max-width:720px"><h1>✨ ${esc(KL.genitive(CN))} Klang-Abenteuer</h1>
+  <div class="say">Hallo${cm()}! Der Misston-König hat die Welten verstimmt. Mit deiner Klarinette und Klang-Formeln stimmen wir sie wieder.</div>
+  <div class="gmenu">
+    <button class="gbtn main" data-act="hopsel"${hopOk ? '' : ' disabled'}><b>🎶</b><span>Ton-Hüpfer<small>Mit der Klarinette springen · zählt als Üben</small></span></button>
+    <button class="gbtn main" data-act="book"><b>📖</b><span>Zauberbuch<small>${learned} von ${nsp} Klang-Formeln gelernt</small></span></button>
+    <button class="gbtn soon" data-act="soon"><b>🗺️</b><span>Abenteuer<small>Welt 1 Summwiese · kommt bald</small></span></button>
+    <button class="gbtn soon" data-act="soon"><b>🧭</b><span>Klang-Reise<small>Rätsel mit Formeln · kommt bald</small></span></button>
+  </div>
+  <div class="row"><button class="btn alt" data-act="intro">🎬 Vorspann</button><a class="btn alt" href="./" style="text-decoration:none">🏠 Zurück zur App</a></div></div>`);
+}
+/* ----- Vorspann ----- */
+let INTRO = 0;
+function intro(i) {
+  stopAll(); SCREEN = 'intro'; INTRO = i || 0; scene('Intro', { i: INTRO });
+  const tx = KLG.introTexts(CN, S.name);
+  ui(`<div class="cap" data-act="introNext">${esc(tx[INTRO])}<small>${INTRO < 3 ? 'Tippe zum Weiterblättern (' + (INTRO + 1) + '/4)' : 'Tippe, um loszulegen!'}</small></div><button class="btn alt skip" data-act="introSkip">Überspringen ⏭</button>`);
+}
+UI.introNext = () => { if (SCREEN !== 'intro') return; if (INTRO < 3) intro(INTRO + 1); else { S.game.intro = true; save(); menu(); } };
+
+/* ----- Ton-Hüpfer: Auswahl, Spiel, Ergebnis ----- */
+let HOP_ISL = Math.min(S.unlocked, PLAYABLE);
+function hopSel(isl) {
+  stopAll(); SCREEN = 'hopsel'; if (isl) HOP_ISL = Math.max(2, Math.min(isl, S.unlocked, PLAYABLE)); scene('Bg');
+  const top = Math.min(S.unlocked, PLAYABLE), I = KL.ISLANDS[HOP_ISL - 1];
+  let isls = ''; for (let n = 2; n <= top; n++) isls += `<button class="${n === HOP_ISL ? 'on' : ''}" data-act="hopisl" data-n="${n}">${KL.ISLANDS[n - 1].icon} ${n}</button>`;
+  let nxt = 0; const cards = KLG.HOP_STAGES.map(st => {
+    const open = KLG.stageOpen(st.n, HOP_ISL), b = S.st[KLG.hopId(HOP_ISL, st.n)] ? S.st[KLG.hopId(HOP_ISL, st.n)].best : 0;
+    const isNext = open && !nxt && b < 2; if (isNext) nxt = st.n;
+    return `<button class="stg${open ? '' : ' lock'}${isNext ? ' next' : ''}" ${open ? `data-act="hopgo" data-s="${st.n}"` : 'data-act="hoplock"'}><b>${open ? st.icon : '🔒'}</b>${st.n}. ${st.name}<small>${open ? st.what : 'Braucht mehr Töne'}</small><small>${starStr(b)}</small></button>`;
+  }).join('');
+  ui(`<div class="panel"><h1>🎶 Ton-Hüpfer</h1><div class="say" style="font-size:20px">Spiel einen Ton, dann springt ${esc(CN)} auf seine Höhe: tief = unten, hoch = oben. Halte den Ton, solange die Plattform da ist. Ohne Ton gleitet ${esc(CN)} sanft zum Boden.</div>
+  <div class="islsel">Töne von Insel: ${isls}</div><div class="muted">${I.icon} ${I.name}: ${KLG.hopLanes(HOP_ISL).join(' ')}</div>
+  <div class="stages">${cards}</div><div class="row"><button class="btn alt" data-act="menu">⬅ Zurück</button></div></div>`);
+}
+let HOP_STAGE = 1;
+async function hopGo(stage) {
+  stopAll(); HOP_STAGE = stage; SCREEN = 'hop';
+  const seed = Math.floor(Math.random() * 1e9), tr = KLG.hopTrack(stage, HOP_ISL, Q.has('seed') ? +Q.get('seed') : seed); if (!tr) return hopSel();
+  if (!(await micOn())) return micFail(() => hopGo(stage));
+  tr.plats.forEach(p => { p.cov = 0; p.cs = []; p.done = false; p.hit = false; });
+  Object.assign(HOP, { on: false, done: false, paused: false, t: 0, fr: null, track: tr, D: KL.diff(HOP_ISL, S.set.tolAdj), quiet: 0, resume: 0, wrongT: 0, wrongN: '', coins: 0, hint: '', nextN: '' });
+  scene('Hop'); wake();
+  $('play').classList.remove('hide'); $('pGauge').innerHTML = DR.gaugeSVG(HOP.D.tol, false, false); $('pHint').innerHTML = ''; $('pNext').innerHTML = '';
+  let n = 3; ui(`<div class="pauseov" style="background:transparent"><div><div class="cnt">${n}</div><div class="say">Hände an die Klarinette${cm()} …</div></div></div>`);
+  const tm = setInterval(() => {
+    n--; if (SCREEN !== 'hop') return clearInterval(tm);
+    if (n > 0) { const c = document.querySelector('.cnt'); if (c) c.textContent = n; return; }
+    clearInterval(tm); ui(''); HOP.on = true; RUNNING = true; LISTEN = hopFrame;
+    WANT = () => KLG.hopWant(HOP.track, HOP.t, 0.3);
+    setHint(stage === 1 ? 'Halte den Ton lang – wie eine Brücke!' : 'Los geht\'s!');
+  }, 800 / SPEED);
+}
+function setHint(h) { if (HOP.hint !== h) { HOP.hint = h; $('pHint').innerHTML = h; } }
+function hopFrame(fr) {
+  HOP.fr = fr; if (!HOP.on) return;
+  const tr = HOP.track, D = HOP.D, t = HOP.t;
+  // Pause nach 8 s Stille, weiter mit dem nächsten Ton (kein Tippen nötig)
+  if (fr.voiced) HOP.quiet = 0; else HOP.quiet += fr.dt;
+  if (HOP.paused) { if (fr.voiced) { HOP.resume += fr.dt; if (HOP.resume > 0.3) { HOP.paused = false; RUNNING = true; ui(''); setHint('Weiter geht\'s!'); } } else HOP.resume = 0; return; }
+  if (HOP.quiet > 8 && t > 1) { HOP.paused = true; HOP.resume = 0; RUNNING = false; ui(`<div class="pauseov"><div class="panel"><h1>⏸ Pause</h1><div class="say">Spiel einfach einen Ton, dann geht es weiter.</div><div class="row"><button class="btn alt" data-act="hopquit">Aufhören</button></div></div></div>`); return; }
+  const cur = tr.plats.find(p => t >= p.t && t < p.t + p.len), nx = cur || tr.plats.find(p => p.t > t);
+  // nächster Ton mit Griffbild am Rand
+  const nn = nx ? nx.name : ''; if (nn !== HOP.nextN) { HOP.nextN = nn; $('pNext').innerHTML = nn ? `<small>${cur ? 'Jetzt' : 'Gleich'}</small>${nn}${DR.fingSVG(nn)}` : ''; }
+  else if (nx) { const s = $('pNext').querySelector('small'); if (s && s.textContent !== (cur ? 'Jetzt' : 'Gleich')) s.textContent = cur ? 'Jetzt' : 'Gleich'; }
+  if (fr.voiced && fr.a) {
+    const target = cur ? cur.name : nn, ok = target && fr.a.name === target && Math.abs(fr.a.cents) <= D.tol;
+    if (target) DR.needle(fr.a.name === target ? fr.a.cents : (KL.NOTES[target] && fr.a.midi < KL.NOTES[target].midi ? -50 : 50)); else DR.needle(fr.a.cents);
+    if (cur && ok) {
+      cur.cov += fr.dt; cur.cs.push(fr.a.cents); HOP.wrongT = 0; DR.gaugeWrong('');
+      const sc = sceneObj('Hop');
+      cur.coins.forEach(c => { if (!c.got && c.at <= t + 0.2) { c.got = true; HOP.coins++; sCoin(); if (sc) sc.coinFx(c); } });
+    } else if (target && fr.a.name !== target) {
+      if (fr.a.name === HOP.wrongN) HOP.wrongT += fr.dt; else { HOP.wrongN = fr.a.name; HOP.wrongT = fr.dt; }
+      if (HOP.wrongT > 0.35 && cur) { DR.gaugeWrong(fr.a.name); const tm = KL.NOTES[target].midi; setHint(`<span class="wrong">Du spielst <b>${fr.a.name}</b> – gesucht ist <b>${target}</b>.</span> ${fr.a.midi < tm ? 'Etwas höher ⬆' : 'Etwas tiefer ⬇'}`); }
+    } else if (cur && fr.a.name === target) setHint(`Fast! Dein <b>${target}</b> ist etwas zu ${fr.a.cents > 0 ? 'hoch ⬇' : 'tief ⬆'}`);
+  } else { DR.needle(null); if (HOP.quiet > 0.6) DR.gaugeWrong(''); }
+  // vorbeigezogene Plattformen bewerten
+  tr.plats.forEach(p => {
+    if (p.done || t < p.t + p.len) return;
+    p.done = true; p.hit = KLG.hopPlatHit(p.cov, p.len);
+    KL.noteStat(S, p.name, p.hit, avg(p.cs), today());
+    if (p.hit) { sOk(); setHint(pick(['Super!', 'Genau!', 'Klasse!', 'Toll gehalten!'])); } else setHint(`Nächstes Mal den Ton ${p.name} länger halten.`);
+  });
+  if (t >= tr.end) hopEnd();
+}
+function hopEnd() {
+  if (!HOP.on) return; HOP.on = false; HOP.done = true; LISTEN = null; RUNNING = false; WANT = null;
+  const tr = HOP.track, score = KLG.hopScore(tr.plats), earned = KL.starsFor(score, HOP_ISL), hits = tr.plats.filter(p => p.hit).length;
+  const r = KL.award(S, { id: KLG.hopId(HOP_ISL, HOP_STAGE), isl: HOP_ISL, earned, date: today(), playable: PLAYABLE, medal: 0 });
+  S.game.coins += HOP.coins; save(); hud();
+  const c = cm(), msg = earned === 3 ? `Wow${c}, alle Plattformen geschafft!` : earned === 2 ? `Klasse${c}! Fast alles getroffen.` : earned === 1 ? `Ein guter Anfang${c}! Versuch es gleich nochmal.` : `Das war schwer${c}. Hör auf das Zeichen am Rand und halte die Töne etwas länger.`;
+  $('play').classList.add('hide');
+  ui(`<div class="panel sres"><div class="stars">${starStr(earned)}</div><div class="say">${msg}</div>
+  <p style="font-size:22px;font-weight:800;margin:4px 0">${hits} von ${tr.plats.length} Plattformen · ♪ ${HOP.coins} Noten-Münzen<br>${r.pay ? '+' + r.pay + ' ⭐' : r.current ? 'Kein neuer Stern – knack deinen Rekord!' : 'Gut geübt! Neue Sterne gibt es mit den Tönen der neuen Inseln.'}${r.tix ? ' · +' + r.tix + ' 🎟️' : ''}</p>
+  ${r.extra.length ? '<p class="xtra">' + r.extra.join('<br>') + '</p>' : ''}
+  <div class="row"><button class="btn alt" data-act="hopsel">⬅ Stufen</button><button class="btn pink huge" data-act="hopagain">🔁 Nochmal</button>${HOP_STAGE < 4 && KLG.stageOpen(HOP_STAGE + 1, HOP_ISL) && earned >= 2 ? `<button class="btn green huge" data-act="hopnext">➡ Stufe ${HOP_STAGE + 1}</button>` : ''}</div></div>`);
+  if (earned >= 2) sStar(); if (earned === 3) confetti();
+  // Lied-Pfad: am Ende erklingt die Melodie mit Begleitung
+  if (HOP_STAGE === 4 && earned >= 1 && tr.song) setTimeout(() => { if (SCREEN === 'hop') playNotes(KL.parseMelody(tr.song.mel), tr.song.bpm, null, true); }, 900);
+  window.KLSPIEL.last = { kind: 'hop', earned, score, pay: r.pay, coins: HOP.coins };
+}
+function micFail(retry) {
+  stopAll(); UI.retry = retry;
+  ui(`<div class="panel"><h1>🎤 Ich kann dich nicht hören</h1><div class="say">${micWhy()} <span class="muted">(${esc(MIC.err)})</span></div><div class="row"><button class="btn pink" data-act="retry">Nochmal versuchen</button><button class="btn alt" data-act="menu">Zurück</button></div></div>`);
+}
+
+/* ----- Zauberbuch und Klang-Formeln ----- */
+const HELP_NAME = ['', 'mit Namen', 'nur Noten', 'nur hören'];
+function book() {
+  stopAll(); SCREEN = 'book'; scene('Bg');
+  const cards = KLG.SPELLS.map(sp => {
+    const open = sp.isl <= S.unlocked, r = S.game.spells[sp.id];
+    if (!open) return `<button class="spc lock" data-act="spelllock" data-n="${sp.isl}"><b>🔒</b>???<small>ab Insel ${sp.isl}</small></button>`;
+    return `<button class="spc${r && r.gold ? ' gold' : ''}" data-act="spell" data-id="${sp.id}"><b>${sp.icon}</b>${sp.name}${r && r.gold ? ' 🏅' : ''}<small>${r ? 'Hilfe: ' + HELP_NAME[KLG.helpLevel(r, S.set.help)] + (sp.rev ? ' · rückwärts: ' + sp.rev.name : '') : '✨ Neu! Tippe zum Lernen'}</small></button>`;
+  }).join('');
+  ui(`<div class="panel book"><h1>📖 ${esc(KL.genitive(CN))} Zauberbuch</h1><div class="muted">Klang-Formeln sind kleine Tonfolgen mit Zauberkraft. Rückwärts gespielt bewirken sie das Gegenteil. Mit jeder Insel kommen neue dazu.</div><div class="spells">${cards}</div><div class="row"><button class="btn alt" data-act="menu">⬅ Zurück</button></div></div>`);
+}
+let SP = null; // { sp, dir, lv, run, L, idle, replays, learn }
+function spellPage(id, dir) {
+  stopAll(); SCREEN = 'spell';
+  const sp = KLG.spell(id); if (!sp || sp.isl > S.unlocked) return book();
+  const r = S.game.spells[sp.id], learn = !r, lv = learn ? 1 : KLG.helpLevel(r, S.set.help); dir = learn || !sp.rev ? 1 : (dir || 1);
+  SP = { sp, dir, lv, learn };
+  scene('Spell', { sp, dir });
+  const notes = KLG.spellMelody(sp, dir), title = dir === -1 ? `${sp.rev.icon} ${sp.rev.name} <span class="muted">(${sp.name} rückwärts)</span>` : `${sp.icon} ${sp.name}`;
+  let show;
+  if (lv === 1) show = `<div class="staff">${DR.staffSVG(notes, { single: false, per: 1 })}</div><div class="fings">${notes.map(n => `<div>${n.name}${DR.fingSVG(n.name)}</div>`).join('')}</div>`;
+  else if (lv === 2) show = `<div class="staff">${DR.staffSVG(notes, { per: 1 })}</div>`;
+  else show = `<div class="listen">🎧</div><div class="dots" id="dots">${notes.map(() => '○').join(' ')}</div>`;
+  const say = learn ? `${sp.from[0].toUpperCase() + sp.from.slice(1)} spielt dir eine Klang-Formel vor. Hör gut zu und spiel sie nach!` : sp.what;
+  ui(`<div class="panel book sppan"><h1 style="margin-bottom:2px">${title}<span class="lvl${lv === 3 ? ' g' : ''}">Hilfe: ${HELP_NAME[lv]}</span>${r && r.gold ? ' 🏅' : ''}</h1>
+  <div class="say" id="spSay" style="font-size:20px">${say}</div>${show}
+  <div class="row"><button class="btn alt" data-act="spellplay">▶ Anhören</button><button class="btn pink huge" data-act="spellgo">🎤 ${learn ? 'Lernen' : 'Zaubern'}</button></div>
+  <div class="row">${!learn && sp.rev ? `<button class="btn alt" data-act="spelldir">${dir === 1 ? '◀ Rückwärts: ' + sp.rev.name : '▶ Vorwärts: ' + sp.name}</button>` : ''}<button class="btn alt" data-act="book">📖 Zauberbuch</button></div></div>`, 'left');
+  window.KLSPIEL.spell = SP;
+}
+function spellDemo(then) {
+  const sc = sceneObj('Spell'), notes = KLG.spellMelody(SP.sp, SP.dir);
+  const d = playNotes(notes, 72, i => { if (sc) sc.sing(i); });
+  if (then) setTimeout(then, (d + 0.4) * 1000 / SPEED);
+}
+async function spellGo() {
+  if (!SP) return; stopPlay();
+  if (!(await micOn())) return micFail(() => spellPage(SP.sp.id, SP.dir));
+  const sp = SP.sp, D = KL.diff(Math.min(S.unlocked, PLAYABLE), S.set.tolAdj);
+  SP.run = KLG.spellRun(sp, SP.dir); SP.L = KLG.noteListener(D); SP.idle = 0; SP.replays = 0; SP.noteMiss = 0; SP.D = D;
+  document.querySelectorAll('[data-act="spellgo"],[data-act="spelldir"],[data-act="spellplay"]').forEach(b => { b.disabled = true; });
+  const listen = () => {
+    if (SCREEN !== 'spell' || !SP.run) return;
+    spSay(SP.lv === 3 ? 'Jetzt du! Spiel nach, was du gehört hast. 🎤' : 'Jetzt du! 🎤 ' + esc(CN) + ' hört zu.');
+    RUNNING = true; wake(); LISTEN = spellFrame; WANT = () => spellWant();
+  };
+  // Beim Lernen und auf Stufe „nur hören“ spielt das Ding die Formel zuerst vor
+  if (SP.learn || SP.lv === 3) { spSay('Hör gut zu …'); spellDemo(listen); } else listen();
+}
+function spSay(h) { const e = $('spSay'); if (e) e.innerHTML = h; }
+function spellMark(i, cls) {
+  const e = document.getElementById('n' + i); if (e) { e.classList.remove('now', 'ok', 'bad'); e.classList.add(cls); }
+  const d = $('dots'); if (d && cls === 'ok') { const a = d.textContent.split(' '); a[i] = '●'; d.innerHTML = a.map(x => x === '●' ? '<span class="ok">●</span>' : x).join(' '); }
+}
+function spellFrame(fr) {
+  const run = SP.run, sc = sceneObj('Spell');
+  SP.L.step(fr);
+  if (fr.voiced) SP.idle = 0; else SP.idle += fr.dt;
+  if (SP.idle > 10) { SP.idle = 0; spSay(SP.dir === -1 ? 'Tipp: Spiel die Formel von hinten nach vorne. Hör nochmal …' : 'Vielleicht klappt es, wenn du sie noch einmal hörst …'); LISTEN = null; spellDemo(() => { if (SCREEN === 'spell' && SP.run && !SP.run.done) { LISTEN = spellFrame; spSay('Jetzt du! 🎤'); } }); return; }
+  const res = run.update(SP.L); if (!res) return;
+  if (res.ok !== undefined) { spellMark(res.ok, 'ok'); SP.noteMiss = 0; if (sc) sc.step(res.ok, run.notes.length); blip(780 + res.ok * 90, 0, 0.12); if (!res.done) spSay(pick(['Genau!', 'Richtig!', 'Weiter so!'])); }
+  if (res.wrong) {
+    sBad(); SP.noteMiss++;
+    const want = res.want, m = KL.NOTES[res.wrong] ? KL.NOTES[res.wrong].midi : null, wm = KL.NOTES[want].midi;
+    const dirTxt = m == null ? '' : m < wm ? 'Etwas höher ⬆' : m > wm ? 'Etwas tiefer ⬇' : 'Fast! Noch etwas sauberer.';
+    // Stufe 1 nennt den gesuchten Ton, Stufe 2 und 3 nur die Richtung (sonst wäre Notenlesen bzw. Hören überflüssig)
+    spSay(`<span class="wrong" style="color:#c2185b">Du spielst <b>${res.wrong}</b>${SP.lv === 1 ? ' – gesucht ist <b>' + want + '</b>' : ''}.</span> ${dirTxt}`);
+    if (SP.noteMiss >= 3) { SP.noteMiss = 0; LISTEN = null; spSay('Das war schwer. Hör noch einmal genau hin …'); spellDemo(() => { if (SCREEN === 'spell' && SP.run && !SP.run.done) { LISTEN = spellFrame; spSay('Jetzt du! 🎤'); } }); }
+  }
+  if (res.short) spSay(`Länger halten! Der Ton ${res.short} muss ${res.need} Sekunden klingen. Tief einatmen …`);
+  if (res.done) spellEnd();
+}
+function spellWant() { // simulierter Spieler: spielt den gesuchten Ton (beim langen Ton lange genug), mit kurzer Pause dazwischen
+  const run = SP && SP.run; if (!run || run.done) return null;
+  const tN = now(), ph = tN % 0.8; if (!(SP.sp.long && run.k === run.notes.length - 1) && ph > 0.62) return null;
+  return run.notes[run.k];
+}
+function spellEnd() {
+  LISTEN = null; RUNNING = false; WANT = null;
+  const sp = SP.sp, run = SP.run, score = run.score(), earned = KL.starsFor(score, sp.isl);
+  const lv = SP.lv, res = KLG.spellSuccess(S.game, sp.id, lv, today(), S.set.help);
+  const r = KL.award(S, { id: 'KF-' + sp.id, isl: sp.isl, earned, date: today(), playable: PLAYABLE, medal: 0 });
+  save(); hud();
+  const sc = sceneObj('Spell'); if (sc) sc.done();
+  sStar(); if (res.first || res.gold) confetti();
+  const nm = SP.dir === -1 ? sp.rev.icon + ' ' + sp.rev.name : sp.icon + ' ' + sp.name;
+  const news = [res.first ? `📖 Neue Klang-Formel im Zauberbuch: <b>${nm}</b>!` : '', res.gold ? '🏅 Gold-Siegel: nur nach Gehör gezaubert!' : '', res.up ? `⬆ Nächstes Mal schwerer: Hilfe „${HELP_NAME[res.up]}“` : '', res.first && sp.rev ? `Tipp: Rückwärts gespielt heißt sie <b>${sp.rev.name}</b>.` : ''].filter(Boolean);
+  setTimeout(() => {
+    if (SCREEN !== 'spell') return;
+    ui(`<div class="panel book sres sppan"><div class="stars">${starStr(earned)}</div><div class="say">${nm} – es hat gewirkt${cm()}!</div>
+    ${news.length ? '<p class="xtra">' + news.join('<br>') + '</p>' : ''}<p style="font-size:20px;font-weight:800;margin:2px 0">${r.pay ? '+' + r.pay + ' ⭐' : 'Gut geübt!'}${r.tix ? ' · +' + r.tix + ' 🎟️' : ''}</p>${r.extra.length ? '<p class="xtra">' + r.extra.join('<br>') + '</p>' : ''}
+    <div class="row"><button class="btn alt" data-act="book">📖 Zauberbuch</button><button class="btn pink" data-act="spellagain">🔁 Nochmal</button>${sp.rev ? `<button class="btn green" data-act="spellrev">${SP.dir === 1 ? '◀ Rückwärts probieren' : '▶ Vorwärts'}</button>` : ''}</div></div>`, 'left');
+  }, 1500 / SPEED);
+  window.KLSPIEL.last = { kind: 'spell', id: sp.id, dir: SP.dir, earned, score, pay: r.pay, first: res.first, gold: res.gold };
+}
+
+/* ================= Bedienung ================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
+  const a = b.dataset.act; ac();
+  if (a === 'menu') menu();
+  else if (a === 'intro') intro(0);
+  else if (a === 'introNext') UI.introNext();
+  else if (a === 'introSkip') { S.game.intro = true; save(); menu(); }
+  else if (a === 'soon') toast('🚧 Kommt mit dem nächsten Update: Welt 1 „Summwiese“ mit Brumm-Hummel Bruno und die erste Klang-Reise.', 4000);
+  else if (a === 'hopsel') hopSel();
+  else if (a === 'hopisl') hopSel(+b.dataset.n);
+  else if (a === 'hopgo') hopGo(+b.dataset.s);
+  else if (a === 'hoplock') toast('🔒 Diese Stufe braucht mehr Töne. Lerne auf den Inseln neue Töne!', 3500);
+  else if (a === 'hopagain') hopGo(HOP_STAGE);
+  else if (a === 'hopnext') hopGo(HOP_STAGE + 1);
+  else if (a === 'hopquit') { stopAll(); hopSel(); }
+  else if (a === 'pause') { if (SCREEN === 'hop' && HOP.on && !HOP.paused) { HOP.paused = true; HOP.resume = 0; RUNNING = false; ui(`<div class="pauseov"><div class="panel"><h1>⏸ Pause</h1><div class="say">Spiel einen Ton oder tippe auf Weiter.</div><div class="row"><button class="btn green huge" data-act="resume">▶ Weiter</button><button class="btn alt" data-act="hopquit">Aufhören</button></div></div></div>`); } }
+  else if (a === 'resume') { HOP.paused = false; HOP.quiet = 0; RUNNING = true; ui(''); }
+  else if (a === 'book') book();
+  else if (a === 'spell') spellPage(b.dataset.id, 1);
+  else if (a === 'spelllock') toast(`🔒 Diese Klang-Formel lernst du ab Insel ${b.dataset.n}.`, 3500);
+  else if (a === 'spellplay') { if (isPlaying()) stopPlay(); else if (SP) spellDemo(); }
+  else if (a === 'spellgo') spellGo();
+  else if (a === 'spelldir') { if (SP) spellPage(SP.sp.id, -SP.dir); }
+  else if (a === 'spellagain') { if (SP) spellPage(SP.sp.id, SP.dir); }
+  else if (a === 'spellrev') { if (SP) spellPage(SP.sp.id, -SP.dir); }
+  else if (a === 'retry') { if (UI.retry) UI.retry(); }
+  else if (a === 'snd') { S.set.mute = !S.set.mute; save(); hud(); if (!S.set.mute) sOk(); }
+});
+document.addEventListener('keydown', e => { if (SCREEN === 'intro' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); UI.introNext(); } });
+
+/* ================= Start ================= */
+window.KLSPIEL = { get S() { return S; }, HOP, get SP() { return SP; }, get SCREEN() { return SCREEN; }, last: null, ready: false, menu, hopSel, hopGo, book, spellPage, spellGo, intro };
+async function start() {
+  hud();
+  await buildTextures();
+  await new Promise(ok => {
+    READY = ok;
+    GAME = new P4.Game({ type: P4.AUTO, parent: 'stage', width: innerWidth, height: innerHeight, backgroundColor: '#bfe9ff', banner: false, audio: { noAudio: true },
+      scale: { mode: P4.Scale.RESIZE }, render: { antialias: true }, scene: [Boot, Bg, Intro, Hop, Spell] });
+  });
+  window.KLSPIEL.ready = true;
+  const go = Q.get('go'), isl = +(Q.get('isl') || 0);
+  if (DEMO === 'intro') intro(+(Q.get('i') || 0));
+  else if (DEMO === 'hop') { HOP_ISL = Math.max(2, Math.min(isl || 5, S.unlocked)); if (Q.has('go')) hopGo(+(Q.get('stage') || 1)); else hopSel(); }
+  else if (DEMO === 'book') book();
+  else if (DEMO === 'spell') { spellPage(Q.get('spell') || 'wachsen', +(Q.get('dir') || 1)); if (Q.has('go')) spellGo(); }
+  else if (DEMO) menu();
+  else if (!S.game.intro) intro(0);
+  else if (go === 'hop') hopSel(isl || undefined);
+  else if (go === 'book') book();
+  else menu();
+}
+if (!S.char) { location.replace('./'); } // ohne gewählte Figur zuerst in die App (Figurenwahl)
+else start();
+})();
+</script>
+</body>
+</html>
