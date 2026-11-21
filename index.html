@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#ff4f8b">
+<title>Flauschis Klarinetten-Abenteuer</title>
+<!-- Gebaut aus src/ mit: node tools/build.mjs · Nicht direkt bearbeiten, sondern die Dateien in src/ ändern. -->
+<style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Trebuchet MS","Segoe UI",Roboto,Arial,sans-serif;color:#3a2d4a;background:linear-gradient(160deg,#fff4fb 0%,#eef6ff 55%,#f1fff0 100%)}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#hud{display:flex;align-items:center;gap:8px;padding:6px 10px;min-height:54px;background:rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(90,70,104,.12);z-index:5}
+#hud .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:2px solid #e4d7f2;border-radius:22px;padding:4px 12px;font-weight:800;font-size:20px;white-space:nowrap}
+.ib{border:0;background:#fff;border-radius:16px;font-size:24px;width:48px;height:44px;box-shadow:0 2px 0 #d9cbe8}
+#tday{position:relative;overflow:hidden;min-width:150px}
+#tday i{position:absolute;left:0;top:0;bottom:0;background:#c9f2c4;z-index:0;transition:width .5s}
+#tday span{position:relative;z-index:1}
+main{flex:1;position:relative;overflow:hidden}
+.scr{position:absolute;inset:0;display:none;padding:12px 16px;overflow-y:auto}
+.scr.on{display:block}
+h1{margin:4px 0 8px;font-size:32px}
+h2{margin:4px 0 8px;font-size:26px}
+.btn{border:0;border-radius:22px;padding:14px 26px;font-size:24px;font-weight:800;color:#fff;background:#7b5cff;box-shadow:0 5px 0 #5a3cc0;margin:6px}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #5a3cc0}
+.btn.pink{background:#ff4f8b;box-shadow:0 5px 0 #c2185b}
+.btn.green{background:#2fb35a;box-shadow:0 5px 0 #1d7d3c}
+.btn.alt{background:#fff;color:#5a4668;box-shadow:0 5px 0 #d9cbe8;border:2px solid #e4d7f2}
+.btn.huge{font-size:34px;padding:22px 40px;border-radius:30px}
+.btn:disabled{opacity:.45}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
+.card{background:#fff;border-radius:26px;padding:16px 20px;box-shadow:0 6px 18px rgba(90,70,104,.12)}
+.say{background:#fff;border-radius:24px;padding:12px 18px;font-size:24px;font-weight:700;position:relative;box-shadow:0 4px 12px rgba(90,70,104,.12)}
+.muted{color:#7d6d8c;font-size:18px}
+/* Start */
+#home .wrap{display:flex;height:100%;align-items:center;justify-content:center;gap:24px}
+#hAlp{width:min(36vw,330px)}
+#home .menu{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:330px}
+/* Karte */
+#map .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.isl{border:0;border-radius:24px;background:#fff;padding:10px;text-align:center;box-shadow:0 5px 0 #d9cbe8;min-height:132px}
+.isl b{display:block;font-size:44px}
+.isl span{display:block;font-weight:800;font-size:17px}
+.isl small{display:block;font-size:14px;color:#7d6d8c}
+.isl.lock{background:#eee8f3;color:#9b8fa8;box-shadow:none}
+.isl.cur{outline:4px solid #ffcf2e}
+/* Insel */
+#isl .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.stn{border:0;border-radius:22px;background:#fff;padding:12px;text-align:left;box-shadow:0 5px 0 #d9cbe8;display:flex;gap:10px;align-items:center;min-height:86px}
+.stn .ic{font-size:36px}
+.stn .t{font-weight:800;font-size:19px}
+.stn .s{font-size:18px;letter-spacing:1px}
+.stn.hw{outline:4px solid #ff4f8b}
+/* Übung */
+#ex{display:none;flex-direction:column;padding:8px 14px}
+#ex.on{display:flex}
+#exTop{display:flex;align-items:center;gap:10px}
+#exTop h2{flex:1;margin:0}
+#exBody{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0}
+#exL{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:100%}
+#exR{width:150px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#exFing svg{width:120px;height:auto}
+#exAlp{width:140px}
+.bigname{font-size:64px;font-weight:900;line-height:1}
+.staff{width:100%;max-width:980px}
+.staff svg{width:100%;height:auto;display:block}
+.n{fill:#3a2d4a;stroke:#3a2d4a}
+.n.now{fill:#7b5cff;stroke:#7b5cff}
+.n.ok{fill:#2fb35a;stroke:#2fb35a}
+.n.bad{fill:#ff4f8b;stroke:#ff4f8b}
+.n .hol{fill:#fff}
+.meter{width:min(560px,90%);height:34px;border-radius:18px;background:#f0e8f8;overflow:hidden;border:3px solid #e4d7f2;margin:8px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8ee08a,#2fb35a);transition:width .12s}
+.tuner{position:relative;width:min(560px,90%);height:56px;margin:4px}
+.tuner .sc{position:absolute;left:0;right:0;top:24px;height:8px;border-radius:4px;background:linear-gradient(90deg,#ffb3c7,#fff1a8 35%,#8ee08a 45%,#8ee08a 55%,#fff1a8 65%,#ffb3c7)}
+.tuner .nd{position:absolute;top:6px;width:8px;height:44px;margin-left:-4px;border-radius:4px;background:#3a2d4a;left:50%;transition:left .1s}
+.tuner .lb{position:absolute;top:-2px;font-weight:800;font-size:16px}
+.hint{font-size:26px;font-weight:800;min-height:36px;text-align:center}
+.dots{display:flex;gap:10px;justify-content:center;margin:6px}
+.dots i{width:30px;height:30px;border-radius:50%;background:#efe6f7;border:3px solid #e4d7f2}
+.dots i.ok{background:#2fb35a;border-color:#1d7d3c}
+.dots i.bad{background:#ff4f8b;border-color:#c2185b}
+.dots i.now{border-color:#7b5cff;background:#d8ccff}
+.ring{width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;background:#e9f6ff;border:8px solid #7cc8ff;transition:transform 1s linear}
+.ov{position:absolute;inset:0;background:rgba(255,246,252,.94);display:none;align-items:center;justify-content:center;z-index:8;flex-direction:column;text-align:center;padding:16px}
+.ov.on{display:flex}
+.stars{font-size:72px;letter-spacing:6px}
+.stars .off{filter:grayscale(1);opacity:.3}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,95%)}
+.opt{border:0;border-radius:22px;background:#fff;font-size:30px;font-weight:900;padding:18px;box-shadow:0 5px 0 #d9cbe8;color:#3a2d4a}
+.opt.good{background:#c9f2c4}
+.opt.no{background:#ffd1df}
+.cnt{font-size:120px;font-weight:900;color:#7b5cff}
+/* Laden */
+#shop .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item{border:0;border-radius:20px;background:#fff;padding:8px;box-shadow:0 4px 0 #d9cbe8;text-align:center;font-weight:800}
+.item b{display:block;font-size:40px}
+.item.own{background:#f0fff0}
+.item.wear{outline:4px solid #2fb35a}
+.item.lock{opacity:.45}
+.item small{display:block;font-weight:600;font-size:13px;color:#7d6d8c}
+#shop .top{display:flex;gap:16px;align-items:center}
+#sAlp{width:170px;flex:none}
+/* Spiel */
+#run{padding:0}
+#runF{position:absolute;inset:0;overflow:hidden;touch-action:none}
+#runG{position:absolute;left:0;right:0;bottom:0;height:56px}
+#runA{position:absolute;left:50px;bottom:56px;width:100px;z-index:3}
+#runA.inv{opacity:.5}
+.ob{position:absolute;left:0;font-size:40px;line-height:1;z-index:2}
+#runH{position:absolute;left:10px;top:10px;display:flex;gap:6px;z-index:4}
+#runM{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;background:rgba(255,255,255,.55)}
+.lvl{display:grid;grid-template-columns:repeat(5,64px);gap:8px;justify-content:center;margin:8px}
+.lvl button{height:60px;border:0;border-radius:16px;font-size:20px;font-weight:900;background:#fff;box-shadow:0 4px 0 #d9cbe8}
+.lvl button.done{background:#c9f2c4}
+.lvl button:disabled{opacity:.35}
+/* Eltern */
+#par table{border-collapse:collapse;width:100%;font-size:17px}
+#par td,#par th{border-bottom:1px solid #eee3f5;padding:6px;text-align:left}
+.bars{display:flex;gap:8px;align-items:flex-end;height:150px;padding:6px;border-bottom:3px solid #e4d7f2;position:relative}
+.bars div{flex:1;background:#7cc8ff;border-radius:8px 8px 0 0;position:relative;min-height:2px}
+.bars div.hit{background:#2fb35a}
+.bars div span{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:13px}
+.bars div em{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:13px;font-style:normal;font-weight:800}
+.goal{position:absolute;left:0;right:0;border-top:2px dashed #ff4f8b}
+#par select,#par input,#par textarea{font-size:18px;padding:6px;border-radius:10px;border:2px solid #e4d7f2;font-family:inherit}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Flauschi-Animation */
+.salto{animation:salto .9s ease}
+@keyframes salto{0%{transform:translateY(0) rotate(0)}40%{transform:translateY(-70px) rotate(-180deg)}80%{transform:translateY(-10px) rotate(-360deg)}100%{transform:translateY(0) rotate(-360deg)}}
+.hop{animation:hop .5s ease}
+@keyframes hop{50%{transform:translateY(-22px)}}
+.tw{animation:tw 1.4s infinite}.tw.b{animation-delay:.4s}.tw.c{animation-delay:.8s}
+@keyframes tw{50%{opacity:.2}}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#3a2d4a;color:#fff;font-weight:800;font-size:22px;padding:10px 20px;border-radius:20px;display:none;z-index:20}
+.conf{position:fixed;top:-40px;font-size:34px;animation:fall 2.6s linear forwards;z-index:30;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (orientation:portrait){#home .wrap{flex-direction:column}#hAlp{width:44vw}#exBody{flex-direction:column}#exR{flex-direction:row;width:auto}.cols{grid-template-columns:1fr}}
+@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{width:96px}#exAlp{width:110px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <button class="ib" id="bHome" data-act="home" aria-label="Start">🏠</button>
+    <span class="chip" id="hStar">⭐ 0</span><span class="chip" id="hTix">🎟️ 0</span><span class="chip" id="hFire">🔥 0</span>
+    <span class="sp"></span>
+    <span class="chip" id="tday"></span>
+    <button class="ib" id="bSnd" data-act="snd" aria-label="Ton">🔊</button>
+  </div>
+  <main>
+    <section class="scr" id="home"><div class="wrap">
+      <div id="hAlp"></div>
+      <div class="menu">
+        <div class="say" id="hSay"></div>
+        <button class="btn pink huge" data-act="today">▶ Heute üben</button>
+        <div class="row" style="justify-content:stretch">
+          <button class="btn" style="flex:1" data-act="map">🗺️ Inseln</button>
+          <button class="btn" style="flex:1" data-act="shop">🛍️ Laden</button>
+        </div>
+        <div class="row" style="justify-content:stretch">
+          <button class="btn green" style="flex:1" data-act="run">🎮 Hüpfspiel</button>
+          <button class="btn alt" style="flex:1" data-act="tuner">🎚️ Ton-Lupe</button>
+        </div>
+        <button class="btn alt" data-act="par" style="font-size:18px;padding:8px">👪 Eltern</button>
+      </div>
+    </div></section>
+
+    <section class="scr" id="map"><h1>🗺️ Flauschis Inseln</h1><div class="grid" id="mapG"></div></section>
+
+    <section class="scr" id="isl"><div class="row" style="justify-content:space-between"><h1 id="islH"></h1><button class="btn alt" data-act="map">🗺️ Karte</button></div><div class="grid" id="islG"></div></section>
+
+    <section class="scr" id="ex">
+      <div id="exTop"><h2 id="exT"></h2><button class="btn alt" data-act="back" style="font-size:18px;padding:8px 16px">✕ Aufhören</button></div>
+      <div id="exBody"><div id="exL"></div><div id="exR"><div id="exFing"></div><div id="exAlp"></div></div></div>
+      <div class="ov" id="exGo"></div>
+      <div class="ov" id="exRes"></div>
+    </section>
+
+    <section class="scr" id="shop">
+      <div class="top"><div id="sAlp"></div><div><h1>🛍️ Flauschis Laden</h1><p class="say" id="shopMsg"></p></div></div>
+      <h2>Kleidung</h2><div class="grid" id="shopG"></div>
+      <h2>🎮 Spiel-Ausrüstung</h2><div class="grid" id="shopG2"></div>
+    </section>
+
+    <section class="scr" id="run"><div id="runF"><div id="runG"></div><div id="runA"></div><div id="runH"></div><div id="runM"></div></div></section>
+
+    <section class="scr" id="tun"><h1>🎚️ Ton-Lupe</h1><div id="tunB" style="display:flex;flex-direction:column;align-items:center"></div><p class="muted" style="text-align:center">Zeigt den gespielten Ton (notiert für B-Klarinette) und ob er zu hoch oder zu tief ist.</p></section>
+
+    <section class="scr" id="par"><div id="parB"></div></section>
+  </main>
+</div>
+<div id="toast"></div>
+<script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
+   Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
+(function (root) {
+  'use strict';
+
+  /* ---------- Töne und Oehler-Griffe (Grifftabelle des Hefts, Buchseite 72; als Tatsachen übernommen) ---------- */
+  // Tasten: D Daumenloch, Ü Überblasklappe, A A-Klappe, L1-L3 / R1-R3 Finger, S b-Seitenklappe rechts, F f-Seitenklappe
+  var NOTES = {
+    'g':    { midi: 55, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    'a':    { midi: 57, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2'] },
+    'b':    { midi: 58, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'S'] },
+    'h':    { midi: 59, keys: ['D', 'L1', 'L2', 'L3', 'R1'] },
+    "c'":   { midi: 60, keys: ['D', 'L1', 'L2', 'L3'] },
+    "d'":   { midi: 62, keys: ['D', 'L1', 'L2'] },
+    "e'":   { midi: 64, keys: ['D', 'L1'] },
+    "f'":   { midi: 65, keys: ['D', 'L1', 'F'] },
+    "fis'": { midi: 66, keys: ['D'] },
+    "g'":   { midi: 67, keys: [] },
+    "a'":   { midi: 69, keys: ['A'] },
+    "b'":   { midi: 70, keys: ['A', 'Ü'] },
+    "d''":  { midi: 74, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    "e''":  { midi: 76, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2'] }
+  };
+  var KEYWORD = { D: 'Daumenloch', 'Ü': 'Überblasklappe (Daumen)', A: 'A-Klappe (Zeigefinger links)', L1: 'Zeigefinger links', L2: 'Mittelfinger links', L3: 'Ringfinger links', R1: 'Zeigefinger rechts', R2: 'Mittelfinger rechts', R3: 'Ringfinger rechts', S: 'b-Klappe rechts', F: 'f-Klappe an der Seite' };
+  var CHROMA = ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'gis', 'a', 'b', 'h'];
+  var TRANSPOSE = 2; // notiert = klingend + 2
+
+  function marks(oct) { return oct <= 3 ? '' : (oct === 4 ? "'" : "''"); }
+  function nameOfMidi(m) { var oct = Math.floor(m / 12) - 1; return CHROMA[((m % 12) + 12) % 12] + marks(oct); }
+  function fingerText(name) {
+    var k = NOTES[name].keys; if (!k.length) return 'Alles offen – kein Finger drückt!';
+    return k.map(function (x) { return KEYWORD[x]; }).join(', ');
+  }
+  // Position im Notensystem: 0 = unterste Linie (e'), 1 = erster Zwischenraum (f') …
+  function staffStep(name) {
+    var m = /^(fis|[a-h])('*)$/.exec(name); if (!m) return 0;
+    var li = { c: 0, d: 1, e: 2, f: 3, fis: 3, g: 4, a: 5, h: 6, b: 6 }[m[1]];
+    var oct = 3 + m[2].length;
+    return oct * 7 + li - (4 * 7 + 2);
+  }
+  function accidental(name) { return /^b/.test(name) ? 'flat' : (/^fis/.test(name) ? 'sharp' : ''); }
+  function concertFreq(name, a4) { return (a4 || 440) * Math.pow(2, (NOTES[name].midi - TRANSPOSE - 69) / 12); }
+  function analyzeFreq(f, a4) {
+    var m = 69 + 12 * Math.log(f / (a4 || 440)) / Math.LN2 + TRANSPOSE, n = Math.round(m);
+    return { midi: n, cents: (m - n) * 100, name: nameOfMidi(n) };
+  }
+
+  /* ---------- Tonhöhenerkennung (YIN, de Cheveigné & Kawahara 2002) ---------- */
+  function yin(buf, sr, fmin, fmax) {
+    fmin = fmin || 150; fmax = fmax || 900;
+    var x = buf, rate = sr;
+    if (sr > 30000) { // auf halbe Abtastrate verkleinern: 4x schneller, für 150-900 Hz genau genug
+      x = new Float32Array(buf.length >> 1);
+      for (var j = 0; j < x.length; j++) x[j] = (buf[2 * j] + buf[2 * j + 1]) * 0.5;
+      rate = sr / 2;
+    }
+    var W = x.length >> 1, tMin = Math.max(2, Math.floor(rate / fmax)), tMax = Math.min(W - 2, Math.ceil(rate / fmin));
+    var d = new Float32Array(tMax + 2), tau, i, s, v;
+    for (tau = 1; tau <= tMax + 1; tau++) { s = 0; for (i = 0; i < W; i++) { v = x[i] - x[i + tau]; s += v * v; } d[tau] = s; }
+    var run = 0; d[0] = 1;
+    for (tau = 1; tau <= tMax + 1; tau++) { run += d[tau]; d[tau] = run > 0 ? d[tau] * tau / run : 1; }
+    var best = -1;
+    for (tau = tMin; tau <= tMax; tau++) {
+      if (d[tau] < 0.15) { while (tau + 1 <= tMax && d[tau + 1] < d[tau]) tau++; best = tau; break; }
+    }
+    if (best < 0) {
+      var mi = tMin; for (tau = tMin; tau <= tMax; tau++) if (d[tau] < d[mi]) mi = tau;
+      if (d[mi] < 0.3) best = mi; else return null;
+    }
+    var x0 = d[best - 1], x1 = d[best], x2 = d[best + 1], den = x0 + x2 - 2 * x1, t = best;
+    if (den !== 0) t = best + (x0 - x2) / (2 * den);
+    return { f: rate / t, clarity: 1 - x1 };
+  }
+  function rms(buf) { var s = 0; for (var i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); }
+
+  /* ---------- Melodien: "e'4 d'4 c'2 | r4 …"  (1 ganze, 2 halbe, 4 Viertel, 8 Achtel, Punkt = punktiert, r = Pause) ---------- */
+  function parseMelody(str) {
+    var out = [], bar = 0;
+    str.trim().split(/\s+/).forEach(function (tok) {
+      if (tok === '|') { bar++; return; }
+      var m = /^(r|fis|[a-h])('{0,2})(1|2|4|8)(\.?)$/.exec(tok);
+      if (!m) throw new Error('Unbekannte Note: ' + tok);
+      var beats = { 1: 4, 2: 2, 4: 1, 8: 0.5 }[m[3]] * (m[4] ? 1.5 : 1);
+      out.push({ rest: m[1] === 'r', name: m[1] === 'r' ? null : m[1] + m[2], dur: +m[3], dot: !!m[4], beats: beats, bar: bar });
+    });
+    return out;
+  }
+  function barBeats(notes) { var b = []; notes.forEach(function (n) { b[n.bar] = (b[n.bar] || 0) + n.beats; }); return b; }
+
+  /* ---------- Schwierigkeit je Insel (fair: steigt mit dem Können, siehe docs/KONZEPT.md Abschnitt 6) ---------- */
+  var BANDS = [
+    { upTo: 3,  tol: 50, hold: 0.25, longSec: 4,  th: [0.50, 0.70, 0.85] },
+    { upTo: 7,  tol: 42, hold: 0.30, longSec: 6,  th: [0.60, 0.78, 0.90] },
+    { upTo: 12, tol: 35, hold: 0.35, longSec: 8,  th: [0.65, 0.82, 0.93] },
+    { upTo: 20, tol: 28, hold: 0.40, longSec: 10, th: [0.70, 0.86, 0.95] }
+  ];
+  function diff(island, tolAdj) {
+    var b = BANDS[BANDS.length - 1];
+    for (var i = 0; i < BANDS.length; i++) if (island <= BANDS[i].upTo) { b = BANDS[i]; break; }
+    return { tol: Math.max(15, Math.min(50, b.tol + (tolAdj || 0))), hold: b.hold, longSec: b.longSec, th: b.th.slice() };
+  }
+  function starsFor(score, island) { var th = diff(island).th; return score >= th[2] ? 3 : score >= th[1] ? 2 : score >= th[0] ? 1 : 0; }
+  // Auszahlung: neue Bestwert-Sterne, plus 1 Bonus-Stern für 3 Sterne bei Wiederholung (höchstens 2x pro Tag und Station)
+  function payout(earned, bestBefore, repeatsToday) {
+    var p = Math.max(0, earned - (bestBefore || 0));
+    if (p === 0 && earned === 3 && (repeatsToday || 0) < 2) p = 1;
+    return p;
+  }
+
+  /* ---------- Inseln (Reihenfolge wie Lektion 1-20 des Hefts; Inhalte selbst erstellt) ---------- */
+  // src: 'eigen' = eigene Komposition, 'trad' = gemeinfreies Volkslied (eigene Fassung)
+  var ISLANDS = [
+    { n: 1, name: 'Luftballon-Insel', icon: '🎈', topic: 'Klarinette aufbauen und atmen', notes: [], st: [
+      { id: 'L1-teile', type: 'quiz', kind: 'parts', title: 'Teile der Klarinette' },
+      { id: 'L1-atem', type: 'breath', title: 'Bauch-Atmung', rounds: 3 },
+      { id: 'L1-ton', type: 'blow', title: 'Mein erster Ton', sec: 3 }
+    ] },
+    { n: 2, name: 'Klappenwald', icon: '🌳', topic: 'Finger und Zunge', notes: ["e'"], st: [
+      { id: 'L2-e', type: 'learn', note: "e'", title: 'Daumen + Zeigefinger' },
+      { id: 'L2-lang', type: 'long', notes: ["e'"], title: 'Langer Ton e\'' },
+      { id: 'L2-zunge', type: 'tongue', note: "e'", count: 6, title: 'Anstoßen mit „D“' }
+    ] },
+    { n: 3, name: 'Notenstrand', icon: '🏖️', topic: "Noten lesen: e', d', c'", notes: ["e'", "d'", "c'"], st: [
+      { id: 'L3-namen', type: 'quiz', kind: 'names', title: 'Notennamen' },
+      { id: 'L3-werte', type: 'quiz', kind: 'values', title: 'Notenwerte' },
+      { id: 'L3-d', type: 'learn', note: "d'", title: "Der Ton d'" },
+      { id: 'L3-c', type: 'learn', note: "c'", title: "Der Ton c'" },
+      { id: 'L3-lang', type: 'long', notes: ["e'", "d'", "c'"], title: 'Lange Töne' },
+      { id: 'L3-zunge', type: 'tongue', note: "d'", count: 6, title: "Anstoßen d'" },
+      { id: 'L3-folge', type: 'seq', title: 'Treppchen', mel: "e'4 d'4 c'4 r4 | c'4 d'4 e'4 r4 | e'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L3-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'"], len: 1, rounds: 5 },
+      { id: 'L3-lied', type: 'song', title: 'Flauschis erstes Lied', src: 'eigen', bpm: 66, mel: "e'4 e'4 d'4 d'4 | c'1 | d'4 d'4 e'4 e'4 | d'1 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 e'4 d'4 d'4 | c'1" },
+      { id: 'L3-bronze', type: 'song', medal: 1, title: 'Muschelsuche', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 r4 | e'4 d'4 c'4 r4 | c'4 e'4 d'4 r4 | d'4 e'4 c'4 r4 | e'1 | d'1 | c'1" }
+    ] },
+    { n: 4, name: 'Hügelhoch', icon: '⛰️', topic: "Neue Töne h, f', g'", notes: ["h", "f'", "g'"], st: [
+      { id: 'L4-h', type: 'learn', note: 'h', title: 'Der Ton h' },
+      { id: 'L4-f', type: 'learn', note: "f'", title: "Der Ton f'" },
+      { id: 'L4-g', type: 'learn', note: "g'", title: "Der Ton g'" },
+      { id: 'L4-griffe', type: 'quiz', kind: 'fing', title: 'Welcher Griff?' },
+      { id: 'L4-lang', type: 'long', notes: ['h', "f'", "g'"], title: 'Lange Töne' },
+      { id: 'L4-folge1', type: 'seq', title: 'Den Hügel hinauf', mel: "c'4 d'4 e'4 f'4 | g'1 | g'4 f'4 e'4 d'4 | c'1" },
+      { id: 'L4-folge2', type: 'seq', title: 'Kleiner Schritt nach unten', mel: "h4 c'4 d'4 r4 | d'4 c'4 h4 r4 | h4 d'4 c'4 h4 | c'1" },
+      { id: 'L4-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L4-lied', type: 'song', title: 'Merrily We Roll Along', src: 'trad', bpm: 72, mel: "e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 d'4 d'4 r4 | e'4 g'4 g'4 r4 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 e'4 | d'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L4-bronze', type: 'song', medal: 1, title: 'Gipfelfahne', src: 'eigen', bpm: 72, mel: "c'4 e'4 g'4 r4 | g'4 f'4 e'4 r4 | e'4 d'4 c'4 h4 | c'1 | g'4 f'4 e'4 d'4 | e'4 f'4 g'4 r4 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L4-silber', type: 'song', medal: 2, title: 'Bergziege', src: 'eigen', bpm: 80, mel: "g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | f'4 d'4 e'4 c'4 | d'4 h4 c'4 e'4 | d'4 f'4 e'4 d'4 | c'1" }
+    ] },
+    { n: 5, name: 'Zauberwald', icon: '🪄', topic: 'Lange Töne, Zunge vor, Kinn ruhig', notes: [], st: [
+      { id: 'L5-leiter', type: 'long', notes: ["c'", "d'", "e'", "f'", "g'"], title: 'Lange-Töne-Leiter' },
+      { id: 'L5-zunge', type: 'tongue', note: "c'", count: 8, title: 'Zunge vor, Kinn ruhig' },
+      { id: 'L5-folge', type: 'seq', title: 'Zickzack', mel: "c'4 e'4 d'4 f'4 | e'4 g'4 f'4 r4 | g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'1" },
+      { id: 'L5-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L5-lied1', type: 'song', title: 'Zauberspruch', src: 'eigen', bpm: 69, mel: "e'4 c'4 e'4 c'4 | d'1 | e'4 e'4 c'4 r4 | d'1 | c'4 e'4 d'4 e'4 | c'4 d'4 e'4 r4 | e'4 d'4 c'4 d'4 | c'1" },
+      { id: 'L5-lied2', type: 'song', title: 'Hüpf-Lied', src: 'eigen', bpm: 76, mel: "c'4 r4 e'4 r4 | g'4 r4 e'4 r4 | f'4 f'4 d'4 d'4 | e'4 e'4 c'4 r4 | c'4 r4 e'4 r4 | g'4 r4 g'4 r4 | f'4 d'4 h4 d'4 | c'4 r4 r4 r4" },
+      { id: 'L5-bronze', type: 'song', medal: 1, title: 'Kletterpartie', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 f'4 | g'4 r4 r4 r4 | g'4 f'4 e'4 d'4 | c'4 r4 r4 r4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | g'4 e'4 f'4 d'4 | c'1" }
+    ] },
+    { n: 6, name: 'Brückenbach', icon: '🌉', topic: 'Halbe Note und halbe Pause', notes: [], st: [
+      { id: 'L6-werte', type: 'quiz', kind: 'values', title: 'Notenwerte mit Halber' },
+      { id: 'L6-folge', type: 'seq', title: 'Große Schritte', mel: "c'2 e'2 | g'2 r2 | f'2 d'2 | c'2 r2" },
+      { id: 'L6-lied1', type: 'song', title: 'Brückenlied', src: 'eigen', bpm: 76, mel: "e'4 e'4 d'2 | c'4 d'4 e'2 | g'4 g'4 f'2 | e'4 d'4 c'2 | e'2 g'2 | f'2 d'2 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L6-lied2', type: 'song', title: 'Hänschen klein', src: 'trad', bpm: 84, mel: "g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 d'4 e'4 f'4 | g'4 g'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1 | d'4 d'4 d'4 d'4 | d'4 e'4 f'2 | e'4 e'4 e'4 e'4 | e'4 f'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1" },
+      { id: 'L6-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 3, rounds: 4 },
+      { id: 'L6-bronze', type: 'song', medal: 1, title: 'Bachlauf', src: 'eigen', bpm: 76, mel: "g'2 e'2 | f'4 e'4 d'2 | e'2 c'2 | d'4 e'4 c'2 | g'2 g'2 | f'4 f'4 e'2 | d'4 e'4 f'4 d'4 | c'1" },
+      { id: 'L6-silber', type: 'song', medal: 2, title: 'Steinchenhüpfen', src: 'eigen', bpm: 84, mel: "c'4 e'4 g'2 | f'4 d'4 h2 | c'4 d'4 e'4 f'4 | g'2 r2 | g'4 e'4 c'2 | f'4 d'4 h2 | c'4 e'4 d'4 h4 | c'1" }
+    ] },
+    { n: 7, name: 'Walzer-Wiese', icon: '🎠', topic: '3/4-Takt, punktierte Halbe', notes: [], st: [] },
+    { n: 8, name: 'Atemberg', icon: '🏔️', topic: 'Atemzeichen, Taktnummern', notes: [], st: [] },
+    { n: 9, name: 'Puppen-Bucht', icon: '🎭', topic: "Neue Töne a und a'", notes: ['a', "a'"], st: [] },
+    { n: 10, name: 'Kuckucks-Tal', icon: '🐦', topic: 'Volkslieder im Dreier- und Vierertakt', notes: [], st: [] },
+    { n: 11, name: 'Achtel-Atoll', icon: '🦋', topic: 'Achtelnoten, Duett', notes: [], st: [] },
+    { n: 12, name: 'Sprung-Schlucht', icon: '🐇', topic: 'Achtel auf der 3, Sprünge', notes: [], st: [] },
+    { n: 13, name: 'Turmstadt', icon: '🏰', topic: 'Klammer 1 und 2, laut und leise', notes: [], st: [] },
+    { n: 14, name: 'Zirkus-Zelt', icon: '🎪', topic: 'Achtel auf der 1, Wiederholung', notes: [], st: [] },
+    { n: 15, name: 'Rumba-Riff', icon: '🪇', topic: "Achtel auf der 4, Faulenzer, tiefes b", notes: ['b'], st: [] },
+    { n: 16, name: 'Tango-Turm', icon: '💃', topic: "Vier Achtel, b'", notes: ["b'"], st: [] },
+    { n: 17, name: 'Zauberer-Zinne', icon: '🧙', topic: "Vorzeichen ♯ ♭ ♮, fis'", notes: ["fis'"], st: [] },
+    { n: 18, name: 'Brunnen-Burg', icon: '⛲', topic: "Auftakt, Überblasen: e''", notes: ["e''"], st: [] },
+    { n: 19, name: 'Hippo-Hafen', icon: '🦛', topic: 'Tiefster Ton g', notes: ['g'], st: [] },
+    { n: 20, name: 'Echo-Gipfel', icon: '📣', topic: "forte und piano, d''", notes: ["d''"], st: [] }
+  ];
+  function knownNotes(island) { var s = []; ISLANDS.forEach(function (i) { if (i.n <= island) i.notes.forEach(function (x) { if (s.indexOf(x) < 0) s.push(x); }); }); return s; }
+  function station(id) { for (var i = 0; i < ISLANDS.length; i++) for (var j = 0; j < ISLANDS[i].st.length; j++) if (ISLANDS[i].st[j].id === id) return { isl: ISLANDS[i], st: ISLANDS[i].st[j], idx: j }; return null; }
+  // Titel eigener Verlagsstücke, die NICHT verwendet werden dürfen (Prüfung in tests/test_logic.mjs)
+  var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
+
+  var KL = { NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
+    concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout,
+    knownNotes: knownNotes, station: station };
+  root.KL = KL;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Flauschis Klarinetten-Abenteuer · Oberfläche, Ton, Mikrofon, Übungen, Belohnungen, Spiel, Elternbereich. */
+(function () {
+'use strict';
+const KL = window.KL, $ = id => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const SIM = Q.has('sim'), AUTO = Q.has('auto'), SPEED = +(Q.get('speed') || 1);
+const now = () => performance.now() / 1000 * SPEED;
+const KEY = 'flauschi_klarinette_v1';
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+const dayKey = off => { const d = new Date(); d.setDate(d.getDate() - off); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+
+/* ================= Spielstand ================= */
+function fresh() {
+  return { v: 1, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
+    set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false }, hop: { done: [], best: {} } };
+}
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return Object.assign(fresh(), s); } catch (e) {} return fresh(); }
+let S = load();
+let save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const day = () => S.days[today()] || (S.days[today()] = { sec: 0, ex: 0, stars: 0, fs: 0, games: 0 });
+const stat = id => S.st[id] || (S.st[id] = { best: 0, n: 0, last: '', rep: 0, medal: 0 });
+const best = id => (S.st[id] ? S.st[id].best : 0);
+const isl = n => KL.ISLANDS[n - 1];
+const PLAYABLE = KL.ISLANDS.filter(i => i.st.length).length;
+
+/* ================= Ton-Ausgabe: klarinettenartiger Klang aus Web Audio ================= */
+let AC = null, WAVE = null, MUTE_UNTIL = 0;
+function ac() {
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    const amp = [0, 1, 0, 0.75, 0, 0.5, 0, 0.14, 0, 0.5, 0, 0.12, 0, 0.17], re = new Float32Array(amp.length), im = new Float32Array(amp);
+    WAVE = AC.createPeriodicWave(re, im);
+  }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function blip(f, t0, d, type, vol) {
+  if (S.set.mute) return;
+  try {
+    const a = ac(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
+    o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol || 0.15, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.03);
+  } catch (e) {}
+}
+function clarTone(f, t0, d) { // f klingend, Zeiten in echten Sekunden
+  try {
+    const a = ac(), o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + t0;
+    o.setPeriodicWave(WAVE); o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = 2600; fl.Q.value = 0.7;
+    const v = S.set.mute ? 0.0001 : 0.22;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.05); g.gain.setValueAtTime(v * 0.85, t + Math.max(0.06, d - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + d);
+    o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.05);
+  } catch (e) {}
+}
+const sOk = () => { blip(660, 0, 0.12); blip(880, 0.1, 0.18); };
+const sBad = () => blip(220, 0, 0.25, 'triangle', 0.1);
+const sStar = () => [523, 659, 784, 1047].forEach((f, i) => blip(f, i * 0.1, 0.22));
+const click = (t0, acc) => blip(acc ? 1500 : 1100, t0, 0.03, 'square', acc ? 0.06 : 0.035);
+// Spielt Töne vor; das Mikrofon hört solange weg. items: [{name|null, beats}] , bpm. Rückgabe: Dauer in Spielzeit-Sekunden
+function playSeq(items, bpm, onNote) {
+  const spb = 60 / bpm; let t = 0;
+  items.forEach((it, i) => {
+    const d = it.beats * spb;
+    if (it.name) clarTone(KL.concertFreq(it.name, S.set.a4), t / SPEED, Math.max(0.12, d * 0.92) / SPEED);
+    if (onNote) setTimeout(() => onNote(i), t * 1000 / SPEED);
+    t += d;
+  });
+  MUTE_UNTIL = now() + t + 0.25;
+  return t;
+}
+
+/* ================= Mikrofon und Tonerkennung ================= */
+const MIC = { ok: false, err: '', an: null, buf: null, floor: 0.003, f3: [] };
+let LOOP = null, LAST = 0, LISTEN = null; // LISTEN(frame) bekommt jede Messung
+async function micOn() {
+  if (MIC.ok) return true;
+  if (SIM) { MIC.ok = true; loop(); return true; }
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: 'NoSecureContext' };
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const a = ac(), src = a.createMediaStreamSource(stream), an = a.createAnalyser(); an.fftSize = 2048; src.connect(an);
+    MIC.an = an; MIC.buf = new Float32Array(2048); MIC.ok = true; loop(); return true;
+  } catch (e) { MIC.err = e && e.name ? e.name : String(e); return false; }
+}
+function loop() { if (!LOOP) { LAST = now(); LOOP = setInterval(tick, 30); } }
+function measure() {
+  if (SIM) {
+    let w = window.KLSIM || { f: 0, rms: 0 };
+    if (AUTO && EX && EX.want) w = EX.want(now()) || { f: 0, rms: 0 };
+    if (window.KLWRONG && w.f) w = { f: w.f * 1.1225, rms: w.rms }; // Gegenprobe im Test: immer einen Ganzton zu hoch
+    return { rms: w.rms || 0, pitch: w.f ? { f: w.f, clarity: 0.97 } : null };
+  }
+  MIC.an.getFloatTimeDomainData(MIC.buf);
+  const r = KL.rms(MIC.buf);
+  return { rms: r, pitch: r > 0.004 ? KL.yin(MIC.buf, AC.sampleRate, 150, 900) : null };
+}
+function tick() {
+  const t = now(), dt = Math.min(0.2, t - LAST); LAST = t;
+  const m = measure(), thr = Math.max(0.006, MIC.floor * 3);
+  let voiced = !!(m.pitch && m.pitch.clarity > 0.8 && m.rms > thr && t > MUTE_UNTIL);
+  if (!voiced && m.rms < MIC.floor * 2) MIC.floor += (m.rms - MIC.floor) * 0.05; else if (m.rms < MIC.floor) MIC.floor = m.rms;
+  MIC.floor = Math.max(0.0005, Math.min(0.02, MIC.floor));
+  let a = null;
+  if (voiced) { MIC.f3.push(m.pitch.f); if (MIC.f3.length > 3) MIC.f3.shift(); const s = MIC.f3.slice().sort((x, y) => x - y); a = KL.analyzeFreq(s[s.length >> 1], S.set.a4); } else MIC.f3 = [];
+  const fr = { t, dt, rms: m.rms, thr, loud: m.rms > thr && t > MUTE_UNTIL, voiced, a };
+  if (voiced && EX && EX.running) { const d = day(), before = Math.floor(d.sec / 300); d.sec += dt / SPEED; if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; toast('💪 Fleiß-Stern für 5 Minuten Spielen!'); hud(); } }
+  if (LISTEN) LISTEN(fr);
+}
+
+/* ================= Zeichnungen (alles eigene SVG) ================= */
+let uid = 0; const O = '#5a4668', CR = '#fff6e6', RB = ['#ff8fa3', '#ffb86b', '#ffe66d', '#8ee08a', '#7cc8ff', '#a996ff', '#e59bff'];
+const circ = (a, attr) => a.map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" ${attr}/>`).join('');
+function alpInner(w) {
+  w = w || {}; const id = 'bc' + (++uid), st = `stroke="${O}" stroke-width="3" stroke-linejoin="round"`; let s = '';
+  const body = [[48, 126, 24], [70, 112, 26], [96, 110, 27], [119, 119, 25], [121, 140, 22], [96, 146, 26], [68, 147, 25], [46, 141, 22]], neck = [[140, 104, 19], [143, 88, 17], [145, 72, 16]];
+  if (w.fx === 'sparkle') s += '<g fill="#ffcf2e" font-size="22" font-weight="800"><text class="tw" x="4" y="40">✦</text><text class="tw b" x="176" y="96">✦</text><text class="tw c" x="6" y="196">✦</text><text class="tw b" x="96" y="-14">✦</text></g>';
+  if (w.fx === 'notes') s += '<g fill="#7b5cff" font-size="26" font-weight="800"><text class="tw" x="2" y="44">♪</text><text class="tw b" x="178" y="100">♫</text><text class="tw c" x="90" y="-12">♪</text><text class="tw" x="8" y="196">♫</text></g>';
+  if (w.back === 'wings') s += `<path d="M86 104 Q66 46 26 58 Q44 74 34 92 Q60 88 86 112 Z" fill="#fff" ${st}/><path d="M100 102 Q96 40 58 40 Q72 60 62 76 Q86 78 100 108 Z" fill="#eaf6ff" ${st}/>`;
+  s += `<circle cx="24" cy="122" r="12" fill="#ff9ec4" ${st}/><circle cx="19" cy="117" r="5" fill="#ffe66d"/><circle cx="28" cy="127" r="4.5" fill="#7cc8ff"/>`;
+  if (w.tail === 'tailbow') s += `<path d="M24 108 l-11 -8 v15 Z M24 108 l11 -8 v15 Z" fill="#ff5a8a" ${st}/><circle cx="24" cy="108" r="4" fill="#ffd23f" ${st}/>`;
+  [52, 72, 101, 119].forEach((x, i) => {
+    s += `<rect x="${x}" y="150" width="14" height="52" rx="7" fill="${i % 2 ? CR : '#f1e3cc'}" ${st}/><rect x="${x}" y="192" width="14" height="10" rx="4" fill="#8a6a5c" ${st}/>`;
+    if (w.feet === 'boots') s += `<path d="M${x - 2} 178 h18 v14 h5 q5 0 5 6 v5 h-28 Z" fill="#ffd23f" ${st}/>`;
+    if (w.feet === 'turbo') s += `<path d="M${x - 2} 180 h18 v12 h6 q4 0 4 5 v6 h-28 Z" fill="#e0483e" ${st}/><path d="M${x - 4} 196 l-9 -3 l4 6 l-6 3 h11 Z" fill="#ffb86b"/>`;
+  });
+  s += circ(body.concat(neck), `fill="${O}" stroke="${O}" stroke-width="6"`) + circ(neck, `fill="${CR}"`);
+  s += `<clipPath id="${id}">${circ(body, '')}</clipPath><g clip-path="url(#${id})"><g transform="rotate(-20 85 128)">`;
+  RB.forEach((c, i) => { s += `<rect x="${2 + i * 25}" y="30" width="25.5" height="200" fill="${c}"/>`; });
+  s += '</g></g>';
+  if (w.back === 'cape') s += `<path d="M136 96 Q84 80 28 100 Q16 128 26 156 Q82 134 138 126 Z" fill="#e0483e" ${st}/><text x="74" y="128" font-size="26" fill="#ffd23f">★</text>`;
+  if (w.back === 'blanket') s += `<path d="M64 90 Q92 82 118 90 L120 138 Q92 148 62 138 Z" fill="#7b5cff" ${st}/><path d="M68 106 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8" fill="none" stroke="#ffe66d" stroke-width="3.5"/>`;
+  if (w.friend === 'chick') s += `<circle cx="82" cy="78" r="12" fill="#ffe45c" ${st}/><circle cx="93" cy="65" r="8.5" fill="#ffe45c" ${st}/><path d="M100 63 l8 3 l-8 3 Z" fill="#ff8a3d" ${st}/><circle cx="95" cy="63" r="1.8" fill="#333"/>`;
+  s += `<ellipse cx="127" cy="26" rx="7" ry="13" transform="rotate(-18 127 26)" fill="${CR}" ${st}/><ellipse cx="165" cy="26" rx="7" ry="13" transform="rotate(18 165 26)" fill="${CR}" ${st}/>`;
+  s += '<ellipse cx="127" cy="27" rx="3" ry="7" transform="rotate(-18 127 27)" fill="#ffb3c7"/><ellipse cx="165" cy="27" rx="3" ry="7" transform="rotate(18 165 27)" fill="#ffb3c7"/>';
+  s += `<ellipse cx="146" cy="48" rx="26" ry="22" fill="${CR}" ${st}/>`;
+  s += `<circle cx="135" cy="29" r="8" fill="#ff8fa3" ${st}/><circle cx="157" cy="29" r="8" fill="#7cc8ff" ${st}/><circle cx="146" cy="25" r="9.5" fill="#ffe66d" ${st}/>`;
+  s += '<circle cx="127" cy="57" r="4.5" fill="#ffb3c7"/><circle cx="165" cy="57" r="4.5" fill="#ffb3c7"/>';
+  s += '<circle cx="136" cy="47" r="5" fill="#3a2d4a"/><circle cx="156" cy="47" r="5" fill="#3a2d4a"/><circle cx="137.6" cy="45.4" r="1.8" fill="#fff"/><circle cx="157.6" cy="45.4" r="1.8" fill="#fff"/>';
+  s += `<ellipse cx="146" cy="59" rx="12" ry="8.5" fill="#fff" stroke="${O}" stroke-width="2.5"/><path d="M142.5 55.5 q3.5 3.5 7 0 M146 57.5 v3 M141 61 q5 4.5 10 0" fill="none" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`;
+  if (w.eyes === 'shades') s += `<rect x="124" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/><rect x="147" y="39" width="21" height="15" rx="6" fill="#2b2140" ${st}/>`;
+  if (w.eyes === 'hearts') [135, 157].forEach(x => { s += `<path transform="translate(${x} 49) scale(1.25)" d="M0 5 C-11 -3 -6 -11 0 -5 C6 -11 11 -3 0 5 Z" fill="#ff5a8a" fill-opacity=".85" stroke="${O}" stroke-width="2"/>`; });
+  if (w.eyes === 'starglasses') [135, 157].forEach(x => { s += `<path transform="translate(${x} 47)" d="M0 -11 L3 -3 L11 -3 L5 2 L7 10 L0 5 L-7 10 L-5 2 L-11 -3 L-3 -3 Z" fill="#ffd23f" ${st}/>`; });
+  if (w.neck === 'scarf') s += `<path d="M129 82 l-4 26 l12 2 l3 -24 Z" fill="#ff5a5a" ${st}/><path d="M127 70 q19 10 38 0 l1 13 q-20 10 -40 0 Z" fill="#ff5a5a" ${st}/>`;
+  if (w.neck === 'bow') s += `<path d="M146 78 l-15 -9 v18 Z M146 78 l15 -9 v18 Z" fill="#7b5cff" ${st}/><circle cx="146" cy="78" r="4.5" fill="#ffd23f" ${st}/>`;
+  if (w.neck === 'bell') s += `<path d="M129 73 q17 10 34 0" stroke="#e0483e" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="146" cy="85" r="7.5" fill="#ffd23f" ${st}/>`;
+  if (w.hat === 'party') s += `<path d="M146 -18 L127 26 L165 26 Z" fill="#ff6fa5" ${st}/><circle cx="146" cy="-19" r="6.5" fill="#ffe66d" ${st}/>`;
+  if (w.hat === 'crown') s += `<path d="M126 28 L123 4 L136 16 L146 -3 L156 16 L169 4 L166 28 Z" fill="#ffd23f" ${st}/><circle cx="146" cy="18" r="4" fill="#ff5a8a"/>`;
+  if (w.hat === 'flowers') [[124, 32, '#ff8fa3'], [134, 25, '#fff'], [146, 21, '#e59bff'], [158, 25, '#fff'], [168, 32, '#ff8fa3']].forEach(f => { s += `<circle cx="${f[0]}" cy="${f[1]}" r="7" fill="${f[2]}" stroke="${O}" stroke-width="2.5"/><circle cx="${f[0]}" cy="${f[1]}" r="2.6" fill="#ffcf2e"/>`; });
+  if (w.hat === 'wizard') s += `<path d="M150 -30 L123 24 L169 24 Z" fill="#6b4bd6" ${st}/><ellipse cx="146" cy="25" rx="33" ry="7.5" fill="#5a3cc0" ${st}/><text x="138" y="14" font-size="15" fill="#ffe66d">★</text>`;
+  if (w.hat === 'helmet') s += `<path d="M120 32 Q146 -10 172 32 Z" fill="#ff5a5a" ${st}/><rect x="118" y="27" width="56" height="8" rx="4" fill="#ffd23f" ${st}/><path d="M140 8 q6 -6 12 0" stroke="#fff" stroke-width="4" fill="none"/>`;
+  if (w.hat === 'phones') s += `<path d="M122 38 Q146 -6 170 38" fill="none" stroke="${O}" stroke-width="7"/><rect x="113" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/><rect x="165" y="30" width="14" height="22" rx="6" fill="#7b5cff" ${st}/>`;
+  if (w.hat === 'beret') s += `<ellipse cx="148" cy="22" rx="30" ry="11" transform="rotate(-8 148 22)" fill="#2b4c9b" ${st}/><path d="M150 11 v-7" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
+  if (w.friend === 'fly') s += `<g transform="translate(184 6)"><ellipse cx="-7" cy="-3" rx="8" ry="10" fill="#ff8fa3" ${st}/><ellipse cx="7" cy="-3" rx="8" ry="10" fill="#7cc8ff" ${st}/></g>`;
+  if (w.friend === 'magnet') s += `<g transform="translate(176 -6)"><path d="M0 0 v16 a11 11 0 0 0 22 0 v-16 h-7 v16 a4 4 0 0 1 -8 0 v-16 Z" fill="#e0483e" ${st}/><rect x="0" y="-6" width="7" height="7" fill="#ccc" ${st}/><rect x="15" y="-6" width="7" height="7" fill="#ccc" ${st}/></g>`;
+  return s;
+}
+const alpSVG = w => `<svg viewBox="-2 -36 204 246" xmlns="http://www.w3.org/2000/svg">${alpInner(w)}</svg>`;
+function drawAlp(id) { const el = $(id); if (el) el.innerHTML = alpSVG(S.wear); }
+function anim(id, cls) { const el = $(id); if (!el) return; el.classList.remove('salto', 'hop'); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 950); }
+
+// Oehler-Griffbild: links Überblasklappe + Daumenloch, rechts A-Klappe und sechs Tonlöcher, Seitenklappen F und S
+function fingSVG(name) {
+  const k = KL.NOTES[name].keys, on = x => k.indexOf(x) >= 0, F = c => on(c) ? '#ff4f8b' : '#fff', st = 'stroke="#5a4668" stroke-width="3"';
+  return `<svg viewBox="0 0 96 240" xmlns="http://www.w3.org/2000/svg"><rect x="44" y="4" width="32" height="232" rx="14" fill="#3a2d4a" opacity=".12"/>
+  <text x="4" y="16" font-size="12" font-weight="800" fill="#7d6d8c">Daumen</text>
+  <ellipse cx="20" cy="38" rx="7" ry="12" fill="${F('Ü')}" ${st}/><circle cx="20" cy="66" r="10" fill="${F('D')}" ${st}/>
+  <ellipse cx="60" cy="24" rx="7" ry="11" fill="${F('A')}" ${st}/>
+  <circle cx="60" cy="54" r="12" fill="${F('L1')}" ${st}/><circle cx="60" cy="84" r="12" fill="${F('L2')}" ${st}/><circle cx="60" cy="114" r="12" fill="${F('L3')}" ${st}/>
+  <ellipse cx="38" cy="100" rx="5" ry="8" fill="${F('F')}" ${st}/>
+  <line x1="42" y1="133" x2="80" y2="133" stroke="#5a4668" stroke-width="3"/>
+  <circle cx="60" cy="152" r="12" fill="${F('R1')}" ${st}/><circle cx="60" cy="182" r="12" fill="${F('R2')}" ${st}/><circle cx="60" cy="212" r="12" fill="${F('R3')}" ${st}/>
+  <ellipse cx="32" cy="224" rx="10" ry="6" fill="${F('S')}" ${st}/>
+  <text x="84" y="88" font-size="14" font-weight="900" fill="#7d6d8c">L</text><text x="84" y="186" font-size="14" font-weight="900" fill="#7d6d8c">R</text></svg>`;
+}
+// Notenzeile(n). notes: Ergebnis von KL.parseMelody. o.per Takte je Zeile, o.single = ein Einzelton ohne Taktstriche
+const CLEF = '<path d="M31 120 C27 132 45 134 43 120 L37 24 C37 13 49 14 47 27 C45 41 22 52 22 76 C22 97 51 101 55 85 C58 71 38 65 32 78 C29 88 38 94 44 89" fill="none" stroke="#3a2d4a" stroke-width="3.6" stroke-linecap="round"/>';
+function noteG(n, i, x) {
+  let g = '';
+  if (n.rest) {
+    if (n.dur === 1) g = `<rect x="${x - 9}" y="54" width="18" height="7"/>`;
+    else if (n.dur === 2) g = `<rect x="${x - 9}" y="61" width="18" height="7"/>`;
+    else g = `<path d="M${x - 3} 52 l8 9 l-8 9 l8 9 q-10 -3 -6 8" fill="none" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return `<g class="n" id="n${i}">${g}</g>`;
+  }
+  const s = KL.staffStep(n.name), y = 96 - s * 7;
+  for (let l = -2; l >= s; l -= 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  for (let l = 10; l <= s; l += 2) g += `<line x1="${x - 15}" x2="${x + 15}" y1="${96 - l * 7}" y2="${96 - l * 7}" stroke-width="2.2"/>`;
+  const acc = KL.accidental(n.name), ax = x - 22;
+  if (acc === 'flat') g += `<path d="M${ax - 3} ${y - 20} V${y + 5} C${ax + 9} ${y - 2} ${ax + 7} ${y - 11} ${ax - 3} ${y - 3}" fill="none" stroke-width="2.4"/>`;
+  if (acc === 'sharp') g += `<path d="M${ax - 3} ${y - 14}V${y + 14}M${ax + 3} ${y - 16}V${y + 12}" stroke-width="1.8"/><path d="M${ax - 8} ${y - 3}L${ax + 8} ${y - 7}M${ax - 8} ${y + 6}L${ax + 8} ${y + 2}" stroke-width="4"/>`;
+  g += `<ellipse cx="${x}" cy="${y}" rx="8.6" ry="6.3" transform="rotate(-20 ${x} ${y})" stroke-width="2.4"${n.dur <= 2 ? ' class="hol"' : ''}/>`;
+  if (n.dur > 1) { const up = s < 4, sx = up ? x + 7.6 : x - 7.6; g += `<line x1="${sx}" x2="${sx}" y1="${y}" y2="${y + (up ? -44 : 44)}" stroke-width="2.4"/>`; if (n.dur === 8) g += `<path d="M${sx} ${y + (up ? -44 : 44)} q12 ${up ? 10 : -10} 8 ${up ? 26 : -26}" fill="none" stroke-width="2.6"/>`; }
+  if (n.dot) g += `<circle cx="${x + 15}" cy="${y + (s % 2 === 0 ? -5 : 0)}" r="2.8" stroke="none"/>`;
+  return `<g class="n" id="n${i}">${g}</g>`;
+}
+function staffSVG(notes, o) {
+  o = o || {}; const W = o.single ? 240 : 1000, lines = [], bars = [];
+  notes.forEach((n, i) => { (bars[n.bar] = bars[n.bar] || []).push([n, i]); });
+  const per = o.per || 4; for (let i = 0; i < bars.length; i += per) lines.push(bars.slice(i, i + per));
+  return lines.map((ln, li) => {
+    let g = ''; for (let k = 0; k < 5; k++) g += `<line x1="6" x2="${W - 4}" y1="${40 + k * 14}" y2="${40 + k * 14}" stroke="#8d7f9a" stroke-width="2"/>`;
+    g += CLEF;
+    if (o.single) { const [n, i] = ln[0][0]; g += noteG(n, i, 150); }
+    else {
+      const x0 = li === 0 ? 112 : 70;
+      if (li === 0) g += '<text x="86" y="67" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text><text x="86" y="95" font-size="30" font-weight="900" text-anchor="middle" fill="#3a2d4a">4</text>';
+      const bw = (W - 6 - x0) / per;
+      ln.forEach((bar, bi) => {
+        const bx = x0 + bi * bw; let pos = 0;
+        bar.forEach(([n, i]) => { const x = bx + 24 + (pos / 4) * (bw - 36) + (n.beats === 4 ? (bw - 36) * 0.3 : 0); g += noteG(n, i, x); pos += n.beats; });
+        const last = li === lines.length - 1 && bi === ln.length - 1;
+        g += `<line x1="${bx + bw}" x2="${bx + bw}" y1="40" y2="96" stroke="#5a4668" stroke-width="${last ? 6 : 2}"/>`;
+      });
+    }
+    return `<svg viewBox="0 0 ${W} 150" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+  }).join('');
+}
+const single = name => staffSVG([{ name, dur: 1, beats: 4, bar: 0 }], { single: true });
+const PARTS = [{ n: 'Mundstück', x: 10, w: 62 }, { n: 'Blattschraube', x: 38, w: 22 }, { n: 'Birne', x: 74, w: 54 }, { n: 'Oberstück', x: 130, w: 210 }, { n: 'Unterstück', x: 342, w: 210 }, { n: 'Schallbecher', x: 554, w: 136 }];
+function clarSVG(hi) {
+  let s = '<svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">';
+  s += '<path d="M10 62 L72 54 L72 76 L10 70 Z" fill="#2b2333"/><rect x="38" y="52" width="22" height="26" rx="3" fill="#c9c9d2" stroke="#888" stroke-width="2"/>';
+  s += '<rect x="74" y="50" width="54" height="30" rx="10" fill="#3a2d4a"/><rect x="128" y="51" width="4" height="28" fill="#c9c9d2"/>';
+  s += '<rect x="132" y="53" width="208" height="24" fill="#3a2d4a"/><rect x="340" y="51" width="4" height="28" fill="#c9c9d2"/><rect x="344" y="53" width="208" height="24" fill="#3a2d4a"/><rect x="552" y="51" width="4" height="28" fill="#c9c9d2"/>';
+  [170, 205, 240, 285, 385, 420, 455, 505].forEach(x => { s += `<circle cx="${x}" cy="65" r="7" fill="#c9c9d2" stroke="#888" stroke-width="2"/>`; });
+  s += '<path d="M556 53 L640 53 Q680 50 692 22 L692 108 Q680 80 640 77 L556 77 Z" fill="#3a2d4a"/>';
+  if (hi != null) { const p = PARTS[hi]; s += `<rect x="${p.x - 4}" y="${p.n === 'Schallbecher' ? 16 : 44}" width="${p.w + 8}" height="${p.n === 'Schallbecher' ? 98 : 42}" rx="10" fill="none" stroke="#ff4f8b" stroke-width="6"/><path d="M${p.x + p.w / 2} 6 v26 m-10 -10 l10 10 l10 -10" stroke="#ff4f8b" stroke-width="6" fill="none" stroke-linecap="round"/>`; }
+  return s + '</svg>';
+}
+
+/* ================= Anzeige ================= */
+let screen = 'home';
+function streak() {
+  const goal = S.set.goal * 60; let n = 0, joker = 0;
+  for (let off = 0; off < 120; off++) {
+    const d = S.days[dayKey(off)], hit = d && d.sec >= goal;
+    if (hit) n++;
+    else if (off === 0) continue;
+    else if (joker < 1 && n > 0) { joker++; }
+    else break;
+    if (off % 7 === 6) joker = 0;
+  }
+  return n;
+}
+function hud() {
+  const d = day(), m = Math.floor(d.sec / 60);
+  $('hStar').textContent = '⭐ ' + S.stars; $('hTix').textContent = '🎟️ ' + S.tix; $('hFire').textContent = '🔥 ' + streak();
+  $('tday').innerHTML = `<i style="width:${Math.min(100, d.sec / (S.set.goal * 60) * 100)}%"></i><span>⏱ ${m}/${S.set.goal} min</span>`;
+  $('bSnd').textContent = S.set.mute ? '🔇' : '🔊'; $('bHome').style.visibility = screen === 'home' ? 'hidden' : 'visible';
+}
+function show(id) { stopEx(); stopRun(); TUNER = false; screen = id; document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === id)); hud(); }
+let toastT = 0;
+function toast(t) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { e.style.display = 'none'; }, 2600); }
+function confetti() { const e = ['⭐', '🎵', '🌈', '💜', '🎉', '✨', '🎶']; for (let i = 0; i < 18; i++) { const s = document.createElement('span'); s.className = 'conf'; s.textContent = pick(e); s.style.left = (3 + Math.random() * 92) + '%'; s.style.animationDelay = Math.random() * 0.6 + 's'; document.body.appendChild(s); setTimeout(() => s.remove(), 3400); } }
+const starStr = n => [0, 1, 2].map(i => `<span class="${i < n ? '' : 'off'}">⭐</span>`).join('');
+const MEDAL = ['', '🥉', '🥈', '🥇'];
+const ICON = { quiz: '❓', breath: '🌬️', blow: '🎺', learn: '🎓', long: '〰️', tongue: '👅', seq: '🎵', ear: '👂', song: '🎶' };
+
+/* ================= Start, Karte, Insel ================= */
+function nextStation() {
+  const hw = S.hw && S.hw.ids ? S.hw.ids : [];
+  for (const id of hw) if (KL.station(id) && stat(id).last !== today()) return id;
+  for (let n = Math.min(S.unlocked, PLAYABLE); n >= 1; n--) for (const st of isl(n).st) if (best(st.id) < 2) return st.id;
+  const all = []; for (let n = 1; n <= Math.min(S.unlocked, PLAYABLE); n++) isl(n).st.forEach(st => { if (st.type !== 'quiz' && st.type !== 'learn') all.push(st.id); });
+  return pick(all);
+}
+function home() {
+  show('home'); drawAlp('hAlp');
+  const d = day(), left = Math.max(0, S.set.goal - Math.floor(d.sec / 60)), h = new Date().getHours();
+  const hi = h < 11 ? 'Guten Morgen!' : h < 17 ? 'Hallo!' : 'Guten Abend!';
+  const nx = KL.station(nextStation());
+  $('hSay').innerHTML = hi + ' ' + (left ? `Noch <b>${left} Minuten</b> Klarinette, dann ist dein Tagesziel geschafft.` : 'Tagesziel geschafft! 🎉 Du bist super!') + (nx ? `<br><span class="muted">Als Nächstes: ${nx.isl.icon} ${nx.st.title}</span>` : '');
+}
+function map() {
+  show('map'); let h = '';
+  KL.ISLANDS.forEach(i => {
+    const open = i.n <= S.unlocked && i.st.length, n = i.st.reduce((a, s) => a + best(s.id), 0), max = i.st.length * 3;
+    const med = i.st.reduce((a, s) => Math.max(a, stat(s.id).medal || 0), 0);
+    h += `<button class="isl${open ? '' : ' lock'}${i.n === Math.min(S.unlocked, PLAYABLE) ? ' cur' : ''}" ${open ? `data-act="isl" data-n="${i.n}"` : 'data-act="locked"'}><b>${open ? i.icon : '🔒'}</b><span>${i.n}. ${i.name}</span><small>${i.topic}</small><small>${open ? '⭐ ' + n + '/' + max + ' ' + MEDAL[med] : (i.st.length ? 'noch zu' : 'kommt bald')}</small></button>`;
+  });
+  $('mapG').innerHTML = h;
+}
+let CUR_ISL = 1;
+function island(n) {
+  CUR_ISL = n; show('isl'); const I = isl(n); $('islH').textContent = I.icon + ' ' + I.name + ' – ' + I.topic;
+  const hw = S.hw && S.hw.ids ? S.hw.ids : [];
+  $('islG').innerHTML = I.st.map(st => { const s = stat(st.id); return `<button class="stn${hw.indexOf(st.id) >= 0 ? ' hw' : ''}" data-act="go" data-id="${st.id}"><span class="ic">${st.medal ? MEDAL[st.medal] : ICON[st.type]}</span><span><span class="t">${st.title}</span><br><span class="s">${starStr(s.best)}${s.medal ? ' ' + MEDAL[s.medal] : ''}</span></span></button>`; }).join('');
+}
+
+/* ================= Übungen ================= */
+let EX = null;
+function stopEx() { if (EX) { EX.running = false; if (EX.timer) clearInterval(EX.timer); } EX = null; LISTEN = null; }
+function exShell(title) {
+  screen = 'ex'; document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === 'ex')); hud();
+  $('exT').textContent = title; $('exL').innerHTML = ''; $('exFing').innerHTML = ''; drawAlp('exAlp'); $('exRes').classList.remove('on'); $('exGo').classList.remove('on');
+}
+function tunerHTML() { return '<div class="tuner"><div class="sc"></div><span class="lb" style="left:0">zu tief</span><span class="lb" style="left:44%">genau</span><span class="lb" style="right:0">zu hoch</span><div class="nd" id="nd"></div></div>'; }
+function needle(c) { const e = $('nd'); if (e) e.style.left = (50 + Math.max(-50, Math.min(50, c))) + '%'; }
+function setHint(t) { const e = $('exHint'); if (e) e.innerHTML = t; }
+function openStation(id) {
+  const r = KL.station(id); if (!r) return home();
+  stopEx(); TUNER = false; stopRun(); exShell(r.st.title);
+  const D = KL.diff(r.isl.n, S.set.tolAdj);
+  EX = (TYPES[r.st.type])(r.st, D, r.isl.n); EX.id = id; EX.st = r.st; EX.isl = r.isl.n; EX.D = D;
+  intro();
+}
+function intro() {
+  const e = EX, ov = $('exGo');
+  ov.innerHTML = `<div class="say" style="max-width:760px">${e.say}</div><div class="row" style="margin-top:14px">${e.demo ? '<button class="btn alt huge" data-act="demo">▶ Anhören</button>' : ''}${e.slow ? `<button class="btn alt" data-act="slow">${e.slowOn ? '🐢 langsam' : '🐇 normal'}</button>` : ''}<button class="btn pink huge" data-act="begin">${e.noMic ? 'Los!' : '🎤 Los!'}</button></div>${e.noMic ? '' : '<p class="muted">Halte die Klarinette bereit. Flauschi hört zu, du musst nichts mehr tippen.</p>'}`;
+  ov.classList.add('on'); if (e.pre) e.pre();
+}
+async function begin() {
+  const e = EX; if (!e) return;
+  if (!e.noMic && !(await micOn())) return micFail();
+  $('exGo').classList.remove('on');
+  if (e.noMic) { e.running = true; return e.begin(); }
+  wake();
+  let n = 3; const ov = $('exGo'); ov.innerHTML = `<div class="cnt">${n}</div><p class="say">Hände an die Klarinette …</p>`; ov.classList.add('on');
+  const t = setInterval(() => { n--; if (EX !== e) return clearInterval(t); if (n > 0) { ov.querySelector('.cnt').textContent = n; } else { clearInterval(t); ov.classList.remove('on'); e.running = true; LISTEN = fr => { if (EX === e && e.running) e.frame(fr); }; e.begin(); } }, 800 / SPEED);
+}
+function micFail() {
+  const sec = window.isSecureContext;
+  $('exGo').innerHTML = `<div class="say" style="max-width:760px">🎤 Ich kann dich leider nicht hören.<br><span class="muted">${sec ? 'Bitte erlaube das Mikrofon, wenn der Browser fragt (oder in den Einstellungen der Seite).' : 'Dieser Browser gibt das Mikrofon hier nicht frei. Für Eltern: Die Seite muss über https oder localhost geöffnet werden (siehe Anleitung im Projekt).'} (${MIC.err})</span></div><div class="row"><button class="btn pink" data-act="begin">Nochmal versuchen</button><button class="btn alt" data-act="skipmic">Ohne Mikrofon (nur anhören)</button></div>`;
+}
+let WL = null; function wake() { try { if (navigator.wakeLock && !WL) navigator.wakeLock.request('screen').then(w => { WL = w; w.addEventListener('release', () => { WL = null; }); }).catch(() => {}); } catch (e) {} }
+function noteStat(name, okHit, cents) { const n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++; if (okHit) n.ok++; if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; } }
+// Gemeinsamer Baustein: auf einen Zielton warten (Tonfolge, Ohren-Spiel, neuer Ton)
+function waiter(D) {
+  return {
+    hold: 0, wrong: 0, wName: '', miss: 0, cs: [], idle: 0,
+    reset() { this.hold = 0; this.wrong = 0; this.wName = ''; this.miss = 0; this.cs = []; this.idle = 0; },
+    step(fr, target, needHold) { // Rückgabe: 'ok' | 'miss' | null
+      if (fr.voiced && fr.a) {
+        this.idle = 0;
+        if (fr.a.name === target && Math.abs(fr.a.cents) <= D.tol) { this.hold += fr.dt; this.wrong = 0; this.cs.push(fr.a.cents); needle(fr.a.cents); if (this.hold >= needHold) return 'ok'; }
+        else {
+          this.hold = Math.max(0, this.hold - fr.dt * 2);
+          const tm = KL.NOTES[target].midi; needle(fr.a.name === target ? fr.a.cents : (fr.a.midi < tm ? -50 : 50));
+          if (fr.a.name === this.wName) this.wrong += fr.dt; else { this.wName = fr.a.name; this.wrong = fr.dt; }
+          if (this.wrong >= 0.4) { this.wrong = -0.6; this.miss++; return 'miss'; }
+        }
+      } else { this.hold = Math.max(0, this.hold - fr.dt); this.idle += fr.dt; }
+      return null;
+    }
+  };
+}
+const higher = (wName, target) => { const tm = KL.NOTES[target].midi; const m = Object.keys(KL.NOTES).indexOf(wName) >= 0 ? KL.NOTES[wName].midi : null; return m == null ? '' : (m < tm ? 'Etwas <b>höher</b> ⬆' : 'Etwas <b>tiefer</b> ⬇'); };
+function autoWant(name, t, gapEvery) { return name ? { f: KL.concertFreq(name, S.set.a4) * (gapEvery && (t % gapEvery) > gapEvery * 0.75 ? 0 : 1), rms: gapEvery && (t % gapEvery) > gapEvery * 0.75 ? 0 : 0.08 } : { f: 0, rms: 0 }; }
+
+const TYPES = {
+  /* ----- neuer Ton: anhören, Griff ansehen, 1 Sekunde richtig spielen ----- */
+  learn(st, D) {
+    const name = st.note, w = waiter(D);
+    const e = {
+      say: `Neuer Ton: <b>${name}</b>! 🎓<br>Griff: ${KL.fingerText(name)}.<br>Hör ihn dir an und spiel ihn dann eine Sekunde lang.`,
+      demo() { playSeq([{ name, beats: 2 }], 60); },
+      pre() { $('exL').innerHTML = `<div class="bigname">${name}</div><div class="staff" style="max-width:300px">${single(name)}</div>`; $('exFing').innerHTML = fingSVG(name); },
+      begin() { this.t0 = now(); $('exL').innerHTML = `<div class="bigname">${name}</div><div class="staff" style="max-width:300px">${single(name)}</div><div class="meter"><i id="mt"></i></div>${tunerHTML()}<div class="hint" id="exHint">Spiel den Ton ${name}!</div>`; },
+      frame(fr) {
+        const r = w.step(fr, name, 1.0); $('mt').style.width = Math.min(100, w.hold * 100) + '%';
+        if (r === 'miss') { setHint(higher(w.wName, name) + ' – schau auf den Griff!'); sBad(); }
+        if (w.idle > 5) { w.idle = 0; setHint('Hör nochmal genau hin …'); playSeq([{ name, beats: 2 }], 60); }
+        if (r === 'ok') { noteStat(name, true, avg(w.cs)); finish(1); }
+        else if (fr.t - this.t0 > 40) finish(Math.min(0.8, w.hold));
+      },
+      want(t) { return autoWant(name, t); }
+    };
+    return e;
+  },
+  /* ----- lange Töne ----- */
+  long(st, D) {
+    const notes = st.notes, target = st.sec || D.longSec; let k = 0, hold = 0, bestH = 0, gap = 0, cs = [], t0 = 0; const res = [];
+    const e = {
+      say: `Lange Töne 〰️<br>Halte jeden Ton <b>${target} Sekunden</b> lang – ruhig und gleichmäßig.<br><span class="muted">Kinn bleibt ruhig, tief in den Bauch atmen.</span>`,
+      demo() { playSeq(notes.map(n => ({ name: n, beats: 2 })), 60); },
+      pre() { $('exL').innerHTML = `<div class="bigname">${notes.join(' ')}</div>`; $('exFing').innerHTML = fingSVG(notes[0]); },
+      show() { const n = notes[k]; $('exFing').innerHTML = fingSVG(n); $('exL').innerHTML = `<div class="dots">${notes.map((x, i) => `<i class="${i < k ? (res[i] >= 0.99 ? 'ok' : 'bad') : i === k ? 'now' : ''}"></i>`).join('')}</div><div class="bigname">${n}</div><div class="staff" style="max-width:260px">${single(n)}</div><div class="meter"><i id="mt"></i></div>${tunerHTML()}<div class="hint" id="exHint">Halte den Ton ${n}!</div>`; hold = 0; bestH = 0; gap = 0; cs = []; t0 = now(); },
+      begin() { this.show(); },
+      frame(fr) {
+        const n = notes[k], good = fr.voiced && fr.a && fr.a.name === n && Math.abs(fr.a.cents) <= D.tol + 5;
+        if (good) { hold += fr.dt; gap = 0; cs.push(fr.a.cents); needle(fr.a.cents); } else { gap += fr.dt; if (fr.voiced && fr.a) needle(fr.a.midi < KL.NOTES[n].midi ? -50 : fr.a.midi > KL.NOTES[n].midi ? 50 : fr.a.cents); if (gap > 0.4) { bestH = Math.max(bestH, hold); hold = 0; } }
+        bestH = Math.max(bestH, hold); $('mt').style.width = Math.min(100, hold / target * 100) + '%';
+        if (gap > 0.4 && bestH > 0.5 && bestH < target) setHint('Weiter so – gleich nochmal und länger halten!');
+        if (fr.voiced && fr.a && !good && gap > 0.5) setHint(higher(fr.a.name, n));
+        if (bestH >= target || fr.t - t0 > target + 20) {
+          const stab = Math.max(0, 1 - sd(cs) / 25), sc = Math.min(1, bestH / target) * (0.85 + 0.15 * stab);
+          res.push(sc); noteStat(n, bestH >= target, avg(cs)); if (bestH >= target) { sOk(); anim('exAlp', 'hop'); }
+          k++; if (k >= notes.length) finish(res.reduce((a, b) => a + b, 0) / res.length); else this.show();
+        }
+      },
+      want(t) { return autoWant(notes[k], t); }
+    };
+    return e;
+  },
+  /* ----- Anstoßen: einzelne Tonanfänge zählen ----- */
+  tongue(st, D) {
+    const name = st.note, N = st.count; let cnt = 0, inSeg = false, segT = 0, counted = false, peak = 0, t0 = 0;
+    return {
+      say: `Anstoßen 👅<br>Spiel den Ton <b>${name}</b> ${N}-mal kurz hintereinander. Die Zunge sagt „D“ – <b>das Kinn bleibt ruhig</b>, nur die Zunge bewegt sich.`,
+      demo() { playSeq(Array.from({ length: 4 }, () => [{ name, beats: 0.6 }, { name: null, beats: 0.4 }]).flat(), 90); },
+      pre() { $('exFing').innerHTML = fingSVG(name); $('exL').innerHTML = `<div class="bigname">${name}</div>`; },
+      begin() { t0 = now(); $('exFing').innerHTML = fingSVG(name); $('exL').innerHTML = `<div class="bigname">${name}</div><div class="dots" id="td">${'<i></i>'.repeat(N)}</div>${tunerHTML()}<div class="hint" id="exHint">D – D – D …</div>`; },
+      frame(fr) {
+        const good = fr.voiced && fr.a && fr.a.name === name && Math.abs(fr.a.cents) <= D.tol + 15;
+        peak = Math.max(fr.rms, peak * 0.96);
+        if (good) needle(fr.a.cents);
+        if (inSeg && (!fr.loud || !fr.voiced || fr.rms < peak * 0.45)) { inSeg = false; peak = fr.rms; }
+        else if (!inSeg && good) { inSeg = true; segT = fr.t; counted = false; }
+        if (inSeg && good && !counted && fr.t - segT >= 0.12) { counted = true; cnt++; const d = $('td').children[cnt - 1]; if (d) d.className = 'ok'; blip(990, 0, 0.05); }
+        if (fr.voiced && fr.a && fr.a.name !== name) setHint(higher(fr.a.name, name));
+        if (cnt >= N) { noteStat(name, true, null); finish(1); } else if (fr.t - t0 > 35) finish(cnt / N);
+      },
+      want(t) { return autoWant(name, t, 0.4); }
+    };
+  },
+  /* ----- Tonfolge: App wartet auf jeden Ton ----- */
+  seq(st, D) {
+    const notes = KL.parseMelody(st.mel), idx = notes.map((n, i) => n.rest ? -1 : i).filter(i => i >= 0), w = waiter(D); let k = 0, score = 0;
+    return {
+      say: `Tonfolge 🎵<br>Spiel die Töne nacheinander. Flauschi wartet auf jeden Ton – du hast Zeit.`,
+      demo() { playSeq(notes, 80, i => mark(i, 'now')); },
+      pre() { $('exL').innerHTML = `<div class="staff">${staffSVG(notes)}</div>`; },
+      show() { const i = idx[k], n = notes[i].name; document.querySelectorAll('#exL .n').forEach(e => e.classList.remove('now')); pageTo(notes[i].bar); mark(i, 'now'); $('exFing').innerHTML = fingSVG(n); $('bn').textContent = n; w.reset(); },
+      begin() { $('exL').innerHTML = `<div class="staff">${staffSVG(notes)}</div><div class="bigname" id="bn"></div>${tunerHTML()}<div class="hint" id="exHint">Los geht's!</div>`; this.show(); },
+      frame(fr) {
+        const i = idx[k], n = notes[i].name, r = w.step(fr, n, D.hold);
+        if (r === 'miss') { sBad(); setHint(higher(w.wName, n)); if (w.miss >= 3) { mark(i, 'bad'); noteStat(n, false, null); setHint('Das war schwer – weiter geht\'s!'); return this.next(); } }
+        if (w.idle > 5) { w.idle = 0; setHint('Hör nochmal: ' + n); playSeq([{ name: n, beats: 1.5 }], 60); }
+        if (r === 'ok') { mark(i, 'ok'); noteStat(n, w.miss === 0, avg(w.cs)); score += [1, 0.6, 0.4][w.miss] || 0; setHint(pick(['Super!', 'Genau!', 'Klasse!', 'Richtig!'])); this.next(); }
+      },
+      next() { k++; if (k >= idx.length) finish(score / idx.length); else this.show(); },
+      want(t) { return autoWant(notes[idx[k]] && notes[idx[k]].name, t, 0.9); }
+    };
+  },
+  /* ----- Lied im Takt mit Metronom ----- */
+  song(st, D) {
+    const notes = KL.parseMelody(st.mel); let bpm = st.bpm, t0 = 0, spb = 0, starts = [], k = 0, okN = 0, tot = 0, fin = []; const real = notes.filter(n => !n.rest).length;
+    const acc = notes.map(() => ({ a: 0, b: 0, cs: [] }));
+    return {
+      slow: true, slowOn: false,
+      say: `${st.medal ? MEDAL[st.medal] + ' Medaillen-Stück' : '🎶 Lied'}: <b>${st.title}</b>${st.src === 'trad' ? ' <span class="muted">(Volkslied)</span>' : ''}<br>Erst anhören, dann mitspielen! Nach 4 Klicks geht es los. Spiel im Takt der Klicks.`,
+      demo() { playSeq(notes, bpm, i => { document.querySelectorAll('#exL .n').forEach(e => e.classList.remove('now')); pageTo(notes[i].bar); mark(i, 'now'); }); },
+      pre() { $('exL').innerHTML = `<div class="staff">${staffSVG(notes)}</div>`; pageTo(0); $('exFing').innerHTML = fingSVG(notes.find(n => !n.rest).name); },
+      begin() {
+        spb = 60 / bpm; t0 = now() + 4 * spb; let b = 0; starts = notes.map(n => { const s = b; b += n.beats; return s * spb; }); tot = b * spb;
+        $('exL').innerHTML = `<div class="staff">${staffSVG(notes)}</div><div class="hint" id="exHint">1 – 2 – 3 – 4 …</div>`; pageTo(0);
+        const beats = Math.round(b) + 4; for (let i = 0; i < beats; i++) click(i * spb / SPEED, i % 4 === 0);
+      },
+      frame(fr) {
+        const rel = fr.t - t0;
+        if (rel < 0) return;
+        if (!this.go) { this.go = 1; setHint('🎵 Spiel mit!'); }
+        while (k < notes.length && rel > starts[k] + notes[k].beats * spb) { this.close(k); k++; }
+        if (k >= notes.length) { if (rel > tot + 0.3) finish(okN / real); return; }
+        const n = notes[k], ws = starts[k] + Math.min(0.15, 0.3 * n.beats * spb), we = starts[k] + n.beats * spb - 0.04;
+        if (!fin[k]) { document.querySelectorAll('#exL .n.now').forEach(e => e.classList.remove('now')); pageTo(n.bar); mark(k, 'now'); fin[k] = 1; if (!n.rest) { $('exFing').innerHTML = fingSVG(n.name); } }
+        if (!n.rest && rel >= ws && rel <= we) { acc[k].b++; if (fr.voiced && fr.a && fr.a.name === n.name && Math.abs(fr.a.cents) <= D.tol) { acc[k].a++; acc[k].cs.push(fr.a.cents); } }
+      },
+      close(i) {
+        const n = notes[i]; if (n.rest) { mark(i, 'ok'); return; }
+        const good = acc[i].b > 0 && acc[i].a / acc[i].b >= 0.45; if (good) okN++;
+        mark(i, good ? 'ok' : 'bad'); noteStat(n.name, good, avg(acc[i].cs));
+      },
+      want(t) { const rel = t - t0; let j = 0; while (j < notes.length - 1 && rel > starts[j] + notes[j].beats * spb) j++; const n = notes[j]; if (rel < 0 || !n || n.rest) return { f: 0, rms: 0 }; const into = rel - starts[j]; return into > n.beats * spb - 0.05 ? { f: 0, rms: 0 } : autoWant(n.name, t); }
+    };
+  },
+  /* ----- Ohren-Spiel: hören und nachspielen ohne Noten ----- */
+  ear(st, D) {
+    const R = st.rounds, L = st.len, w = waiter(D); let r = 0, k = 0, seq = [], okR = 0, roundMiss = 0, wait = 0;
+    const mk = () => { const s = []; while (s.length < L) { const n = pick(st.pool); if (s[s.length - 1] !== n) s.push(n); } return s; };
+    return {
+      say: `Ohren-Spiel 👂<br>Flauschi spielt dir ${L === 1 ? 'einen Ton' : L + ' Töne'} vor. Hör gut zu und spiel ${L === 1 ? 'ihn' : 'sie'} nach – ganz ohne Noten!`,
+      pre() { $('exL').innerHTML = '<div style="font-size:110px">👂</div>'; },
+      round() { seq = mk(); k = 0; roundMiss = 0; w.reset(); this.play(); },
+      play() { $('exL').innerHTML = `<div class="dots">${Array.from({ length: R }, (_, i) => `<i class="${i < r ? '' : i === r ? 'now' : ''}"></i>`).join('')}</div><div style="font-size:110px">🔊</div><div class="hint" id="exHint">Hör gut zu …</div>`; $('exFing').innerHTML = ''; const d = playSeq(seq.map(n => ({ name: n, beats: 1 })), 75); wait = now() + d; },
+      begin() { this.round(); },
+      frame(fr) {
+        if (fr.t < wait) return;
+        if (!$('ed')) { $('exL').innerHTML = `<div style="font-size:90px">🎷</div><div class="dots" id="ed">${seq.map(() => '<i></i>').join('')}</div>${tunerHTML()}<div class="hint" id="exHint">Jetzt du!</div>`; }
+        const n = seq[k], res = w.step(fr, n, D.hold);
+        if (res === 'miss') { roundMiss++; sBad(); setHint(higher(w.wName, n)); if (roundMiss === 2) { setHint('Hör nochmal …'); this.play(); return; } if (roundMiss >= 4) { $('exFing').innerHTML = fingSVG(n); setHint('Es war <b>' + n + '</b>. So geht der Griff.'); } }
+        if (res === 'ok') { const d = $('ed').children[k]; if (d) d.className = 'ok'; noteStat(n, true, avg(w.cs)); k++; w.reset(); if (k >= seq.length) { if (roundMiss <= 1) okR++; sOk(); anim('exAlp', 'hop'); r++; if (r >= R) return finish(okR / R); setHint('Richtig! Es war ' + seq.join(' – ')); wait = now() + 99; setTimeout(() => { if (EX && EX.running) this.round(); }, 1200 / SPEED); } }
+      },
+      want(t) { return t < wait ? { f: 0, rms: 0 } : autoWant(seq[k], t, 0.9); }
+    };
+  },
+  /* ----- Atmung (Lektion 1): einatmen und kräftig pusten ----- */
+  breath(st) {
+    const R = st.rounds; let r = 0, ph = 'in', pt = 0, blowN = 0, blowA = 0; const res = [];
+    return {
+      say: 'Bauch-Atmung 🌬️<br>Leg eine Hand auf den Bauch. Wenn der Kreis wächst: <b>einatmen</b> (4 Schläge). Wenn er schrumpft: <b>„FFF“ pusten</b> – kräftig, so dass Flauschi es hört.',
+      begin() { pt = now(); ph = 'in'; this.draw(); },
+      draw() { $('exL').innerHTML = `<div class="dots">${Array.from({ length: R }, (_, i) => `<i class="${i < r ? (res[i] > 0.5 ? 'ok' : 'bad') : i === r ? 'now' : ''}"></i>`).join('')}</div><div class="ring" id="rg">${ph === 'in' ? 'einatmen' : 'FFF …'}</div><div class="meter"><i id="mt"></i></div>`; },
+      frame(fr) {
+        const el = fr.t - pt, rg = $('rg');
+        if (ph === 'in') { rg.style.transform = `scale(${0.7 + Math.min(1, el / 4) * 0.5})`; if (el >= 4) { ph = 'out'; pt = fr.t; blowN = 0; blowA = 0; this.draw(); $('rg').style.transform = 'scale(1.2)'; } }
+        else { rg.style.transform = `scale(${1.2 - Math.min(1, el / 4) * 0.5})`; blowA++; if (fr.rms > fr.thr * 1.5) blowN++; $('mt').style.width = (blowN / Math.max(1, blowA) * 100) + '%'; if (el >= 4) { res.push(blowN / Math.max(1, blowA)); r++; if (r >= R) return finish(Math.min(1, res.reduce((a, b) => a + b, 0) / R / 0.7)); ph = 'in'; pt = fr.t; this.draw(); } }
+      },
+      want(t) { return ph === 'out' ? { f: 0, rms: 0.05 } : { f: 0, rms: 0 }; }
+    };
+  },
+  /* ----- erster Ton: irgendein kräftiger Ton für einige Sekunden ----- */
+  blow(st) {
+    let hold = 0, gap = 0, t0 = 0;
+    return {
+      say: `Mein erster Ton 🎺<br>Spiel einen Ton – mit Mundstück und Birne oder mit der ganzen Klarinette – und halte ihn <b>${st.sec} Sekunden</b>.`,
+      begin() { t0 = now(); $('exL').innerHTML = `<div style="font-size:100px">🎺</div><div class="meter"><i id="mt"></i></div><div class="hint" id="exHint">Kräftig blasen, wie bei einem Luftballon!</div>`; },
+      frame(fr) { if (fr.rms > fr.thr * 2) { hold += fr.dt; gap = 0; } else { gap += fr.dt; if (gap > 0.4) hold = 0; } $('mt').style.width = Math.min(100, hold / st.sec * 100) + '%'; if (hold >= st.sec) finish(1); else if (fr.t - t0 > 40) finish(hold / st.sec); },
+      want() { return { f: 700, rms: 0.08 }; }
+    };
+  },
+  /* ----- Quiz ohne Klarinette ----- */
+  quiz(st, D, islN) {
+    const known = KL.knownNotes(Math.max(islN, 3)), Qs = [], ALL = ['h', "c'", "d'", "e'", "f'", "g'"];
+    const PORD = shuffle(PARTS.map((_, i) => i));
+    const opts = (right, pool) => shuffle([right].concat(shuffle(pool.filter(x => x !== right)).slice(0, 3)));
+    for (let i = 0; i < 6; i++) {
+      if (st.kind === 'parts') { const p = PORD[i % PARTS.length]; Qs.push({ q: 'Wie heißt das markierte Teil?', img: clarSVG(p), a: PARTS[p].n, o: opts(PARTS[p].n, PARTS.map(x => x.n)) }); }
+      if (st.kind === 'names') { const n = pick(known); Qs.push({ q: 'Wie heißt diese Note?', img: `<div class="staff" style="max-width:300px">${single(n)}</div>`, a: n, o: opts(n, known.length >= 4 ? known : ALL.slice(1)) }); }
+      if (st.kind === 'fing') { const n = pick(known); Qs.push({ q: 'Welcher Ton hat diesen Griff?', img: `<div style="width:120px">${fingSVG(n)}</div>`, a: n, o: opts(n, known) }); }
+      if (st.kind === 'values') {
+        const V = islN >= 6 ? [['ganze Note', 1, 0, 4], ['halbe Note', 2, 0, 2], ['Viertelnote', 4, 0, 1], ['ganze Pause', 1, 1, 4], ['halbe Pause', 2, 1, 2], ['Viertelpause', 4, 1, 1]] : [['ganze Note', 1, 0, 4], ['Viertelnote', 4, 0, 1], ['ganze Pause', 1, 1, 4], ['Viertelpause', 4, 1, 1]];
+        const v = pick(V), img = `<div class="staff" style="max-width:300px">${staffSVG([{ rest: !!v[2], name: v[2] ? null : "d'", dur: v[1], beats: v[3], bar: 0 }], { single: true })}</div>`;
+        if (i % 2) Qs.push({ q: 'Wie viele Schläge dauert das?', img, a: String(v[3]), o: ['1', '2', '4'].concat(islN >= 7 ? ['3'] : []) });
+        else Qs.push({ q: 'Wie heißt das?', img, a: v[0], o: opts(v[0], V.map(x => x[0])) });
+      }
+    }
+    let k = 0, first = 0, tries = 0;
+    return {
+      get solution() { return Qs[k] && Qs[k].a; }, // nur für tests/e2e_cdp.mjs
+      noMic: true, say: `${st.title} ❓<br>Tippe auf die richtige Antwort. Dafür brauchst du die Klarinette nicht.`,
+      begin() { this.show(); },
+      show() { const q = Qs[k]; tries = 0; $('exL').innerHTML = `<div class="dots">${Qs.map((_, i) => `<i class="${i < k ? 'ok' : i === k ? 'now' : ''}"></i>`).join('')}</div><h2>${q.q}</h2><div style="margin:6px;display:flex;justify-content:center;width:100%">${q.img}</div><div class="opts">${q.o.map(o => `<button class="opt" data-act="ans" data-v="${o}">${o}</button>`).join('')}</div>`; $('exFing').innerHTML = ''; },
+      answer(v, b) {
+        const q = Qs[k]; if (b.classList.contains('no')) return;
+        if (v === q.a) { b.classList.add('good'); sOk(); if (!tries) first++; anim('exAlp', 'hop'); k++; setTimeout(() => { if (EX !== this) return; if (k >= Qs.length) finish(first / Qs.length); else this.show(); }, 700 / SPEED); }
+        else { tries++; b.classList.add('no'); sBad(); }
+      }
+    };
+  }
+};
+function pageTo(bar) { const sv = document.querySelectorAll('#exL .staff svg'); if (sv.length <= 2) return; const st = Math.min(Math.floor(bar / 4), sv.length - 2); sv.forEach((s, j) => { s.style.display = j === st || j === st + 1 ? '' : 'none'; }); }
+function mark(i, cls) { const e = document.getElementById('n' + i); if (e) { e.classList.remove('now', 'ok', 'bad'); e.classList.add(cls); } }
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const sd = a => { if (a.length < 2) return 0; const m = avg(a); return Math.sqrt(avg(a.map(x => (x - m) * (x - m)))); };
+
+/* ----- Abschluss einer Übung: Sterne, Auszahlung, Freischaltung ----- */
+function finish(score) {
+  const e = EX; if (!e || !e.running) return; e.running = false; LISTEN = null;
+  score = Math.max(0, Math.min(1, score || 0));
+  let earned = e.st.type === 'learn' ? (score >= 1 ? 3 : score > 0.5 ? 1 : 0) : KL.starsFor(score, e.isl);
+  const s = stat(e.id), bestBefore = s.best, rep = s.last === today() ? s.rep : 0;
+  let pay = KL.payout(earned, bestBefore, rep);
+  if (S.bonus < 3 && earned > 0) { pay += 1; S.bonus++; }
+  s.best = Math.max(s.best, earned); s.n++; s.rep = rep + 1; s.last = today();
+  let medal = '';
+  if (e.st.medal && earned >= 2 && (s.medal || 0) < e.st.medal) { s.medal = e.st.medal; medal = MEDAL[e.st.medal]; }
+  const d = day(); d.ex++; d.stars += pay; S.stars += pay;
+  const tix = earned >= 2 ? 1 : 0; S.tix += tix;
+  let unlock = '';
+  const I = isl(e.isl);
+  if (e.isl === S.unlocked && e.isl < PLAYABLE && I.st.every(x => best(x.id) >= 1)) { S.unlocked++; unlock = `<p class="say">🗺️ Neue Insel offen: ${isl(S.unlocked).icon} ${isl(S.unlocked).name}!</p>`; }
+  save(); hud();
+  const msg = earned === 3 ? pick(['Wow, perfekt gespielt!', 'Spitze! Das klingt richtig gut!', 'Super – du bist ein Klarinetten-Profi!']) : earned === 2 ? pick(['Gut gemacht! Noch ein bisschen üben, dann wird es perfekt.', 'Klasse! Fast alles richtig.']) : earned === 1 ? 'Ein guter Anfang! Probier es gleich nochmal.' : 'Das war schwer. Hör es dir nochmal an und versuch es noch einmal – du schaffst das!';
+  const tip = e.st.type === 'tongue' ? 'Tipp: Kinn ruhig, nur die Zunge bewegt sich.' : e.st.type === 'long' && earned < 3 ? 'Tipp: Vorher tief in den Bauch einatmen.' : e.st.type === 'song' && earned < 3 ? 'Tipp: Mit 🐢 langsam üben.' : '';
+  $('exRes').innerHTML = `<div class="stars">${starStr(earned)}</div><div class="say" style="max-width:720px">${msg}${tip ? '<br><span class="muted">' + tip + '</span>' : ''}</div><p style="font-size:24px;font-weight:800">${pay ? '+' + pay + ' ⭐' : 'Kein neuer Stern – versuch deinen Rekord zu knacken!'} ${tix ? ' · +1 🎟️' : ''} ${medal ? ' · Medaille ' + medal : ''}</p>${unlock}<div class="row"><button class="btn alt huge" data-act="again">🔁 Nochmal</button><button class="btn green huge" data-act="nextst">➡ Weiter</button></div>`;
+  $('exRes').classList.add('on');
+  if (earned >= 2) { anim('exAlp', 'salto'); sStar(); } if (earned === 3 || medal || unlock) confetti();
+}
+function nextAfter(id) { const r = KL.station(id), I = r.isl; if (r.idx + 1 < I.st.length) return I.st[r.idx + 1].id; return nextStation(); }
+
+/* ================= Laden ================= */
+const ITEMS = [
+  { id: 'party', n: 'Partyhut', slot: 'hat', p: 1, ic: '🥳', mi: 1 }, { id: 'shades', n: 'Sonnenbrille', slot: 'eyes', p: 1, ic: '😎', mi: 1 },
+  { id: 'bow', n: 'Fliege', slot: 'neck', p: 1, ic: '🎀', mi: 1 }, { id: 'tailbow', n: 'Schweif-Schleife', slot: 'tail', p: 2, ic: '🎗️', mi: 1 },
+  { id: 'phones', n: 'Kopfhörer', slot: 'hat', p: 2, ic: '🎧', mi: 1 }, { id: 'notes', n: 'Notenwirbel', slot: 'fx', p: 3, ic: '🎵', mi: 2 },
+  { id: 'scarf', n: 'Schal', slot: 'neck', p: 2, ic: '🧣', mi: 2 }, { id: 'flowers', n: 'Blumenkranz', slot: 'hat', p: 2, ic: '🌸', mi: 2 },
+  { id: 'boots', n: 'Gummistiefel', slot: 'feet', p: 2, ic: '👢', mi: 2 }, { id: 'bell', n: 'Glöckchen', slot: 'neck', p: 3, ic: '🔔', mi: 3 },
+  { id: 'fly', n: 'Schmetterling', slot: 'friend', p: 3, ic: '🦋', mi: 3 }, { id: 'blanket', n: 'Kuscheldecke', slot: 'back', p: 3, ic: '🧶', mi: 3 },
+  { id: 'beret', n: 'Musikerkappe', slot: 'hat', p: 4, ic: '🎨', mi: 4 }, { id: 'hearts', n: 'Herzbrille', slot: 'eyes', p: 4, ic: '💖', mi: 4 },
+  { id: 'starglasses', n: 'Sternenbrille', slot: 'eyes', p: 5, ic: '🌟', mi: 5 }, { id: 'wizard', n: 'Zauberhut', slot: 'hat', p: 5, ic: '🧙', mi: 5 },
+  { id: 'chick', n: 'Küken-Freund', slot: 'friend', p: 5, ic: '🐥', mi: 5 }, { id: 'cape', n: 'Helden-Cape', slot: 'back', p: 6, ic: '🦸', mi: 6 },
+  { id: 'sparkle', n: 'Glitzer', slot: 'fx', p: 6, ic: '✨', mi: 6 }, { id: 'crown', n: 'Krone', slot: 'hat', p: 8, ic: '👑', mi: 6 },
+  // Spiel-Ausrüstung mit Vorteil im Hüpfspiel (muss getragen werden)
+  { id: 'helmet', n: 'Sturzhelm', slot: 'hat', p: 3, ic: '⛑️', mi: 2, gear: 'Ein Treffer pro Level ist frei' },
+  { id: 'turbo', n: 'Turbo-Schuhe', slot: 'feet', p: 4, ic: '👟', mi: 3, gear: 'Springt höher' },
+  { id: 'magnet', n: 'Karotten-Magnet', slot: 'friend', p: 5, ic: '🧲', mi: 4, gear: 'Zieht Karotten an' },
+  { id: 'wings', n: 'Flügel', slot: 'back', p: 7, ic: '🪽', mi: 5, gear: 'Doppelsprung in der Luft' }
+];
+const CONS = [{ id: 'life', n: 'Extra-Leben', ic: '❤️', p: 2, d: 'Für das nächste Level' }, { id: 'clock', n: 'Zeitlupe', ic: '⏳', p: 2, d: 'Nächstes Level langsamer' }];
+const item = id => ITEMS.find(i => i.id === id);
+function shop(msg) {
+  show('shop'); drawAlp('sAlp'); $('shopMsg').textContent = msg || 'Was soll Flauschi anziehen? Tippe auf Gekauftes zum An- und Ausziehen.';
+  const card = it => { const own = S.own.indexOf(it.id) >= 0, lock = it.mi > S.unlocked; return `<button class="item${own ? ' own' : ''}${S.wear[it.slot] === it.id ? ' wear' : ''}${lock ? ' lock' : ''}" data-act="${lock ? 'locked' : own ? 'wear' : 'buy'}" data-id="${it.id}"><b>${it.ic}</b>${it.n}<small>${lock ? '🔒 ab Insel ' + it.mi : own ? (S.wear[it.slot] === it.id ? 'trägt Flauschi' : 'gehört dir') : it.p + ' ⭐'}</small>${it.gear ? `<small>🎮 ${it.gear}</small>` : ''}</button>`; };
+  $('shopG').innerHTML = ITEMS.filter(i => !i.gear).map(card).join('');
+  $('shopG2').innerHTML = ITEMS.filter(i => i.gear).map(card).join('') + CONS.map(c => `<button class="item" data-act="buyc" data-id="${c.id}"><b>${c.ic}</b>${c.n}<small>${c.p} ⭐ · du hast ${S.cons[c.id]}</small><small>🎮 ${c.d}</small></button>`).join('');
+}
+
+/* ================= Hüpfspiel: 4 Welten × 5 Level ================= */
+const WORLDS = [
+  { n: 'Blumenwiese', sky: 'linear-gradient(#bfe9ff,#f0fbff)', gr: '#8ee08a', ob: ['🌵', '🪨', '🍄'], fly: '🐝' },
+  { n: 'Sandwüste', sky: 'linear-gradient(#ffe2a8,#fff6e0)', gr: '#f1c27d', ob: ['🌵', '🦂', '🪨'], fly: '🦅' },
+  { n: 'Schneeberg', sky: 'linear-gradient(#cfe3ff,#ffffff)', gr: '#e8f1ff', ob: ['⛄', '🧊', '🌲'], fly: '❄️' },
+  { n: 'Regenbogenland', sky: 'linear-gradient(#ffd1f0,#e6dcff)', gr: '#c6a8ff', ob: ['💎', '🍭', '🌈'], fly: '🦄' }
+];
+let G = null;
+function stopRun() { if (G) G.on = false; G = null; }
+function runMenu(msg) {
+  show('run'); const lv = S.hop.done.length; let h = '';
+  WORLDS.forEach((w, wi) => { h += `<div style="font-weight:800;margin-top:6px">${w.ob[0]} ${w.n}</div><div class="lvl">`; for (let l = 0; l < 5; l++) { const n = wi * 5 + l, b = S.hop.best[n] || 0; h += `<button data-act="rungo" data-l="${n}" class="${S.hop.done.indexOf(n) >= 0 ? 'done' : ''}" ${n > lv ? 'disabled' : ''}>${n + 1}<br><small>${'⭐'.repeat(b)}</small></button>`; } h += '</div>'; });
+  const left = S.set.gameLimit - day().games;
+  $('runA').innerHTML = alpSVG(S.wear); $('runA').style.transform = ''; $('runH').innerHTML = ''; $('runF').querySelectorAll('.ob').forEach(o => o.remove());
+  $('runF').style.background = WORLDS[0].sky; $('runG').style.background = WORLDS[0].gr;
+  $('runM').style.display = 'flex';
+  $('runM').innerHTML = `<div class="card" style="max-height:96%;overflow:auto;text-align:center"><h2>Flauschis Hüpfspiel</h2><p style="margin:0;font-weight:700">${msg || 'Tippe zum Springen. Sammle Karotten 🥕, spring über Hindernisse und erreiche die Fahne 🏁!'}</p><p class="muted">Tickets: ${S.tix} 🎟️ · heute noch ${Math.max(0, left)} Runden · ❤️ ${S.cons.life} · ⏳ ${S.cons.clock}</p>${h}<button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
+}
+function runGo(L) {
+  if (S.tix < 1) return runMenu('Du brauchst ein Ticket 🎟️. Tickets gibt es für jede Übung mit 2 oder 3 Sternen.');
+  if (day().games >= S.set.gameLimit) return runMenu('Für heute ist die Spielzeit vorbei. Morgen geht es weiter! 🌙');
+  S.tix--; day().games++;
+  const w = WORLDS[Math.floor(L / 5)], gear = id => Object.values(S.wear).indexOf(id) >= 0;
+  const slow = S.cons.clock > 0 ? (S.cons.clock--, 0.85) : 1, extra = S.cons.life > 0 ? (S.cons.life--, 1) : 0;
+  save(); hud(); $('runM').style.display = 'none'; $('runF').style.background = w.sky; $('runG').style.background = w.gr;
+  G = { on: true, L, w, len: 30 + L * 1.5, dist: 0, sp: (230 + L * 16) * slow, gapT: Math.max(0.62, 1.3 - L * 0.034), fly: L < 2 ? 0 : 0.12 + L * 0.016, dbl: L >= 8 ? 0.15 + (L - 8) * 0.02 : 0,
+    car: 0, carN: 0, hp: 3 + extra, y: 0, vy: 0, objs: [], nxt: 1.2, inv: 0, last: 0, jumps: 0,
+    shield: gear('helmet') ? 1 : 0, jumpV: gear('turbo') ? 760 : 680, wings: gear('wings'), magnet: gear('magnet'), flag: null };
+  requestAnimationFrame(runTick);
+}
+function runJump() { if (!G || !G.on) return; if (G.y === 0) { G.vy = G.jumpV; G.jumps = 1; blip(520, 0, 0.08); } else if (G.wings && G.jumps === 1) { G.vy = G.jumpV * 0.85; G.jumps = 2; blip(700, 0, 0.08); } }
+function spawn(Fw, emoji, y, car, h) { const el = document.createElement('span'); el.className = 'ob'; el.textContent = emoji; el.style.bottom = (56 + y) + 'px'; $('runF').appendChild(el); G.objs.push({ el, x: Fw + 20, y, car, w: 36, h: h || 40 }); }
+function runTick(ts) {
+  if (!G || !G.on) return; const dt = Math.min(0.05, (ts - (G.last || ts)) / 1000); G.last = ts;
+  const Fw = $('runF').clientWidth, a = $('runA');
+  G.dist += dt; G.inv -= dt; G.vy -= 1900 * dt; G.y += G.vy * dt; if (G.y <= 0) { G.y = 0; G.vy = 0; G.jumps = 0; }
+  a.style.transform = `translate(0,${-G.y}px)`; a.classList.toggle('inv', G.inv > 0);
+  G.nxt -= dt;
+  if (G.dist < G.len && G.nxt <= 0) {
+    const r = Math.random();
+    if (r < 0.38) { G.carN++; spawn(Fw, '🥕', pick([6, 70, 110]), true, 34); }
+    else if (r < 0.38 + G.fly) spawn(Fw, G.w.fly, pick([70, 95]), false, 34);
+    else { spawn(Fw, pick(G.w.ob), 0, false, 42); if (Math.random() < G.dbl) setTimeout(() => { if (G && G.on) spawn(Fw, pick(G.w.ob), 0, false, 42); }, 150); }
+    G.nxt = G.gapT + Math.random() * 0.7;
+  }
+  if (G.dist >= G.len && !G.flag) { const el = document.createElement('span'); el.className = 'ob'; el.textContent = '🏁'; el.style.bottom = '56px'; el.style.fontSize = '64px'; $('runF').appendChild(el); G.flag = { el, x: Fw + 40 }; }
+  if (G.flag) { G.flag.x -= G.sp * dt; G.flag.el.style.transform = `translate(${G.flag.x}px,0)`; if (G.flag.x < 120) return runEnd(true); }
+  for (let i = G.objs.length - 1; i >= 0; i--) {
+    const b = G.objs[i]; if (b.car && G.magnet && b.x < 360 && b.x > 60) b.y += ((G.y + 40) - b.y) * Math.min(1, dt * 6), b.el.style.bottom = (56 + b.y) + 'px';
+    b.x -= G.sp * dt; b.el.style.transform = `translate(${b.x}px,0)`;
+    const hit = b.x < 50 + 82 && b.x + b.w > 50 + 22 && b.y < G.y + 92 && b.y + b.h > G.y + 8; let gone = b.x < -60;
+    if (hit && b.car) { G.car++; blip(880, 0, 0.08); gone = true; }
+    else if (hit && G.inv <= 0) { if (G.shield > 0) { G.shield--; toast('⛑️ Der Helm hat dich beschützt!'); } else { G.hp--; sBad(); } G.inv = 1.2; }
+    if (gone) { b.el.remove(); G.objs.splice(i, 1); }
+  }
+  $('runH').innerHTML = `<span class="chip">🥕 ${G.car}</span><span class="chip">${'❤️'.repeat(Math.max(0, G.hp))}</span>${G.shield ? '<span class="chip">⛑️</span>' : ''}<span class="chip">🏁 ${Math.max(0, Math.round((1 - G.dist / G.len) * 100))}%</span>`;
+  if (G.hp <= 0) return runEnd(false);
+  requestAnimationFrame(runTick);
+}
+function runEnd(won) {
+  const L = G.L, frac = G.carN ? G.car / G.carN : 1, st = won ? (frac >= 0.8 ? 3 : frac >= 0.5 ? 2 : 1) : 0; G.on = false; G = null;
+  if (won) { if (S.hop.done.indexOf(L) < 0) S.hop.done.push(L); S.hop.best[L] = Math.max(S.hop.best[L] || 0, st); confetti(); }
+  save(); runMenu(won ? `Level ${L + 1} geschafft! ${'⭐'.repeat(st)} ${L % 5 === 4 ? '🏆 Welt geschafft!' : ''}` : 'Oh nein, keine Leben mehr. Versuch es nochmal!');
+}
+
+/* ================= Ton-Lupe (Stimmhilfe, auch zum Prüfen des Mikrofons) ================= */
+let TUNER = false;
+async function tuner() {
+  show('tun'); $('tunB').innerHTML = '<p class="say">Einen Moment …</p>';
+  if (!(await micOn())) { $('tunB').innerHTML = `<p class="say">🎤 Kein Mikrofon (${MIC.err}). ${window.isSecureContext ? 'Bitte im Browser erlauben.' : 'Die Seite muss über https oder localhost geöffnet werden.'}</p>`; return; }
+  TUNER = true; $('tunB').innerHTML = `<div class="bigname" id="tunN" style="font-size:110px">–</div>${tunerHTML()}<p class="muted" id="tunF">Spiel einen Ton.</p>`;
+  LISTEN = fr => { if (!TUNER) return; if (fr.voiced && fr.a) { $('tunN').textContent = fr.a.name; needle(fr.a.cents); $('tunF').textContent = (fr.a.cents > 0 ? '+' : '') + Math.round(fr.a.cents) + ' Cent · notiert ' + fr.a.name + ' · Pegel ' + fr.rms.toFixed(3); } };
+}
+
+/* ================= Elternbereich ================= */
+let GATE = null;
+function parGate() {
+  show('par'); const a = 12 + Math.floor(Math.random() * 8), b = 3 + Math.floor(Math.random() * 7); GATE = a * b;
+  const o = shuffle([GATE, GATE + b, GATE - a, GATE + 10]);
+  $('parB').innerHTML = `<div class="card" style="max-width:640px;margin:30px auto;text-align:center"><h2>Elternbereich</h2><p style="font-size:24px">Bitte lösen: <b>${a} × ${b}</b></p><div class="opts">${o.map(v => `<button class="opt" data-act="gate" data-v="${v}">${v}</button>`).join('')}</div><button class="btn alt" data-act="home">Zurück</button></div>`;
+}
+function parents() {
+  show('par'); const goal = S.set.goal, D = KL.diff(Math.min(S.unlocked, PLAYABLE), S.set.tolAdj);
+  let bars = ''; const max = Math.max(goal * 1.4, ...Array.from({ length: 7 }, (_, i) => (S.days[dayKey(i)] || {}).sec / 60 || 0));
+  for (let i = 6; i >= 0; i--) { const d = S.days[dayKey(i)] || { sec: 0 }, m = d.sec / 60; bars += `<div class="${m >= goal ? 'hit' : ''}" style="height:${m / max * 100}%"><em>${Math.round(m)}</em><span>${['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][new Date(Date.now() - i * 864e5).getDay()]}</span></div>`; }
+  const week = Array.from({ length: 7 }, (_, i) => S.days[dayKey(i)] || { sec: 0, ex: 0 });
+  const wMin = Math.round(week.reduce((a, d) => a + d.sec, 0) / 60), wHit = week.filter(d => d.sec >= goal * 60).length, td = day();
+  let prog = '';
+  for (let n = 1; n <= PLAYABLE; n++) { const I = isl(n); prog += `<tr><td>${I.icon} ${n}. ${I.name}${n > S.unlocked ? ' 🔒' : ''}</td><td>${I.st.map(s => `<span title="${s.title}">${['·', '⭐', '⭐⭐', '⭐⭐⭐'][best(s.id)]}${stat(s.id).medal ? MEDAL[stat(s.id).medal] : ''}</span>`).join(' | ')}</td></tr>`; }
+  let notes = '';
+  Object.keys(KL.NOTES).forEach(n => { const x = S.nt[n]; if (!x) return; const c = x.cn ? x.cs / x.cn : 0; notes += `<tr><td><b>${n}</b></td><td>${Math.round(x.ok / x.n * 100)} % von ${x.n}</td><td>${x.cn ? (c > 0 ? '+' : '') + Math.round(c) + ' Cent ' + (Math.abs(c) > 15 ? (c > 0 ? '(eher zu hoch)' : '(eher zu tief)') : '(gut)') : '–'}</td></tr>`; });
+  const hwI = S.hw ? S.hw.isl : Math.min(S.unlocked, PLAYABLE);
+  const sel = (id, vals, cur, lab) => `<select id="${id}">${vals.map(v => `<option value="${v[0]}"${String(v[0]) === String(cur) ? ' selected' : ''}>${v[1]}</option>`).join('')}</select>`;
+  $('parB').innerHTML = `<h1>👪 Elternbereich</h1><div class="cols">
+  <div class="card"><h2>Übungszeit (letzte 7 Tage, Minuten)</h2><div class="bars">${bars}<i class="goal" style="bottom:${goal / max * 100}%"></i></div><p style="margin-top:30px">Diese Woche: <b>${wMin} min</b>, Tagesziel an <b>${wHit} von 7</b> Tagen erreicht · Serie: <b>${streak()} Tage</b> 🔥<br>Heute: ${Math.round(td.sec / 60)} min echte Spielzeit, ${td.ex} Übungen, ${td.stars} ⭐ verdient, ${td.games} Spielrunden.</p><p class="muted">Gezählt wird nur die Zeit, in der wirklich ein Ton erklingt – nicht die Zeit, in der die App offen ist.</p></div>
+  <div class="card"><h2>Hausaufgabe der Lehrkraft</h2><p>Insel: ${sel('hwI', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), hwI)}</p><div id="hwL">${hwList(hwI)}</div><p><textarea id="hwT" rows="2" style="width:100%" placeholder="Notiz, z. B. Töne aushalten c d e f g, Kinn ruhig">${S.hw ? S.hw.txt || '' : ''}</textarea></p><button class="btn green" data-act="hwsave">Speichern</button><p class="muted">Markierte Übungen schlägt „Heute üben“ zuerst vor, jede einmal pro Tag.</p></div>
+  <div class="card"><h2>Lernstand</h2><table>${prog}</table><p class="muted">Eine Insel öffnet sich, wenn auf der vorigen jede Übung mindestens einen Stern hat – oder hier unten in den Einstellungen.</p></div>
+  <div class="card"><h2>Ton-Bericht</h2>${notes ? `<table><tr><th>Ton</th><th>Treffer</th><th>Stimmung im Schnitt</th></tr>${notes}</table>` : '<p>Noch keine Töne gespielt.</p>'}<p class="muted">Ist ein Ton dauerhaft zu hoch oder zu tief, lohnt eine Frage an die Lehrkraft (Ansatz, Blatt, Birne).</p></div>
+  <div class="card"><h2>Einstellungen</h2><table>
+   <tr><td>Tagesziel</td><td>${sel('sGoal', [5, 10, 15, 20, 25, 30].map(v => [v, v + ' Minuten']), goal)}</td></tr>
+   <tr><td>Spielrunden pro Tag</td><td>${sel('sLim', [0, 2, 3, 5, 8, 10].map(v => [v, v]), S.set.gameLimit)}</td></tr>
+   <tr><td>Offene Inseln bis</td><td>${sel('sUnl', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), Math.min(S.unlocked, PLAYABLE))}</td></tr>
+   <tr><td>Tonprüfung</td><td>${sel('sTol', [[10, 'großzügig'], [0, 'normal'], [-10, 'streng']], S.set.tolAdj)}</td></tr>
+   <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr></table>
+   <button class="btn green" data-act="setsave">Speichern</button><button class="btn alt" data-act="reset">Spielstand löschen</button></div>
+  <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne, bei 3 Sternen höchstens zweimal am Tag einen Bonus-Stern. Alle 5 Minuten echte Spielzeit gibt es einen Fleiß-Stern.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
+  </div><div class="row"><button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
+}
+function hwList(n) { const ids = S.hw && S.hw.isl == n ? S.hw.ids : []; return isl(n).st.map(s => `<label style="display:block;font-size:18px"><input type="checkbox" value="${s.id}"${ids.indexOf(s.id) >= 0 ? ' checked' : ''}> ${ICON[s.type]} ${s.title}</label>`).join(''); }
+
+/* ================= Bedienung ================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
+  const a = b.dataset.act; ac();
+  if (a === 'home') home();
+  else if (a === 'today') openStation(nextStation());
+  else if (a === 'map') map();
+  else if (a === 'isl') island(+b.dataset.n);
+  else if (a === 'locked') toast('🔒 Das ist noch zu. Erst die Übungen davor schaffen!');
+  else if (a === 'go') openStation(b.dataset.id);
+  else if (a === 'demo') { if (EX && EX.demo) EX.demo(); }
+  else if (a === 'slow') { if (EX) { const on = !EX.slowOn; openStationBpm(EX.id, on ? Math.round(EX.st.bpm * 0.8) : EX.st.bpm, on); } }
+  else if (a === 'begin') begin();
+  else if (a === 'skipmic') { $('exGo').classList.remove('on'); if (EX && EX.demo) EX.demo(); toast('Ohne Mikrofon gibt es keine Sterne. Bitte die Eltern, das Mikrofon einzurichten.'); }
+  else if (a === 'ans') { if (EX && EX.answer) EX.answer(b.dataset.v, b); }
+  else if (a === 'again') openStation(EX ? EX.id : nextStation());
+  else if (a === 'nextst') openStation(nextAfter(EX ? EX.id : nextStation()));
+  else if (a === 'back') { if (EX) island(EX.isl); else home(); }
+  else if (a === 'shop') shop();
+  else if (a === 'buy') { const it = item(b.dataset.id); if (S.stars >= it.p) { S.stars -= it.p; S.own.push(it.id); S.wear[it.slot] = it.id; save(); sStar(); shop('Oh, wie schön! Danke! ' + it.ic); anim('sAlp', 'salto'); } else shop('Dafür brauchst du ' + it.p + ' ⭐. Übe noch ein bisschen!'); }
+  else if (a === 'buyc') { const c = CONS.find(x => x.id === b.dataset.id); if (S.stars >= c.p) { S.stars -= c.p; S.cons[c.id]++; save(); sStar(); shop(c.ic + ' gekauft!'); } else shop('Dafür brauchst du ' + c.p + ' ⭐.'); }
+  else if (a === 'wear') { const w = item(b.dataset.id); if (S.wear[w.slot] === w.id) delete S.wear[w.slot]; else S.wear[w.slot] = w.id; save(); shop(); }
+  else if (a === 'run') runMenu();
+  else if (a === 'rungo') runGo(+b.dataset.l);
+  else if (a === 'tuner') tuner();
+  else if (a === 'par') parGate();
+  else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else home(); }
+  else if (a === 'hwsave') { const n = +$('hwI').value; S.hw = { isl: n, ids: [...document.querySelectorAll('#hwL input:checked')].map(i => i.value), txt: $('hwT').value, date: today() }; save(); toast('Hausaufgabe gespeichert ✓'); }
+  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; save(); hud(); toast('Gespeichert ✓'); parents(); }
+  else if (a === 'reset') { if (window.confirm('Wirklich den ganzen Spielstand löschen? Sterne, Sachen und Übungszeiten sind dann weg.')) { S = fresh(); save(); home(); } }
+  else if (a === 'snd') { S.set.mute = !S.set.mute; save(); hud(); if (!S.set.mute) sOk(); }
+});
+document.addEventListener('change', e => { if (e.target.id === 'hwI') $('hwL').innerHTML = hwList(+e.target.value); });
+function openStationBpm(id, bpm, slowOn) { const r = KL.station(id); const st = Object.assign({}, r.st, { bpm }); stopEx(); exShell(r.st.title); const D = KL.diff(r.isl.n, S.set.tolAdj); EX = TYPES[st.type](st, D, r.isl.n); EX.id = id; EX.st = r.st; EX.isl = r.isl.n; EX.D = D; EX.slowOn = slowOn; intro(); }
+$('runF').addEventListener('pointerdown', e => { if (G && G.on) { e.preventDefault(); runJump(); } });
+document.addEventListener('keydown', e => { if (screen === 'run' && (e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); runJump(); } });
+
+/* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|run|par|tun */
+window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day };
+const demo = Q.get('demo');
+if (demo) {
+  S = fresh(); save = () => {}; S.unlocked = 6;
+  if (demo === 'shop') { S.stars = 30; S.own = ['phones', 'notes', 'helmet', 'wings']; S.wear = { hat: 'phones', fx: 'notes', back: 'wings' }; shop(); }
+  else if (demo === 'par') { for (let i = 0; i < 7; i++) S.days[dayKey(i)] = { sec: [900, 1200, 300, 0, 1000, 600, 950][i], ex: 4, stars: 3, fs: 2, games: 2 }; S.nt = { "c'": { n: 20, ok: 18, cs: -120, cn: 18 }, "d'": { n: 15, ok: 14, cs: 40, cn: 14 }, h: { n: 10, ok: 6, cs: -210, cn: 6 } }; ['L3-lied', 'L4-lied', 'L3-d'].forEach(id => { stat(id).best = 2; }); parents(); }
+  else if (demo === 'map') map();
+  else if (demo === 'run') { S.tix = 3; runMenu(); }
+  else if (demo === 'tun') tuner();
+  else if (KL.station(demo)) { openStation(demo); if (Q.has('go')) begin(); }
+  else home();
+} else home();
+})();
+</script>
+</body>
+</html>
