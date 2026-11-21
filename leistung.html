@@ -41,7 +41,7 @@
   <div class="card" id="lastC" style="display:none"><h2>Letzte Messung</h2><div id="last" class="muted"></div></div>
 </div>
 <div id="stage"></div><div id="lab"></div><button class="btn alt" id="stop">✕ Abbrechen</button>
-<script>window.KLMETA = {"version":"0.2.1","built":"21.11.2026 17:39","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.2.2","built":"21.11.2026 19:14","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -326,7 +326,7 @@ function gpuName() {
 }
 const GPU = gpuName();
 const DEV = {
-  screen: innerWidth + '×' + innerHeight + ' @' + (devicePixelRatio || 1),
+  screen: innerWidth + '×' + innerHeight + ' @' + Math.round((devicePixelRatio || 1) * 100) / 100,
   cores: navigator.hardwareConcurrency || '?', mem: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '?',
   ua: (navigator.userAgent.match(/(Silk|Chrome|Firefox|Edg|Safari)\/[\d.]+/g) || ['?']).join(' '),
   android: (navigator.userAgent.match(/Android [\d.]+/) || [''])[0]

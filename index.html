@@ -283,7 +283,7 @@ h2{margin:4px 0 8px;font-size:26px}
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.2.1","built":"21.11.2026 17:39","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.2.2","built":"21.11.2026 19:14","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -577,6 +577,17 @@ if (WEB && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(r => { PWA.state = 'ok'; if (r.active) r.active.postMessage('version'); })
     .catch(() => { PWA.state = 'err'; });
 } else if (WEB) PWA.state = 'none';
+// Installieren ohne Browser-Menü: Chromium-Browser schicken beforeinstallprompt, die App zeigt dann einen eigenen Knopf
+PWA.ask = null; PWA.installed = false;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA.ask = e; techRefresh(); });
+window.addEventListener('appinstalled', () => { PWA.ask = null; PWA.installed = true; toast('📲 Auf dem Startbildschirm! Ab jetzt dort starten.', 4000); techRefresh(); });
+function techRefresh() { const c = document.getElementById('techC'); if (c) c.innerHTML = '<h2>Technik und offline</h2>' + techHTML(); }
+function install() {
+  const p = PWA.ask; if (!p) return;
+  p.prompt(); PWA.ask = null;
+  if (p.userChoice) p.userChoice.then(r => { if (r && r.outcome !== 'accepted') toast('Nicht hinzugefügt. Der Knopf kommt beim nächsten Öffnen wieder.', 3500); techRefresh(); });
+  techRefresh();
+}
 // Vollbild braucht ein Tippen, darum beim ersten Tippen (und nach dem Verlassen beim nächsten)
 function fullOn() {
   const m = S.set.full || 'auto'; if (m === 'off' || (m === 'auto' && !TABLET) || Q.get('demo') || SIM) return;
@@ -1593,7 +1604,11 @@ function parents() {
 function techHTML() {
   const st = { ok: '✅ Offline bereit' + (PWA.sw ? ' (gespeichert: v' + PWA.sw + ')' : '') + '. Die App startet auch ohne WLAN.', wait: '⏳ Wird für offline gespeichert …', err: '⚠️ Offline-Speicher ging nicht. Die App läuft trotzdem, braucht aber Internet zum Start.', none: '⚠️ Dieser Browser kann die App nicht offline speichern.', file: '📄 Als Datei geöffnet: läuft ohne Internet, Spielstand nur in diesem Browser.' }[PWA.state];
   return `<p>Version v${META.version}${META.built ? ' · ' + META.built : ''}<br>${st}</p>
-  <p>${APPMODE() ? '✅ Gestartet vom Startbildschirm (Vollbild ohne Browserleiste).' : '<b>Tipp für das Tablet:</b> Im Browser-Menü (Silk: ☰ oder ⋮) „Zum Startbildschirm hinzufügen“ wählen. Dann startet die App mit eigenem Symbol im Vollbild und ohne WLAN. Der Spielstand bleibt derselbe.'}</p>
+  <p>${APPMODE() ? '✅ Gestartet vom Startbildschirm (Vollbild ohne Browserleiste).'
+    : PWA.ask ? '<button class="btn green" data-act="install">📲 Auf den Startbildschirm legen</button><br><span class="muted">Danach startet die App mit eigenem Symbol im Vollbild und ohne WLAN. Der Spielstand bleibt derselbe.</span>'
+    : PWA.installed ? '✅ Auf den Startbildschirm gelegt. Bitte ab jetzt über das Symbol starten.'
+    : !WEB ? 'Startbildschirm geht nur über die Internet-Adresse der App, nicht als Datei.'
+    : '<b>Startbildschirm:</b> Dieser Browser bietet der App gerade keine Installation an (Knopf erscheint, sobald er es tut). Möglich: im Browser-Menü „Zum Startbildschirm hinzufügen“ bzw. „Verknüpfung erstellen“. In einem Kinderprofil ist das oft gesperrt; dann im Erwachsenen-Profil versuchen.'}</p>
   ${WEB ? '<p><a class="btn alt" href="leistung.html" style="text-decoration:none;display:inline-block">📊 Leistungstest (2D/3D)</a></p><p class="muted">Misst, wie flüssig das Gerät Spiele und 3D zeigt (etwa 2 Minuten). Hilft bei der Planung des neuen Hüpfspiels. Der Spielstand wird nicht verändert.</p>' : ''}`;
 }
 function hwList(n) { const ids = S.hw && S.hw.ids ? S.hw.ids : []; return isl(n).st.map(s => `<label style="display:block;font-size:18px"><input type="checkbox" value="${s.id}"${ids.indexOf(s.id) >= 0 ? ' checked' : ''}> ${ICON[s.type]} ${s.title}${s.main ? ' 👑' : ''}</label>`).join(''); }
@@ -1604,6 +1619,7 @@ document.addEventListener('click', e => {
   const a = b.dataset.act; ac(); if (a !== 'import' && a !== 'export') autoFile();
   if (a === 'home') home();
   else if (a === 'mis') { const m = missions().list[+b.dataset.i], id = m && misStation(m); if (id) openStation(id); else tuner(); }
+  else if (a === 'install') install();
   else if (a === 'full') { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d); else { const el = d.documentElement; try { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => toast('Vollbild geht in diesem Browser nicht.')); } catch (e) { toast('Vollbild geht in diesem Browser nicht.'); } } }
   else if (a === 'today') openStation(nextStation());
   else if (a === 'map') map();
