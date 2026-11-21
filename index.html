@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#ff4f8b">
 <title>Klarinetten-Abenteuer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- Gebaut aus src/ mit: node tools/build.mjs · Nicht direkt bearbeiten, sondern die Dateien in src/ ändern. -->
 <style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;font-family:"Trebuchet MS","Segoe UI",Roboto,Arial,sans-serif;color:#3a2d4a;background:linear-gradient(160deg,#fff4fb 0%,#eef6ff 55%,#f1fff0 100%)}
@@ -280,7 +283,7 @@ h2{margin:4px 0 8px;font-size:26px}
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.2.0","built":"21.11.2026 17:08","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.2.1","built":"21.11.2026 17:39","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -564,11 +567,21 @@ const META = window.KLMETA || { version: '0.0.0', built: '', model: '', credits:
 // Tablet / Silk-Browser (Fire HD): Touch als Hauptbedienung oder Silk bzw. Android in der Kennung
 const TABLET = /Silk|Android|iPad/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
 const autoFileOn = () => S.set.autoFile === null || S.set.autoFile === undefined ? !TABLET : !!S.set.autoFile;
+// Vom Startbildschirm gestartet (Web-App-Manifest): Der Browser zeigt die App schon ohne Leisten
+const APPMODE = () => !!(window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches));
+// Testseite (https/localhost mit Manifest): Service Worker macht sie offline nutzbar. Als Datei geöffnet: nichts davon.
+const WEB = /^https?:$/.test(location.protocol) && !!document.querySelector('link[rel="manifest"]');
+const PWA = { sw: '', state: WEB ? 'wait' : 'file' };
+if (WEB && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.sw) PWA.sw = e.data.sw; });
+  navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(r => { PWA.state = 'ok'; if (r.active) r.active.postMessage('version'); })
+    .catch(() => { PWA.state = 'err'; });
+} else if (WEB) PWA.state = 'none';
 // Vollbild braucht ein Tippen, darum beim ersten Tippen (und nach dem Verlassen beim nächsten)
 function fullOn() {
   const m = S.set.full || 'auto'; if (m === 'off' || (m === 'auto' && !TABLET) || Q.get('demo') || SIM) return;
   const d = document, el = d.documentElement;
-  if (d.fullscreenElement || d.webkitFullscreenElement) return;
+  if (d.fullscreenElement || d.webkitFullscreenElement || APPMODE()) return;
   try { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (e) {}
 }
 function load() {
@@ -1573,7 +1586,15 @@ function parents() {
    <tr><td>Vollbild</td><td>${sel('sFull', [['auto', 'automatisch auf Tablets'], ['on', 'immer'], ['off', 'aus']], S.set.full || 'auto')}</td></tr></table>
    <button class="btn green" data-act="setsave">Speichern</button><button class="btn alt" data-act="reset">Spielstand löschen</button></div>
   <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne. Bei 3 Sternen gibt es höchstens zweimal am Tag einen Bonus-Stern, aber nur auf der aktuellen und der vorigen Insel sowie für Hausaufgaben – so lohnt es sich nicht, immer nur die leichteste alte Übung zu spielen. Dafür: 3 Tagesmissionen (je +1 ⭐, alle zusammen Schatztruhe +3 ⭐ +1 🎟️), ein Abwechslungs-Stern für 3 verschiedene Übungen am Tag und alle 5 Minuten echte Spielzeit ein Fleiß-Stern.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
+  <div class="card" id="techC"><h2>Technik und offline</h2>${techHTML()}</div>
   </div><div class="row"><button class="btn alt" data-act="opt">⚙️ Zurück zu den Optionen</button></div>`;
+}
+// Elternbereich: Offline-Zustand, Start vom Startbildschirm, Leistungstest
+function techHTML() {
+  const st = { ok: '✅ Offline bereit' + (PWA.sw ? ' (gespeichert: v' + PWA.sw + ')' : '') + '. Die App startet auch ohne WLAN.', wait: '⏳ Wird für offline gespeichert …', err: '⚠️ Offline-Speicher ging nicht. Die App läuft trotzdem, braucht aber Internet zum Start.', none: '⚠️ Dieser Browser kann die App nicht offline speichern.', file: '📄 Als Datei geöffnet: läuft ohne Internet, Spielstand nur in diesem Browser.' }[PWA.state];
+  return `<p>Version v${META.version}${META.built ? ' · ' + META.built : ''}<br>${st}</p>
+  <p>${APPMODE() ? '✅ Gestartet vom Startbildschirm (Vollbild ohne Browserleiste).' : '<b>Tipp für das Tablet:</b> Im Browser-Menü (Silk: ☰ oder ⋮) „Zum Startbildschirm hinzufügen“ wählen. Dann startet die App mit eigenem Symbol im Vollbild und ohne WLAN. Der Spielstand bleibt derselbe.'}</p>
+  ${WEB ? '<p><a class="btn alt" href="leistung.html" style="text-decoration:none;display:inline-block">📊 Leistungstest (2D/3D)</a></p><p class="muted">Misst, wie flüssig das Gerät Spiele und 3D zeigt (etwa 2 Minuten). Hilft bei der Planung des neuen Hüpfspiels. Der Spielstand wird nicht verändert.</p>' : ''}`;
 }
 function hwList(n) { const ids = S.hw && S.hw.ids ? S.hw.ids : []; return isl(n).st.map(s => `<label style="display:block;font-size:18px"><input type="checkbox" value="${s.id}"${ids.indexOf(s.id) >= 0 ? ' checked' : ''}> ${ICON[s.type]} ${s.title}${s.main ? ' 👑' : ''}</label>`).join(''); }
 
@@ -1650,10 +1671,11 @@ $('runF').addEventListener('pointerdown', e => { if (G && G.on && !(e.target.clo
 document.addEventListener('keydown', e => { if (screen === 'run' && (e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); runJump(); } });
 
 /* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|run|par|tun|who|name|opt  ·  &wrong=1 */
-window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, get LASTSAVE() { return LASTSAVE; } };
+window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, PWA, get LASTSAVE() { return LASTSAVE; } };
 const demo = Q.get('demo');
 if (demo) {
-  S = fresh(); save = () => {}; S.unlocked = 6; if (Q.has('wrong')) window.KLWRONG = true; // &wrong=1: simulierter Spieler immer einen Ganzton zu hoch S.char = Q.get('char') || 'alpaka'; S.name = Q.get('name') || '';
+  S = fresh(); save = () => {}; S.unlocked = 6; if (Q.has('wrong')) window.KLWRONG = true; // &wrong=1: simulierter Spieler immer einen Ganzton zu hoch
+  S.char = Q.get('char') || 'alpaka'; S.name = Q.get('name') || '';
   if (demo === 'shop') { S.stars = 30; S.own = ['phones', 'notes', 'helmet', 'wings']; S.wear = { hat: 'phones', fx: 'notes', back: 'wings' }; shop(); }
   else if (demo === 'par') { for (let i = 0; i < 7; i++) S.days[dayKey(i)] = { sec: [900, 1200, 300, 0, 1000, 600, 950][i], ex: 4, stars: 3, fs: 2, games: 2 }; S.nt = { "c'": { n: 20, ok: 18, cs: -120, cn: 18 }, "d'": { n: 15, ok: 14, cs: 40, cn: 14 }, h: { n: 10, ok: 6, cs: -210, cn: 6 } }; ['L3-lied', 'L4-lied', 'L3-d'].forEach(id => { stat(id).best = 2; }); parents(); }
   else if (demo === 'map') map();

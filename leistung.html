@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#ff4f8b">
+<title>Leistungstest · Klarinetten-Abenteuer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg">
+<!-- Gebaut aus src/leistung.html und src/leistung.js mit: node tools/build.mjs -->
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #fff4f8; color: #3a2a35; font: 18px/1.4 system-ui, "Segoe UI", Roboto, sans-serif; }
+  #page { max-width: 900px; margin: 0 auto; padding: 14px 18px 30px; }
+  h1 { font-size: 26px; margin: 4px 0 8px; } h2 { font-size: 20px; margin: 18px 0 6px; }
+  .card { background: #fff; border-radius: 16px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(120, 40, 80, .12); margin: 10px 0; }
+  .btn { font: inherit; font-size: 22px; font-weight: 700; border: 0; border-radius: 14px; padding: 12px 22px; background: #ff4f8b; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.alt { background: #eadcf3; color: #3a2a35; font-size: 18px; }
+  .btn:disabled { opacity: .5; }
+  table { border-collapse: collapse; width: 100%; } td, th { padding: 5px 8px; border-bottom: 1px solid #f0dce6; text-align: left; }
+  .muted { color: #7a6a75; font-size: 15px; }
+  #code { font: 15px/1.4 ui-monospace, Consolas, monospace; background: #2b2230; color: #fff; padding: 10px 12px; border-radius: 10px; word-break: break-all; user-select: all; }
+  #stage { position: fixed; inset: 0; display: none; background: #000; z-index: 5; }
+  #stage.on { display: block; }
+  #stage canvas { display: block; }
+  #lab { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 6; display: none; background: rgba(0, 0, 0, .65); color: #fff; padding: 8px 18px; border-radius: 12px; font-size: 20px; font-weight: 700; white-space: nowrap; }
+  #lab.on { display: block; }
+  #stop { position: fixed; right: 10px; bottom: 10px; z-index: 6; display: none; } #stop.on { display: inline-block; }
+</style>
+</head>
+<body>
+<div id="page">
+  <h1>📊 Leistungstest</h1>
+  <p>Für Eltern: Misst, wie flüssig dieses Gerät ein 2D-Spiel und eine 3D-Insel zeigt – mit der gleichen Tonerkennung im Hintergrund wie beim Üben. Das Ergebnis hilft, das neue Hüpfspiel und die 3D-Karte passend für das Tablet zu bauen.</p>
+  <p class="muted">Dauer etwa 1 Minute. Bitte das Tablet in der Zeit nicht bedienen. Der Spielstand der App wird nicht verändert, es wird nichts gesendet. Das Mikrofon wird nicht benutzt (die Tonerkennung rechnet mit einem Testton).</p>
+  <p><button class="btn" id="go">▶ Test starten</button> <a class="btn alt" href="./">⬅ Zurück zur App</a></p>
+  <div class="card"><h2>Gerät</h2><table id="dev"></table></div>
+  <div class="card" id="resC" style="display:none"><h2>Ergebnis</h2><table id="res"></table>
+    <p>Bitte diesen Code abfotografieren oder abschreiben und an die Entwicklung geben:</p><div id="code"></div>
+    <p class="muted">🟢 flüssig (ab 50 Bildern pro Sekunde) · 🟡 spielbar (30–49) · 🔴 ruckelt (unter 30). „Ruckler“ = Anteil der Bilder, die länger als 50 ms brauchten.</p></div>
+  <div class="card" id="lastC" style="display:none"><h2>Letzte Messung</h2><div id="last" class="muted"></div></div>
+</div>
+<div id="stage"></div><div id="lab"></div><button class="btn alt" id="stop">✕ Abbrechen</button>
+<script>window.KLMETA = {"version":"0.2.1","built":"21.11.2026 17:39","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Bilder selbst gezeichnet. Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
+   Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
+(function (root) {
+  'use strict';
+
+  /* ---------- Töne und Oehler-Griffe (Grifftabelle des Hefts, Buchseite 72; als Tatsachen übernommen) ---------- */
+  // Tasten: D Daumenloch, Ü Überblasklappe, A A-Klappe, L1-L3 / R1-R3 Finger, S b-Seitenklappe rechts, F f-Seitenklappe
+  var NOTES = {
+    'g':    { midi: 55, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    'a':    { midi: 57, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2'] },
+    'b':    { midi: 58, keys: ['D', 'L1', 'L2', 'L3', 'R1', 'R2', 'S'] }, // Heft S. 72: Griff a + b-Klappe
+    'h':    { midi: 59, keys: ['D', 'L1', 'L2', 'L3', 'R1'] },
+    "c'":   { midi: 60, keys: ['D', 'L1', 'L2', 'L3'] },
+    "d'":   { midi: 62, keys: ['D', 'L1', 'L2'] },
+    "e'":   { midi: 64, keys: ['D', 'L1'] },
+    "f'":   { midi: 65, keys: ['D', 'L1', 'F'] },
+    "fis'": { midi: 66, keys: ['D'] },
+    "g'":   { midi: 67, keys: [] },
+    "a'":   { midi: 69, keys: ['A'] },
+    "b'":   { midi: 70, keys: ['A', 'Ü'] },
+    "d''":  { midi: 74, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3'] },
+    "e''":  { midi: 76, keys: ['Ü', 'D', 'L1', 'L2', 'L3', 'R1', 'R2'] }
+  };
+  var KEYWORD = { D: 'Daumenloch', 'Ü': 'Überblasklappe (Daumen)', A: 'A-Klappe (Zeigefinger links)', L1: 'Zeigefinger links', L2: 'Mittelfinger links', L3: 'Ringfinger links', R1: 'Zeigefinger rechts', R2: 'Mittelfinger rechts', R3: 'Ringfinger rechts', S: 'b-Klappe rechts', F: 'f-Klappe an der Seite' };
+  var CHROMA = ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'gis', 'a', 'b', 'h'];
+  var TRANSPOSE = 2; // notiert = klingend + 2
+
+  function marks(oct) { return oct <= 3 ? '' : (oct === 4 ? "'" : "''"); }
+  function nameOfMidi(m) { var oct = Math.floor(m / 12) - 1; return CHROMA[((m % 12) + 12) % 12] + marks(oct); }
+  function fingerText(name) {
+    var k = NOTES[name].keys; if (!k.length) return 'Alles offen – kein Finger drückt!';
+    return k.map(function (x) { return KEYWORD[x]; }).join(', ');
+  }
+  // Position im Notensystem: 0 = unterste Linie (e'), 1 = erster Zwischenraum (f') …
+  function staffStep(name) {
+    var m = /^(fis|[a-h])('*)$/.exec(name); if (!m) return 0;
+    var li = { c: 0, d: 1, e: 2, f: 3, fis: 3, g: 4, a: 5, h: 6, b: 6 }[m[1]];
+    var oct = 3 + m[2].length;
+    return oct * 7 + li - (4 * 7 + 2);
+  }
+  function accidental(name) { return /^b/.test(name) ? 'flat' : (/^fis/.test(name) ? 'sharp' : ''); }
+  function concertFreq(name, a4) { return (a4 || 440) * Math.pow(2, (NOTES[name].midi - TRANSPOSE - 69) / 12); }
+  function analyzeFreq(f, a4) {
+    var m = 69 + 12 * Math.log(f / (a4 || 440)) / Math.LN2 + TRANSPOSE, n = Math.round(m);
+    return { midi: n, cents: (m - n) * 100, name: nameOfMidi(n) };
+  }
+
+  /* ---------- Tonhöhenerkennung (YIN, de Cheveigné & Kawahara 2002) ---------- */
+  function yin(buf, sr, fmin, fmax) {
+    fmin = fmin || 150; fmax = fmax || 900;
+    var x = buf, rate = sr;
+    if (sr > 30000) { // auf halbe Abtastrate verkleinern: 4x schneller, für 150-900 Hz genau genug
+      x = new Float32Array(buf.length >> 1);
+      for (var j = 0; j < x.length; j++) x[j] = (buf[2 * j] + buf[2 * j + 1]) * 0.5;
+      rate = sr / 2;
+    }
+    var W = x.length >> 1, tMin = Math.max(2, Math.floor(rate / fmax)), tMax = Math.min(W - 2, Math.ceil(rate / fmin));
+    var d = new Float32Array(tMax + 2), tau, i, s, v;
+    for (tau = 1; tau <= tMax + 1; tau++) { s = 0; for (i = 0; i < W; i++) { v = x[i] - x[i + tau]; s += v * v; } d[tau] = s; }
+    var run = 0; d[0] = 1;
+    for (tau = 1; tau <= tMax + 1; tau++) { run += d[tau]; d[tau] = run > 0 ? d[tau] * tau / run : 1; }
+    var best = -1;
+    for (tau = tMin; tau <= tMax; tau++) {
+      if (d[tau] < 0.15) { while (tau + 1 <= tMax && d[tau + 1] < d[tau]) tau++; best = tau; break; }
+    }
+    if (best < 0) {
+      var mi = tMin; for (tau = tMin; tau <= tMax; tau++) if (d[tau] < d[mi]) mi = tau;
+      if (d[mi] < 0.3) best = mi; else return null;
+    }
+    var x0 = d[best - 1], x1 = d[best], x2 = d[best + 1], den = x0 + x2 - 2 * x1, t = best;
+    if (den !== 0) t = best + (x0 - x2) / (2 * den);
+    return { f: rate / t, clarity: 1 - x1 };
+  }
+  function rms(buf) { var s = 0; for (var i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); }
+
+  /* ---------- Melodien: "e'4 d'4 c'2 | r4 …"  (1 ganze, 2 halbe, 4 Viertel, 8 Achtel, Punkt = punktiert, r = Pause) ---------- */
+  function parseMelody(str) {
+    var out = [], bar = 0;
+    str.trim().split(/\s+/).forEach(function (tok) {
+      if (tok === '|') { bar++; return; }
+      var m = /^(r|fis|[a-h])('{0,2})(1|2|4|8)(\.?)$/.exec(tok);
+      if (!m) throw new Error('Unbekannte Note: ' + tok);
+      var beats = { 1: 4, 2: 2, 4: 1, 8: 0.5 }[m[3]] * (m[4] ? 1.5 : 1);
+      out.push({ rest: m[1] === 'r', name: m[1] === 'r' ? null : m[1] + m[2], dur: +m[3], dot: !!m[4], beats: beats, bar: bar });
+    });
+    return out;
+  }
+  function barBeats(notes) { var b = []; notes.forEach(function (n) { b[n.bar] = (b[n.bar] || 0) + n.beats; }); return b; }
+
+  /* ---------- Schwierigkeit je Insel (fair: steigt mit dem Können, siehe docs/KONZEPT.md Abschnitt 6) ---------- */
+  var BANDS = [
+    { upTo: 3,  tol: 50, hold: 0.25, longSec: 4,  th: [0.50, 0.70, 0.85] },
+    { upTo: 7,  tol: 42, hold: 0.30, longSec: 6,  th: [0.60, 0.78, 0.90] },
+    { upTo: 12, tol: 35, hold: 0.35, longSec: 8,  th: [0.65, 0.82, 0.93] },
+    { upTo: 20, tol: 28, hold: 0.40, longSec: 10, th: [0.70, 0.86, 0.95] }
+  ];
+  function diff(island, tolAdj) {
+    var b = BANDS[BANDS.length - 1];
+    for (var i = 0; i < BANDS.length; i++) if (island <= BANDS[i].upTo) { b = BANDS[i]; break; }
+    return { tol: Math.max(15, Math.min(50, b.tol + (tolAdj || 0))), hold: b.hold, longSec: b.longSec, th: b.th.slice() };
+  }
+  function starsFor(score, island) { var th = diff(island).th; return score >= th[2] ? 3 : score >= th[1] ? 2 : score >= th[0] ? 1 : 0; }
+  // Auszahlung: neue Bestwert-Sterne, plus 1 Bonus-Stern für 3 Sterne bei Wiederholung (höchstens 2x pro Tag und Station).
+  // current = false: Station liegt weit zurück (nicht aktuelle/vorige Insel, keine Hausaufgabe) -> kein Wiederholungs-Bonus.
+  // So lohnt Üben immer (Fleiß-Sterne für die Zeit), das Abgrasen einer leichten alten Übung aber nicht.
+  function payout(earned, bestBefore, repeatsToday, current) {
+    var p = Math.max(0, earned - (bestBefore || 0));
+    if (p === 0 && earned === 3 && (repeatsToday || 0) < 2 && current !== false) p = 1;
+    return p;
+  }
+  // Bonus nur für aktuelle Übungen: Insel = höchste offene oder die davor, oder als Hausaufgabe markiert
+  function isCurrent(islandN, unlocked, playable, isHomework) {
+    var top = Math.min(unlocked, playable);
+    return !!isHomework || islandN >= top - 1;
+  }
+  // Hauptaufgaben (main: true) einer Insel; sind alle mit mindestens 1 Stern geschafft, öffnet sich die nächste Insel
+  function mainStations(island) { return island.st.filter(function (s) { return s.main; }); }
+  function islandPassed(island, bestOf) { var m = mainStations(island); return m.length > 0 && m.every(function (s) { return (bestOf(s.id) || 0) >= 1; }); }
+
+  /* ---------- Inseln (Reihenfolge wie Lektion 1-20 des Hefts; Inhalte selbst erstellt) ---------- */
+  // src: 'eigen' = eigene Komposition, 'trad' = gemeinfreies Volkslied (eigene Fassung)
+  var ISLANDS = [
+    { n: 1, name: 'Luftballon-Insel', icon: '🎈', topic: 'Klarinette aufbauen und atmen', notes: [], st: [
+      { id: 'L1-teile', type: 'quiz', kind: 'parts', title: 'Teile der Klarinette' },
+      { id: 'L1-atem', main: true, type: 'breath', title: 'Bauch-Atmung', rounds: 3 },
+      { id: 'L1-ton', main: true, type: 'blow', title: 'Mein erster Ton', sec: 3 }
+    ] },
+    { n: 2, name: 'Klappenwald', icon: '🌳', topic: 'Finger und Zunge', notes: ["e'"], st: [
+      { id: 'L2-e', main: true, type: 'learn', note: "e'", title: "Der Ton e'" },
+      { id: 'L2-lang', type: 'long', notes: ["e'"], title: 'Langer Ton e\'' },
+      { id: 'L2-zunge', main: true, type: 'tongue', note: "e'", count: 6, title: 'Anstoßen mit „D“' }
+    ] },
+    { n: 3, name: 'Notenstrand', icon: '🏖️', topic: "Noten lesen: e', d', c'", notes: ["e'", "d'", "c'"], st: [
+      { id: 'L3-namen', type: 'quiz', kind: 'names', title: 'Notennamen' },
+      { id: 'L3-werte', type: 'quiz', kind: 'values', title: 'Notenwerte' },
+      { id: 'L3-d', main: true, type: 'learn', note: "d'", title: "Der Ton d'" },
+      { id: 'L3-c', main: true, type: 'learn', note: "c'", title: "Der Ton c'" },
+      { id: 'L3-lang', type: 'long', notes: ["e'", "d'", "c'"], title: 'Lange Töne' },
+      { id: 'L3-zunge', type: 'tongue', note: "d'", count: 6, title: "Anstoßen d'" },
+      { id: 'L3-folge', main: true, type: 'seq', title: 'Treppchen', mel: "e'4 d'4 c'4 r4 | c'4 d'4 e'4 r4 | e'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L3-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'"], len: 1, rounds: 5 },
+      { id: 'L3-lied', type: 'song', title: 'Flauschis erstes Lied', src: 'eigen', bpm: 66, mel: "e'4 e'4 d'4 d'4 | c'1 | d'4 d'4 e'4 e'4 | d'1 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 e'4 d'4 d'4 | c'1" },
+      { id: 'L3-bronze', type: 'song', medal: 1, title: 'Muschelsuche', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 r4 | e'4 d'4 c'4 r4 | c'4 e'4 d'4 r4 | d'4 e'4 c'4 r4 | e'1 | d'1 | c'1" }
+    ] },
+    { n: 4, name: 'Hügelhoch', icon: '⛰️', topic: "Neue Töne h, f', g'", notes: ["h", "f'", "g'"], st: [
+      { id: 'L4-h', main: true, type: 'learn', note: 'h', title: 'Der Ton h' },
+      { id: 'L4-f', main: true, type: 'learn', note: "f'", title: "Der Ton f'" },
+      { id: 'L4-g', main: true, type: 'learn', note: "g'", title: "Der Ton g'" },
+      { id: 'L4-griffe', type: 'quiz', kind: 'fing', title: 'Welcher Griff?' },
+      { id: 'L4-lang', type: 'long', notes: ['h', "f'", "g'"], title: 'Lange Töne' },
+      { id: 'L4-folge1', type: 'seq', title: 'Den Hügel hinauf', mel: "c'4 d'4 e'4 f'4 | g'1 | g'4 f'4 e'4 d'4 | c'1" },
+      { id: 'L4-folge2', type: 'seq', title: 'Kleiner Schritt nach unten', mel: "h4 c'4 d'4 r4 | d'4 c'4 h4 r4 | h4 d'4 c'4 h4 | c'1" },
+      { id: 'L4-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ["c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L4-lied', type: 'song', title: 'Merrily We Roll Along', src: 'trad', bpm: 72, mel: "e'4 d'4 c'4 d'4 | e'4 e'4 e'4 r4 | d'4 d'4 d'4 r4 | e'4 g'4 g'4 r4 | e'4 d'4 c'4 d'4 | e'4 e'4 e'4 e'4 | d'4 d'4 e'4 d'4 | c'1" },
+      { id: 'L4-bronze', type: 'song', medal: 1, title: 'Gipfelfahne', src: 'eigen', bpm: 72, mel: "c'4 e'4 g'4 r4 | g'4 f'4 e'4 r4 | e'4 d'4 c'4 h4 | c'1 | g'4 f'4 e'4 d'4 | e'4 f'4 g'4 r4 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L4-silber', type: 'song', medal: 2, title: 'Bergziege', src: 'eigen', bpm: 80, mel: "g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | f'4 d'4 e'4 c'4 | d'4 h4 c'4 e'4 | d'4 f'4 e'4 d'4 | c'1" }
+    ] },
+    { n: 5, name: 'Zauberwald', icon: '🪄', topic: 'Lange Töne, Zunge vor, Kinn ruhig', notes: [], st: [
+      { id: 'L5-leiter', main: true, type: 'long', notes: ["c'", "d'", "e'", "f'", "g'"], title: 'Lange-Töne-Leiter' },
+      { id: 'L5-zunge', main: true, type: 'tongue', note: "c'", count: 8, title: 'Zunge vor, Kinn ruhig' },
+      { id: 'L5-folge', main: true, type: 'seq', title: 'Zickzack', mel: "c'4 e'4 d'4 f'4 | e'4 g'4 f'4 r4 | g'4 e'4 f'4 d'4 | e'4 c'4 d'4 h4 | c'1" },
+      { id: 'L5-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 2, rounds: 4 },
+      { id: 'L5-lied1', type: 'song', title: 'Zauberspruch', src: 'eigen', bpm: 69, mel: "e'4 c'4 e'4 c'4 | d'1 | e'4 e'4 c'4 r4 | d'1 | c'4 e'4 d'4 e'4 | c'4 d'4 e'4 r4 | e'4 d'4 c'4 d'4 | c'1" },
+      { id: 'L5-lied2', type: 'song', title: 'Hüpf-Lied', src: 'eigen', bpm: 76, mel: "c'4 r4 e'4 r4 | g'4 r4 e'4 r4 | f'4 f'4 d'4 d'4 | e'4 e'4 c'4 r4 | c'4 r4 e'4 r4 | g'4 r4 g'4 r4 | f'4 d'4 h4 d'4 | c'4 r4 r4 r4" },
+      { id: 'L5-bronze', type: 'song', medal: 1, title: 'Kletterpartie', src: 'eigen', bpm: 72, mel: "c'4 d'4 e'4 f'4 | g'4 r4 r4 r4 | g'4 f'4 e'4 d'4 | c'4 r4 r4 r4 | c'4 e'4 d'4 f'4 | e'4 g'4 g'4 r4 | g'4 e'4 f'4 d'4 | c'1" }
+    ] },
+    { n: 6, name: 'Brückenbach', icon: '🌉', topic: 'Halbe Note und halbe Pause', notes: [], st: [
+      { id: 'L6-werte', type: 'quiz', kind: 'values', title: 'Notenwerte mit Halber' },
+      { id: 'L6-folge', main: true, type: 'seq', title: 'Große Schritte', mel: "c'2 e'2 | g'2 r2 | f'2 d'2 | c'2 r2" },
+      { id: 'L6-lied1', main: true, type: 'song', title: 'Brückenlied', src: 'eigen', bpm: 76, mel: "e'4 e'4 d'2 | c'4 d'4 e'2 | g'4 g'4 f'2 | e'4 d'4 c'2 | e'2 g'2 | f'2 d'2 | e'4 d'4 h4 d'4 | c'1" },
+      { id: 'L6-lied2', type: 'song', title: 'Hänschen klein', src: 'trad', bpm: 84, mel: "g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 d'4 e'4 f'4 | g'4 g'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1 | d'4 d'4 d'4 d'4 | d'4 e'4 f'2 | e'4 e'4 e'4 e'4 | e'4 f'4 g'2 | g'4 e'4 e'2 | f'4 d'4 d'2 | c'4 e'4 g'4 g'4 | c'1" },
+      { id: 'L6-ohr', type: 'ear', title: 'Ohren-Spiel', pool: ['h', "c'", "d'", "e'", "f'", "g'"], len: 3, rounds: 4 },
+      { id: 'L6-bronze', type: 'song', medal: 1, title: 'Bachlauf', src: 'eigen', bpm: 76, mel: "g'2 e'2 | f'4 e'4 d'2 | e'2 c'2 | d'4 e'4 c'2 | g'2 g'2 | f'4 f'4 e'2 | d'4 e'4 f'4 d'4 | c'1" },
+      { id: 'L6-silber', type: 'song', medal: 2, title: 'Steinchenhüpfen', src: 'eigen', bpm: 84, mel: "c'4 e'4 g'2 | f'4 d'4 h2 | c'4 d'4 e'4 f'4 | g'2 r2 | g'4 e'4 c'2 | f'4 d'4 h2 | c'4 e'4 d'4 h4 | c'1" }
+    ] },
+    { n: 7, name: 'Walzer-Wiese', icon: '🎠', topic: '3/4-Takt, punktierte Halbe', notes: [], st: [] },
+    { n: 8, name: 'Atemberg', icon: '🏔️', topic: 'Atemzeichen, Taktnummern', notes: [], st: [] },
+    { n: 9, name: 'Puppen-Bucht', icon: '🎭', topic: "Neue Töne a und a'", notes: ['a', "a'"], st: [] },
+    { n: 10, name: 'Kuckucks-Tal', icon: '🐦', topic: 'Volkslieder im Dreier- und Vierertakt', notes: [], st: [] },
+    { n: 11, name: 'Achtel-Atoll', icon: '🦋', topic: 'Achtelnoten, Duett', notes: [], st: [] },
+    { n: 12, name: 'Sprung-Schlucht', icon: '🐇', topic: 'Achtel auf der 3, Sprünge', notes: [], st: [] },
+    { n: 13, name: 'Turmstadt', icon: '🏰', topic: 'Klammer 1 und 2, laut und leise', notes: [], st: [] },
+    { n: 14, name: 'Zirkus-Zelt', icon: '🎪', topic: 'Achtel auf der 1, Wiederholung', notes: [], st: [] },
+    { n: 15, name: 'Rumba-Riff', icon: '🪇', topic: "Achtel auf der 4, Faulenzer, tiefes b", notes: ['b'], st: [] },
+    { n: 16, name: 'Tango-Turm', icon: '💃', topic: "Vier Achtel, b'", notes: ["b'"], st: [] },
+    { n: 17, name: 'Zauberer-Zinne', icon: '🧙', topic: "Vorzeichen ♯ ♭ ♮, fis'", notes: ["fis'"], st: [] },
+    { n: 18, name: 'Brunnen-Burg', icon: '⛲', topic: "Auftakt, Überblasen: e''", notes: ["e''"], st: [] },
+    { n: 19, name: 'Hippo-Hafen', icon: '🦛', topic: 'Tiefster Ton g', notes: ['g'], st: [] },
+    { n: 20, name: 'Echo-Gipfel', icon: '📣', topic: "forte und piano, d''", notes: ["d''"], st: [] }
+  ];
+  // Tagesmissionen: 3 Aufgaben pro Tag, gleiche Auswahl für den ganzen Tag (Zufall aus dem Datum).
+  // 1. Hausaufgabe oder Hauptaufgabe der aktuellen Insel, 2. schwächster bekannter Ton 3-mal richtig, 3. andere Übungsart der aktuellen/vorigen Insel.
+  // o = { date, unlocked, playable, bestOf(id), nt (Ton-Statistik), hw (IDs) }. Rückgabe: [{k:'st', id} | {k:'note', note, need}]
+  function dayMissions(o) {
+    var seed = 0, i; for (i = 0; i < o.date.length; i++) seed = (seed * 31 + o.date.charCodeAt(i)) % 2147483647;
+    var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    var top = Math.max(1, Math.min(o.unlocked, o.playable)), I = ISLANDS[top - 1], out = [], used = [];
+    var take = function (st) { out.push({ k: 'st', id: st.id }); used.push(st.id); };
+    var hw = (o.hw || []).filter(function (id) { return station(id); });
+    var mainOpen = mainStations(I).filter(function (s) { return (o.bestOf(s.id) || 0) < 2; });
+    if (hw.length) take(station(hw[Math.floor(rnd() * hw.length)]).st);
+    else take(mainOpen.length ? mainOpen[0] : I.st[Math.floor(rnd() * I.st.length)]);
+    var known = knownNotes(top).filter(function (n) { return NOTES[n]; });
+    if (known.length) {
+      var rate = function (n) { var x = o.nt && o.nt[n]; return x && x.n ? x.ok / x.n : 0.5; };
+      var low = known.slice().sort(function (a, b) { return rate(a) - rate(b) || known.indexOf(b) - known.indexOf(a); })[0];
+      out.push({ k: 'note', note: low, need: 3 });
+    }
+    var firstType = station(out[0].id).st.type, pool = [];
+    for (i = Math.max(1, top - 1); i <= top; i++) ISLANDS[i - 1].st.forEach(function (s) { if (s.type !== 'quiz' && used.indexOf(s.id) < 0) pool.push(s); });
+    var other = pool.filter(function (s) { return s.type !== firstType; });
+    while (out.length < 3 && (other.length || pool.length)) {
+      var src = other.length ? other : pool, st = src.splice(Math.floor(rnd() * src.length), 1)[0];
+      other = other.filter(function (s) { return s.id !== st.id; }); pool = pool.filter(function (s) { return s.id !== st.id; });
+      take(st);
+    }
+    return out;
+  }
+  function knownNotes(island) { var s = []; ISLANDS.forEach(function (i) { if (i.n <= island) i.notes.forEach(function (x) { if (s.indexOf(x) < 0) s.push(x); }); }); return s; }
+  function station(id) { for (var i = 0; i < ISLANDS.length; i++) for (var j = 0; j < ISLANDS[i].st.length; j++) if (ISLANDS[i].st[j].id === id) return { isl: ISLANDS[i], st: ISLANDS[i].st[j], idx: j }; return null; }
+  // Titel eigener Verlagsstücke, die NICHT verwendet werden dürfen (Prüfung in tests/test_logic.mjs)
+  var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
+
+  /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
+  // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
+  // Rückgabe null, wenn obj kein Spielstand dieser App ist.
+  // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
+  var SAVE_VERSION = 3;
+  function migrateSave(obj, fresh) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    if (obj.app === 'flauschi-klarinette' && obj.state) obj = obj.state; // Datei aus "Spielstand sichern"
+    if (typeof obj.stars !== 'number' || typeof obj.st !== 'object') return null;
+    var oldV = typeof obj.v === 'number' ? obj.v : 1;
+    var out = fresh, k;
+    for (k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      var a = obj[k], b = fresh[k];
+      if (b && typeof b === 'object' && !Array.isArray(b) && a && typeof a === 'object' && !Array.isArray(a)) { for (var j in a) b[j] = a[j]; }
+      else if (b === undefined || b === null || typeof a === typeof b || (Array.isArray(b) && Array.isArray(a))) out[k] = a;
+    }
+    out.stars = Math.max(0, Math.floor(+out.stars || 0)); out.tix = Math.max(0, Math.floor(+out.tix || 0));
+    out.unlocked = Math.max(1, Math.min(20, Math.floor(+out.unlocked || 1)));
+    if (typeof out.name !== 'string') out.name = ''; out.name = out.name.slice(0, 20);
+    // bis v2 war die Wochen-Datei überall fest "an" (Voreinstellung); ab v3 "automatisch" = auf Tablets aus
+    if (oldV < 3 && out.set && out.set.autoFile === true) out.set.autoFile = null;
+    out.v = SAVE_VERSION;
+    return out;
+  }
+  // "Lina" -> "Linas", "Rex" -> "Rex'"
+  function genitive(n) { return /[sßxz]$/i.test(n) ? n + '’' : n + 's'; }
+
+  var KL = { SAVE_VERSION: SAVE_VERSION, migrateSave: migrateSave, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
+    concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
+    knownNotes: knownNotes, station: station };
+  root.KL = KL;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Leistungstest für das Tablet (Phase 2): 2D mit Phaser, 3D mit three.js, Tonerkennung (YIN) als Hintergrundlast.
+   Parameter: ?quick=1 (kurze Stufen, für den automatischen Test) · ?auto=1 (startet sofort).
+   Ergebnis: window.KLPERF = { done, results, code }. Gespeichert nur lokal unter 'flauschi_leistung' (nicht im Spielstand). */
+(function () {
+'use strict';
+const $ = id => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const QUICK = Q.has('quick'), STEP = QUICK ? 1.2 : 6, WARM = QUICK ? 0.3 : 1;
+const META = window.KLMETA || { version: '?' };
+const LKEY = 'flauschi_leistung';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+window.KLPERF = { done: false, results: [], code: '' };
+let ABORT = false;
+
+/* ---------- Gerät ---------- */
+function gpuName() {
+  try {
+    const c = document.createElement('canvas'), gl = c.getContext('webgl2') || c.getContext('webgl');
+    if (!gl) return { gl: 'keins', name: '–' };
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    const v = (typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) ? 'WebGL 2' : 'WebGL 1';
+    const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    return { gl: v, name: String(name || '?') };
+  } catch (e) { return { gl: 'Fehler', name: '–' }; }
+}
+const GPU = gpuName();
+const DEV = {
+  screen: innerWidth + '×' + innerHeight + ' @' + (devicePixelRatio || 1),
+  cores: navigator.hardwareConcurrency || '?', mem: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '?',
+  ua: (navigator.userAgent.match(/(Silk|Chrome|Firefox|Edg|Safari)\/[\d.]+/g) || ['?']).join(' '),
+  android: (navigator.userAgent.match(/Android [\d.]+/) || [''])[0]
+};
+$('dev').innerHTML = [['Bildschirm (Punkte × Dichte)', DEV.screen], ['Prozessorkerne', DEV.cores], ['Arbeitsspeicher (ungefähr)', DEV.mem],
+  ['Grafik', GPU.gl + ' · ' + GPU.name], ['Browser', DEV.ua + (DEV.android ? ' · ' + DEV.android : '')], ['App-Version', 'v' + META.version]]
+  .map(r => `<tr><td>${r[0]}</td><td><b>${esc(r[1])}</b></td></tr>`).join('');
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+try { const l = JSON.parse(localStorage.getItem(LKEY) || 'null'); if (l && l.code) { $('lastC').style.display = ''; $('last').innerHTML = esc(l.when) + '<br><span style="font-family:monospace">' + esc(l.code) + '</span>'; } } catch (e) {}
+
+/* ---------- Tonerkennung als Last: genau wie in der App alle 30 ms YIN auf 2048 Werten ---------- */
+const SR = 44100, BUF = new Float32Array(2048);
+for (let i = 0; i < BUF.length; i++) { const t = i / SR; BUF[i] = 0.3 * Math.sin(2 * Math.PI * 233.08 * t) + 0.1 * Math.sin(2 * Math.PI * 466.16 * t) + 0.02 * (Math.random() - 0.5); }
+let yinT = null; const yinMs = [];
+function yinOn() { if (yinT) return; yinT = setInterval(() => { const a = performance.now(); window.KL.yin(BUF, SR, 150, 900); yinMs.push(performance.now() - a); if (yinMs.length > 400) yinMs.shift(); }, 30); }
+function yinOff() { clearInterval(yinT); yinT = null; }
+
+/* ---------- Messung: Bildabstände über requestAnimationFrame ---------- */
+async function measure(label) {
+  $('lab').textContent = label; await sleep(WARM * 1000);
+  const gaps = []; let last = 0, t0 = 0;
+  await new Promise(done => {
+    function f(t) {
+      if (ABORT) return done();
+      if (!t0) t0 = t; else gaps.push(t - last);
+      last = t;
+      if (t - t0 < STEP * 1000) requestAnimationFrame(f); else done();
+    }
+    requestAnimationFrame(f);
+  });
+  if (!gaps.length) return { fps: 0, slow: 100 };
+  const sum = gaps.reduce((a, b) => a + b, 0);
+  return { fps: Math.round(gaps.length / (sum / 1000)), slow: Math.round(gaps.filter(g => g > 50).length / gaps.length * 100) };
+}
+
+/* ---------- Bibliotheken nur bei Bedarf laden (liegen in vendor/, nichts aus dem Netz) ---------- */
+function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src)); document.head.appendChild(s); }); }
+
+/* ---------- 2D: Hüpfspiel-ähnliche Szene mit Phaser ---------- */
+async function test2D(add) {
+  if (!window.Phaser) await loadScript('vendor/phaser-4.2.1/phaser.min.js');
+  const P = window.Phaser, stage = $('stage');
+  for (const n of [40, 120, 250]) {
+    if (ABORT) return;
+    let game;
+    await new Promise(ready => {
+      game = new P.Game({
+        type: P.AUTO, parent: stage, width: innerWidth, height: innerHeight, backgroundColor: '#8fd3ff', banner: false, audio: { noAudio: true },
+        scene: {
+          create() {
+            const g = this.add.graphics();
+            g.fillStyle(0x6cc04a).fillRect(0, 0, 64, 64).fillStyle(0x8b5a2b).fillRect(0, 24, 64, 40).fillStyle(0x7a4a22).fillRect(8, 36, 12, 8).fillRect(40, 48, 12, 8);
+            g.generateTexture('ground', 64, 64); g.clear();
+            g.fillStyle(0xffffff).fillCircle(40, 30, 26).fillCircle(70, 34, 20).fillCircle(18, 36, 16);
+            g.generateTexture('cloud', 96, 60); g.clear();
+            g.fillStyle(0xff4f8b).fillCircle(20, 22, 18).fillStyle(0xffffff).fillCircle(14, 18, 6).fillCircle(27, 18, 6).fillStyle(0x222222).fillCircle(15, 19, 3).fillCircle(28, 19, 3).fillStyle(0xffc83d).fillTriangle(10, 4, 20, 0, 30, 4);
+            g.generateTexture('fig', 40, 42); g.clear();
+            g.fillStyle(0xffc83d).fillCircle(10, 10, 9).fillStyle(0xfff3b0).fillCircle(7, 7, 3);
+            g.generateTexture('coin', 20, 20); g.destroy();
+            const W = this.scale.width, H = this.scale.height;
+            this.clouds = this.add.tileSprite(0, 0, W, H * 0.5, 'cloud').setOrigin(0, 0).setAlpha(0.8);
+            this.ground = this.add.tileSprite(0, H - 64, W, 64, 'ground').setOrigin(0, 0);
+            this.items = [];
+            for (let i = 0; i < n; i++) {
+              const s = this.add.image(Math.random() * W, Math.random() * (H - 100), i % 3 ? 'coin' : 'fig');
+              s.vx = (Math.random() - 0.5) * 240; s.vy = (Math.random() - 0.5) * 240; s.va = (Math.random() - 0.5) * 3;
+              this.items.push(s);
+            }
+            this.label = this.add.text(12, H - 40, n + ' Figuren', { fontSize: '20px', color: '#ffffff' });
+            ready();
+          },
+          update(time, dt) {
+            const W = this.scale.width, H = this.scale.height, s = dt / 1000;
+            this.clouds.tilePositionX += 20 * s; this.ground.tilePositionX += 160 * s;
+            for (const it of this.items) {
+              it.x += it.vx * s; it.y += it.vy * s; it.rotation += it.va * s;
+              if (it.x < 0 || it.x > W) it.vx = -it.vx;
+              if (it.y < 0 || it.y > H - 64) it.vy = -it.vy;
+            }
+          }
+        }
+      });
+    });
+    const r = await measure(`2D · ${n} Figuren${yinT ? ' · mit Tonerkennung' : ''}`);
+    add({ k: '2D-' + n, name: `2D-Spiel, ${n} Figuren${yinT ? ', mit Tonerkennung' : ''}`, renderer: game.renderer && game.renderer.type === P.WEBGL ? 'WebGL' : 'Canvas', ...r });
+    game.destroy(true); stage.innerHTML = ''; await sleep(200);
+  }
+}
+
+/* ---------- 3D: Insel mit Bäumen und Figuren, three.js ---------- */
+async function test3D(add) {
+  let THREE;
+  try { THREE = await import('./vendor/three-0.187.0/three.module.js'); } catch (e) { add({ k: '3D', name: '3D: three.js nicht ladbar', fps: 0, slow: 100, err: true }); return; }
+  if (GPU.gl === 'keins') { add({ k: '3D', name: '3D: kein WebGL auf diesem Gerät', fps: 0, slow: 100, err: true }); return; }
+  const levels = [
+    { k: '3D-1', name: '3D-Insel einfach (20 Bäume, ohne Schatten)', trees: 20, shadow: false, pr: 1 },
+    { k: '3D-2', name: '3D-Insel mittel (80 Bäume, Schatten)', trees: 80, shadow: true, pr: 1 },
+    { k: '3D-3', name: '3D-Insel voll (200 Bäume, Schatten, scharf)', trees: 200, shadow: true, pr: Math.min(2, devicePixelRatio || 1) }
+  ];
+  const stage = $('stage');
+  for (const L of levels) {
+    if (ABORT) return;
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'default' }); } catch (e) { add({ k: L.k, name: L.name + ': WebGL-Fehler', fps: 0, slow: 100, err: true }); continue; }
+    renderer.setPixelRatio(L.pr); renderer.setSize(innerWidth, innerHeight); renderer.shadowMap.enabled = L.shadow;
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x8fd3ff);
+    const cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 200);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x447744, 1.2));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(10, 20, 8); sun.castShadow = L.shadow;
+    if (L.shadow) { sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16 }); }
+    scene.add(sun);
+    const water = new THREE.Mesh(new THREE.CircleGeometry(80, 32), new THREE.MeshLambertMaterial({ color: 0x3aa0e0 })); water.rotation.x = -Math.PI / 2; scene.add(water);
+    const land = new THREE.Mesh(new THREE.CylinderGeometry(14, 16, 2, 24), new THREE.MeshLambertMaterial({ color: 0x7cc65a })); land.position.y = 0.6; land.receiveShadow = true; scene.add(land);
+    const trunkG = new THREE.CylinderGeometry(0.15, 0.2, 1, 6), leafG = new THREE.ConeGeometry(0.8, 1.8, 7);
+    const trunkM = new THREE.MeshLambertMaterial({ color: 0x8b5a2b }), leafM = new THREE.MeshLambertMaterial({ color: 0x2f8f3a });
+    for (let i = 0; i < L.trees; i++) {
+      const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      const t = new THREE.Mesh(trunkG, trunkM), l = new THREE.Mesh(leafG, leafM);
+      t.position.set(x, 2.1, z); l.position.set(x, 3.4, z); t.castShadow = l.castShadow = L.shadow; scene.add(t, l);
+    }
+    const figs = [], figG = new THREE.SphereGeometry(0.6, 16, 12), figM = new THREE.MeshLambertMaterial({ color: 0xff4f8b });
+    for (let i = 0; i < 6; i++) { const f = new THREE.Mesh(figG, figM); f.castShadow = L.shadow; f.userData.a = i; scene.add(f); figs.push(f); }
+    let run = true;
+    renderer.setAnimationLoop(t => {
+      if (!run) return; const s = t / 1000;
+      cam.position.set(Math.cos(s * 0.3) * 24, 12, Math.sin(s * 0.3) * 24); cam.lookAt(0, 1.5, 0);
+      figs.forEach((f, i) => { const a = s * 0.8 + i; f.position.set(Math.cos(a) * 6, 2.2 + Math.abs(Math.sin(s * 3 + i)) * 1.5, Math.sin(a) * 6); });
+      renderer.render(scene, cam);
+    });
+    const r = await measure(L.name);
+    add({ k: L.k, name: L.name, renderer: 'WebGL', ...r });
+    run = false; renderer.setAnimationLoop(null);
+    scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    renderer.dispose(); if (renderer.forceContextLoss) renderer.forceContextLoss(); stage.innerHTML = ''; await sleep(200);
+  }
+}
+
+/* ---------- Ablauf ---------- */
+function verdict(r) { return r.err ? '–' : r.fps >= 50 ? '🟢' : r.fps >= 30 ? '🟡' : '🔴'; }
+function show(results) {
+  const yAvg = yinMs.length ? yinMs.reduce((a, b) => a + b, 0) / yinMs.length : 0;
+  const rows = results.map(r => `<tr><td>${verdict(r)} ${esc(r.name)}</td><td><b>${r.err ? '–' : r.fps + ' Bilder/s'}</b></td><td>${r.err ? '' : r.slow + ' % Ruckler'}</td></tr>`);
+  rows.push(`<tr><td>Tonerkennung (eine Messung)</td><td><b>${yAvg.toFixed(1)} ms</b></td><td>${yAvg < 8 ? 'gut' : yAvg < 15 ? 'geht' : 'langsam'}</td></tr>`);
+  $('res').innerHTML = rows.join('');
+  const code = 'KL' + META.version + ' ' + results.map(r => r.k + ':' + (r.err ? 'x' : r.fps + '/' + r.slow)).join(' ') + ' Y:' + yAvg.toFixed(1)
+    + ' S:' + DEV.screen.replace(/\s/g, '') + ' C:' + DEV.cores + ' M:' + DEV.mem.replace(/\s/g, '') + ' G:' + GPU.name.replace(/\s+/g, '_').slice(0, 40);
+  $('code').textContent = code; $('resC').style.display = '';
+  return code;
+}
+async function start() {
+  ABORT = false; $('go').disabled = true; yinMs.length = 0;
+  const results = [], add = r => results.push(r);
+  $('stage').classList.add('on'); $('lab').classList.add('on'); $('stop').classList.add('on');
+  try {
+    yinOn(); await test2D(add);  // Ton-Hüpfer: Spiel und Tonerkennung laufen gleichzeitig
+    yinOff(); await test3D(add); // 3D nur dort, wo nicht geübt wird (ADR-002)
+  } catch (e) { add({ k: 'F', name: 'Fehler: ' + (e && e.message || e), fps: 0, slow: 100, err: true }); }
+  yinOff();
+  $('stage').classList.remove('on'); $('lab').classList.remove('on'); $('stop').classList.remove('on'); $('stage').innerHTML = ''; $('go').disabled = false;
+  const code = show(results);
+  if (!ABORT) try { localStorage.setItem(LKEY, JSON.stringify({ when: new Date().toLocaleString('de-DE'), code })); } catch (e) {}
+  Object.assign(window.KLPERF, { done: true, results, code, aborted: ABORT });
+}
+$('go').addEventListener('click', start);
+$('stop').addEventListener('click', () => { ABORT = true; });
+if (Q.has('auto')) start();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Eigenes Symbol: Klarinette mit Note und Stern. Inhalt im inneren Kreis (maskierbar). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6fa3"/><stop offset="1" stop-color="#e83c7a"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="268" r="168" fill="#fff4f8" opacity=".95"/>
+  <g transform="rotate(35 256 268)">
+    <rect x="236" y="96" width="40" height="34" rx="6" fill="#3a3a46"/>
+    <rect x="232" y="128" width="48" height="12" rx="3" fill="#c9ced8"/>
+    <rect x="234" y="138" width="44" height="236" rx="10" fill="#26262f"/>
+    <rect x="232" y="232" width="48" height="10" rx="3" fill="#c9ced8"/>
+    <path d="M234 370 L278 370 L304 432 Q256 448 208 432 Z" fill="#26262f"/>
+    <rect x="230" y="366" width="52" height="10" rx="3" fill="#c9ced8"/>
+    <circle cx="256" cy="168" r="7" fill="#c9ced8"/><circle cx="256" cy="196" r="7" fill="#c9ced8"/>
+    <circle cx="256" cy="268" r="7" fill="#c9ced8"/><circle cx="256" cy="298" r="7" fill="#c9ced8"/><circle cx="256" cy="328" r="7" fill="#c9ced8"/>
+  </g>
+  <g fill="#ff4f8b">
+    <ellipse cx="166" cy="322" rx="30" ry="22" transform="rotate(-20 166 322)"/>
+    <rect x="186" y="196" width="10" height="124"/>
+    <path d="M186 196 Q230 206 228 250 Q214 226 196 224 Z"/>
+  </g>
+  <path d="M352 150 l13 27 30 4 -22 21 6 30 -27 -15 -27 15 6 -30 -22 -21 30 -4 z" fill="#ffc83d" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+</svg>
