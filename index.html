@@ -489,7 +489,7 @@ const dayKey = off => { const d = new Date(); d.setDate(d.getDate() - off); retu
 // Der Schlüssel KEY bleibt bei Updates gleich, sonst wären Sterne weg. Neue Felder ergänzt KL.migrateSave.
 function fresh() {
   return { v: KL.SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
-    set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false }, hop: { done: [], best: {} }, char: '', name: '' };
+    set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: true }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '' };
 }
 function load() {
   let raw = null; try { raw = localStorage.getItem(KEY); } catch (e) {}
@@ -502,7 +502,24 @@ function load() {
   return fresh();
 }
 let S = load();
-let save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+// Speichern: jede Änderung sofort; dazu eine Tagessicherung (die letzten 7 Tage bleiben), höchstens einmal pro Minute
+const SNAP = KEY + '_tag_'; let snapT = 0, lastJ = JSON.stringify(S);
+let save = () => {
+  try {
+    const j = JSON.stringify(S); localStorage.setItem(KEY, j); lastJ = j;
+    if (Date.now() - snapT > 60000 && S.stars + Object.keys(S.st).length > 0) {
+      snapT = Date.now(); localStorage.setItem(SNAP + today(), j);
+      snapList().slice(7).forEach(k => localStorage.removeItem(SNAP + k));
+    }
+  } catch (e) {}
+};
+// Tage mit Tagessicherung, neueste zuerst
+function snapList() { const out = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(SNAP) === 0) out.push(k.slice(SNAP.length)); } } catch (e) {} return out.sort().reverse(); }
+// Beim Schließen, Wegwischen oder Wechsel in eine andere App sofort speichern
+// nur wenn sich etwas geändert hat, damit ein alter Tab keinen neueren Stand überschreibt
+const saveIfChanged = () => { if (JSON.stringify(S) !== lastJ) save(); };
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveIfChanged(); });
+window.addEventListener('pagehide', saveIfChanged);
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} // Browser soll den Speicher nicht von selbst leeren
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cm = () => S.name ? ', ' + esc(S.name) : ''; // ", Lina" oder nichts
@@ -576,7 +593,7 @@ function playSeq(items, bpm, onNote) {
 
 /* ================= Mikrofon und Tonerkennung ================= */
 const MIC = { ok: false, err: '', an: null, buf: null, floor: 0.003, f3: [] };
-let LOOP = null, LAST = 0, LISTEN = null; // LISTEN(frame) bekommt jede Messung
+let LOOP = null, LAST = 0, LISTEN = null, LASTSAVE = 0; // LISTEN(frame) bekommt jede Messung
 async function micOn() {
   if (MIC.ok) return true;
   if (SIM) { MIC.ok = true; loop(); return true; }
@@ -608,7 +625,7 @@ function tick() {
   let a = null;
   if (voiced) { MIC.f3.push(m.pitch.f); if (MIC.f3.length > 3) MIC.f3.shift(); const s = MIC.f3.slice().sort((x, y) => x - y); a = KL.analyzeFreq(s[s.length >> 1], S.set.a4); } else MIC.f3 = [];
   const fr = { t, dt, rms: m.rms, thr, loud: m.rms > thr && t > MUTE_UNTIL, voiced, a };
-  if (voiced && EX && EX.running) { const d = day(), before = Math.floor(d.sec / 300); d.sec += dt / SPEED; if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); } }
+  if (voiced && EX && EX.running) { const d = day(), before = Math.floor(d.sec / 300); d.sec += dt / SPEED; if (Math.floor(d.sec / 300) > before && Math.floor(d.sec / 300) > d.fs) { d.fs++; S.stars++; save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); } if (t - LASTSAVE > 10) { LASTSAVE = t; save(); } }
   if (LISTEN) LISTEN(fr);
 }
 
@@ -1310,18 +1327,39 @@ function options(msg) {
   const ov = Object.keys(S.st).filter(id => best(id) > 0).length;
   $('optB').innerHTML = `<h1>⚙️ Optionen</h1>${msg ? `<p class="say">${msg}</p>` : ''}<div class="cols">
   <div class="card"><h2>Figur und Name</h2><div style="display:flex;gap:14px;align-items:center"><div style="width:130px;flex:none">${alpSVG(S.wear)}</div><div><p style="font-size:22px;margin:4px 0"><b>${CN()}</b> begleitet ${S.name ? '<b>' + esc(S.name) + '</b>' : 'dich'}.</p><button class="btn" data-act="who">🐾 Figur ändern</button><button class="btn alt" data-act="whoname">✏️ Namen ändern</button></div></div></div>
-  <div class="card"><h2>💾 Spielstand</h2><p>Jetzt: <b>${S.stars} ⭐</b>, ${S.tix} 🎟️, ${S.own.length} Sachen, ${ov} Übungen geschafft.</p><button class="btn green" data-act="export">💾 Sichern (Datei)</button><button class="btn alt" data-act="import">📂 Laden (Datei)</button><input type="file" id="impF" accept=".json,application/json,text/plain" style="display:none"><p class="muted">Der Spielstand bleibt bei Updates der App erhalten. Eine Sicherungsdatei hilft, wenn die Browserdaten gelöscht werden oder das Gerät wechselt. Laden ersetzt den jetzigen Stand; vorher wird er automatisch zwischengespeichert.</p>${hasUndo() ? '<button class="btn alt" data-act="undoimp">↩ Stand vor dem letzten Laden zurückholen</button>' : ''}</div>
+  <div class="card"><h2>💾 Spielstand</h2><p>Jetzt: <b>${S.stars} ⭐</b>, ${S.tix} 🎟️, ${S.own.length} Sachen, ${ov} Übungen geschafft.</p><button class="btn green" data-act="export">💾 Sichern (Datei)</button><button class="btn alt" data-act="import">📂 Laden (Datei)</button><input type="file" id="impF" accept=".json,application/json,text/plain" style="display:none"><p><b>Automatisch:</b> gespeichert wird nach jeder Übung, alle 10 Sekunden beim Spielen und beim Schließen. ${S.set.autoFile ? `Einmal pro Woche legt die App eine Sicherungsdatei in „Downloads“ ab${S.lastFile ? ' (zuletzt ' + new Date(S.lastFile).toLocaleDateString('de-DE') + ')' : ''}.` : 'Wöchentliche Sicherungsdatei ist im Elternbereich ausgeschaltet.'}</p><h3 style="margin:8px 0 2px">Tagessicherungen (letzte 7 Tage)</h3>${snapHTML()}<p class="muted">Der Spielstand bleibt bei Updates der App erhalten. Eine Sicherungsdatei hilft, wenn die Browserdaten gelöscht werden oder das Gerät wechselt. Laden ersetzt den jetzigen Stand; vorher wird er automatisch zwischengespeichert.</p>${hasUndo() ? '<button class="btn alt" data-act="undoimp">↩ Stand vor dem letzten Laden zurückholen</button>' : ''}</div>
   <div class="card"><h2>👪 Für Eltern</h2><p>Übungszeit, Lernstand, Hausaufgabe, Tagesziel und Bewertung.</p><button class="btn alt" data-act="par">👪 Elternbereich</button></div>
   </div><div class="row"><button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
 }
 const UNDO = KEY + '_vor_laden';
+// Wochen-Sicherung als Datei: beim ersten Tippen, wenn die letzte Datei 7 Tage alt ist (Download braucht ein Tippen)
+function autoFile() {
+  if ((SIM && !Q.has('autofile')) || Q.get('demo') || !S.set.autoFile || !S.char || S.stars + Object.keys(S.st).length === 0) return;
+  if (S.lastFile && (new Date(today()) - new Date(S.lastFile)) / 864e5 < 7) return;
+  exportSave(true);
+}
+function restoreSnap(dayK) {
+  let m = null; try { m = KL.migrateSave(JSON.parse(localStorage.getItem(SNAP + dayK)), fresh()); } catch (e) {}
+  if (!m) return options('⚠️ Diese Sicherung ist nicht lesbar.');
+  if (!window.confirm(`Sicherung vom ${new Date(dayK).toLocaleDateString('de-DE')} zurückholen?
+
+Darin: ${m.stars} Sterne. Jetzt: ${S.stars} Sterne.
+Der jetzige Stand wird zwischengespeichert.`)) return options();
+  try { localStorage.setItem(UNDO, JSON.stringify(S)); } catch (e) {}
+  S = m; save(); hud(); options(`✓ Sicherung vom ${new Date(dayK).toLocaleDateString('de-DE')} geladen: ${S.stars} ⭐.`);
+}
+function snapHTML() {
+  const L = snapList(); if (!L.length) return '<p class="muted">Noch keine automatische Sicherung.</p>';
+  return '<table style="width:100%;font-size:17px">' + L.map(k => { let st = '?'; try { st = JSON.parse(localStorage.getItem(SNAP + k)).stars; } catch (e) {} return `<tr><td>${new Date(k).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' })}</td><td>${st} ⭐</td><td><button class="btn alt" style="font-size:16px;padding:6px 12px;margin:2px" data-act="snap" data-d="${k}">Zurückholen</button></td></tr>`; }).join('') + '</table>';
+}
 const hasUndo = () => { try { return !!localStorage.getItem(UNDO); } catch (e) { return false; } };
-function exportSave() {
+function exportSave(auto) {
   const data = JSON.stringify({ app: 'flauschi-klarinette', version: KL.SAVE_VERSION, saved: new Date().toISOString(), state: S }, null, 1);
   const a = document.createElement('a'), nm = cleanName(S.name).replace(/[^A-Za-z0-9ÄÖÜäöüß-]/g, '') || 'kind';
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = `klarinette-spielstand-${nm}-${today()}.json`;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-  toast('💾 Spielstand gesichert (Ordner „Downloads“)', 3500);
+  S.lastFile = today(); save();
+  toast(auto ? '💾 Wochen-Sicherung gespeichert (Ordner „Downloads“)' : '💾 Spielstand gesichert (Ordner „Downloads“)', 3500);
 }
 function importSave(file) {
   const r = new FileReader();
@@ -1371,7 +1409,8 @@ function parents() {
    <tr><td>Spielrunden pro Tag</td><td>${sel('sLim', [0, 2, 3, 5, 8, 10].map(v => [v, v]), S.set.gameLimit)}</td></tr>
    <tr><td>Offene Inseln bis</td><td>${sel('sUnl', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), Math.min(S.unlocked, PLAYABLE))}</td></tr>
    <tr><td>Tonprüfung</td><td>${sel('sTol', [[10, 'großzügig'], [0, 'normal'], [-10, 'streng']], S.set.tolAdj)}</td></tr>
-   <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr></table>
+   <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr>
+   <tr><td>Sicherungsdatei jede Woche</td><td>${sel('sFile', [[1, 'an (Ordner Downloads)'], [0, 'aus']], S.set.autoFile ? 1 : 0)}</td></tr></table>
    <button class="btn green" data-act="setsave">Speichern</button><button class="btn alt" data-act="reset">Spielstand löschen</button></div>
   <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne, bei 3 Sternen höchstens zweimal am Tag einen Bonus-Stern. Alle 5 Minuten echte Spielzeit gibt es einen Fleiß-Stern.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
   </div><div class="row"><button class="btn alt" data-act="opt">⚙️ Zurück zu den Optionen</button></div>`;
@@ -1381,7 +1420,7 @@ function hwList(n) { const ids = S.hw && S.hw.ids ? S.hw.ids : []; return isl(n)
 /* ================= Bedienung ================= */
 document.addEventListener('click', e => {
   const b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
-  const a = b.dataset.act; ac();
+  const a = b.dataset.act; ac(); if (a !== 'import' && a !== 'export') autoFile();
   if (a === 'home') home();
   else if (a === 'today') openStation(nextStation());
   else if (a === 'map') map();
@@ -1410,7 +1449,7 @@ document.addEventListener('click', e => {
   else if (a === 'par') parGate();
   else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else options(); }
   else if (a === 'hwsave') { hwSync(); S.hw.txt = $('hwT').value; save(); toast('Hausaufgabe gespeichert ✓'); }
-  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; save(); hud(); toast('Gespeichert ✓'); parents(); }
+  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === '1'; save(); hud(); toast('Gespeichert ✓'); parents(); }
   else if (a === 'reset') { if (window.confirm('Wirklich den ganzen Spielstand löschen? Sterne, Sachen und Übungszeiten sind dann weg.')) { S = fresh(); save(); home(); } }
   else if (a === 'opt') options();
   else if (a === 'info') toast(INFO[b.dataset.k](), 4000);
@@ -1423,6 +1462,7 @@ document.addEventListener('click', e => {
   else if (a === 'export') exportSave();
   else if (a === 'import') $('impF').click();
   else if (a === 'undoimp') undoImport();
+  else if (a === 'snap') restoreSnap(b.dataset.d);
   else if (a === 'snd') { S.set.mute = !S.set.mute; save(); hud(); if (!S.set.mute) sOk(); }
 });
 // Häkchen gelten sofort, auch über mehrere Inseln hinweg
@@ -1443,7 +1483,7 @@ $('runF').addEventListener('pointerdown', e => { if (G && G.on && !(e.target.clo
 document.addEventListener('keydown', e => { if (screen === 'run' && (e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); runJump(); } });
 
 /* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|run|par|tun */
-window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport };
+window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, get LASTSAVE() { return LASTSAVE; } };
 const demo = Q.get('demo');
 if (demo) {
   S = fresh(); save = () => {}; S.unlocked = 6; S.char = Q.get('char') || 'alpaka'; S.name = Q.get('name') || '';
