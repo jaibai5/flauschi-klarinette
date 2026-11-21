@@ -72,10 +72,6 @@ h2{margin:4px 0 8px;font-size:26px}
 .n .hol{fill:#fff}
 .meter{width:min(560px,90%);height:34px;border-radius:18px;background:#f0e8f8;overflow:hidden;border:3px solid #e4d7f2;margin:8px}
 .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8ee08a,#2fb35a);transition:width .12s}
-.tuner{position:relative;width:min(560px,90%);height:56px;margin:4px}
-.tuner .sc{position:absolute;left:0;right:0;top:24px;height:8px;border-radius:4px;background:linear-gradient(90deg,#ffb3c7,#fff1a8 35%,#8ee08a 45%,#8ee08a 55%,#fff1a8 65%,#ffb3c7)}
-.tuner .nd{position:absolute;top:6px;width:8px;height:44px;margin-left:-4px;border-radius:4px;background:#3a2d4a;left:50%;transition:left .1s}
-.tuner .lb{position:absolute;top:-2px;font-weight:800;font-size:16px}
 .hint{font-size:26px;font-weight:800;min-height:36px;text-align:center}
 .dots{display:flex;gap:10px;justify-content:center;margin:6px}
 .dots i{width:30px;height:30px;border-radius:50%;background:#efe6f7;border:3px solid #e4d7f2}
@@ -138,6 +134,19 @@ h2{margin:4px 0 8px;font-size:26px}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 @media (orientation:portrait){#home .wrap{flex-direction:column}#hAlp{width:44vw}#exBody{flex-direction:column}#exR{flex-direction:row;width:auto}.cols{grid-template-columns:1fr}}
 @media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{width:96px}#exAlp{width:110px}}
+.gauge{width:min(230px,60%);height:auto;display:block;margin:2px auto}
+.gauge.big{width:min(460px,90%)}
+.gauge .nd{transform-origin:150px 150px;transform-box:view-box;transition:transform .12s ease-out,opacity .3s}
+.gauge .nd.off{opacity:.25}
+.demoV{display:none;gap:18px;align-items:center;justify-content:center;margin-top:8px;background:#fff;border-radius:22px;padding:4px 16px;box-shadow:0 4px 14px rgba(80,40,120,.12)}
+.demoV.on{display:flex}
+.demoV .dn{display:flex;flex-direction:column;align-items:center}
+.demoV .dn .bigname{font-size:52px;line-height:1}
+.demoV .staff{width:170px}
+.demoV .df svg{height:170px;width:auto}
+.ov.demo .say{font-size:20px;padding:10px 18px}
+.ov.demo .btn.huge{padding-top:8px;padding-bottom:8px}
+.ov.demo>p.muted{display:none}
 </style>
 </head>
 <body>
@@ -429,13 +438,27 @@ function blip(f, t0, d, type, vol) {
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.03);
   } catch (e) {}
 }
+const PLAYING = { osc: [], tm: [], end: 0 }; let SHOWNOTES = false; // SHOWNOTES: beim Anhören Note und Griff zeigen // laufendes Vorspielen, damit es gestoppt werden kann
+function stopPlay() {
+  PLAYING.osc.forEach(o => { try { o.stop(); } catch (e) {} }); PLAYING.tm.forEach(clearTimeout);
+  PLAYING.osc = []; PLAYING.tm = []; PLAYING.end = 0; demoShow(); MUTE_UNTIL = Math.min(MUTE_UNTIL, now() + 0.15); demoBtn();
+}
+const isPlaying = () => now() < PLAYING.end;
+// Zeigt im Startfenster, welcher Ton gerade vorgespielt wird: Name, Note, Griffbild
+function demoShow(name) {
+  const v = $('demoV'); if (!v) return;
+  if (name === undefined) { v.innerHTML = ''; v.classList.remove('on'); $('exGo').classList.remove('demo'); return; }
+  v.classList.add('on'); $('exGo').classList.add('demo');
+  v.innerHTML = name ? `<div class="dn"><div class="bigname">${name}</div><div class="staff">${single(name)}</div></div><div class="df">${fingSVG(name)}</div>` : '<div class="dn"><div class="bigname">Pause</div></div>';
+}
+function demoBtn() { const b = document.querySelector('[data-act="demo"]'); if (b) b.textContent = isPlaying() ? '⏹ Stopp' : '▶ Anhören'; }
 function clarTone(f, t0, d) { // f klingend, Zeiten in echten Sekunden
   try {
     const a = ac(), o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + t0;
     o.setPeriodicWave(WAVE); o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = 2600; fl.Q.value = 0.7;
     const v = S.set.mute ? 0.0001 : 0.22;
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.05); g.gain.setValueAtTime(v * 0.85, t + Math.max(0.06, d - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + d);
-    o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.05);
+    o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.05); PLAYING.osc.push(o);
   } catch (e) {}
 }
 const sOk = () => { blip(660, 0, 0.12); blip(880, 0.1, 0.18); };
@@ -444,14 +467,17 @@ const sStar = () => [523, 659, 784, 1047].forEach((f, i) => blip(f, i * 0.1, 0.2
 const click = (t0, acc) => blip(acc ? 1500 : 1100, t0, 0.03, 'square', acc ? 0.06 : 0.035);
 // Spielt Töne vor; das Mikrofon hört solange weg. items: [{name|null, beats}] , bpm. Rückgabe: Dauer in Spielzeit-Sekunden
 function playSeq(items, bpm, onNote) {
-  const spb = 60 / bpm; let t = 0;
+  stopPlay(); // nie zwei Vorspiele übereinander
+  const spb = 60 / bpm, show = SHOWNOTES; let t = 0; SHOWNOTES = false;
   items.forEach((it, i) => {
     const d = it.beats * spb;
     if (it.name) clarTone(KL.concertFreq(it.name, S.set.a4), t / SPEED, Math.max(0.12, d * 0.92) / SPEED);
-    if (onNote) setTimeout(() => onNote(i), t * 1000 / SPEED);
+    if (onNote) PLAYING.tm.push(setTimeout(() => onNote(i), t * 1000 / SPEED));
+    if (show) PLAYING.tm.push(setTimeout(() => demoShow(it.name || null), t * 1000 / SPEED));
     t += d;
   });
-  MUTE_UNTIL = now() + t + 0.25;
+  MUTE_UNTIL = now() + t + 0.25; PLAYING.end = now() + t / SPEED;
+  PLAYING.tm.push(setTimeout(() => { PLAYING.end = 0; demoBtn(); demoShow(); }, t * 1000 / SPEED + 50)); demoBtn();
   return t;
 }
 
@@ -675,13 +701,23 @@ function island(n) {
 
 /* ================= Übungen ================= */
 let EX = null;
-function stopEx() { if (EX) { EX.running = false; if (EX.timer) clearInterval(EX.timer); } EX = null; LISTEN = null; }
+function stopEx() { stopPlay(); if (EX) { EX.running = false; if (EX.timer) clearInterval(EX.timer); } EX = null; LISTEN = null; }
 function exShell(title) {
   screen = 'ex'; document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === 'ex')); hud();
   $('exT').textContent = title; $('exL').innerHTML = ''; $('exFing').innerHTML = ''; drawAlp('exAlp'); $('exRes').classList.remove('on'); $('exGo').classList.remove('on');
 }
-function tunerHTML() { return '<div class="tuner"><div class="sc"></div><span class="lb" style="left:0">zu tief</span><span class="lb" style="left:44%">genau</span><span class="lb" style="right:0">zu hoch</span><div class="nd" id="nd"></div></div>'; }
-function needle(c) { const e = $('nd'); if (e) e.style.left = (50 + Math.max(-50, Math.min(50, c))) + '%'; }
+// Zeigerinstrument: −50 … +50 Cent auf einem Halbkreis (±75°), grüner Bereich = erlaubte Abweichung
+function tunerHTML(big) {
+  const tol = TUNER ? 10 : (EX && EX.D ? EX.D.tol : 25), R = 118, C = 150;
+  const pt = (c, r) => { const a = c / 50 * 75 * Math.PI / 180; return [(C + r * Math.sin(a)).toFixed(1), (C - r * Math.cos(a)).toFixed(1)]; };
+  const arc = (c1, c2, col, w) => { const p = pt(c1, R), q = pt(c2, R); return `<path d="M${p} A${R} ${R} 0 0 1 ${q}" fill="none" stroke="${col}" stroke-width="${w}"/>`; };
+  let ticks = ''; for (let c = -50; c <= 50; c += 10) { const p = pt(c, R - 20), q = pt(c, R - (c % 50 ? 30 : 36)); ticks += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#3a2d4a" stroke-width="${c ? 2 : 4}"/>`; }
+  return `<svg class="gauge${big ? ' big' : ''}" viewBox="0 0 300 172" role="img" aria-label="Zeiger: zu tief, genau, zu hoch">${tol < 50 ? arc(-50, -tol, '#ffb3c7', 22) + arc(tol, 50, '#ffb3c7', 22) : ''}${arc(-Math.min(tol, 50), Math.min(tol, 50), '#a6e9a0', 22)}${tol > 10 ? arc(-10, 10, '#3fbf4f', 22) : ''}${ticks}
+  <text x="22" y="168" font-size="20" font-weight="800" fill="#c2185b">tiefer</text><text x="278" y="168" font-size="20" font-weight="800" fill="#c2185b" text-anchor="end">höher</text>
+  <g id="nd" class="nd off" style="transform:rotate(0deg)"><path d="M146 150 L150 ${C - R + 6} L154 150 Z" fill="#3a2d4a"/></g><circle cx="150" cy="150" r="12" fill="#3a2d4a"/><circle cx="150" cy="150" r="5" fill="#fff"/></svg>`;
+}
+// c in Cent; null = kein Ton (Zeiger blass in der Mitte)
+function needle(c) { const e = $('nd'); if (!e) return; const on = c != null && isFinite(c); e.classList.toggle('off', !on); e.style.transform = `rotate(${on ? Math.max(-50, Math.min(50, c)) / 50 * 75 : 0}deg)`; }
 function setHint(t) { const e = $('exHint'); if (e) e.innerHTML = t; }
 function openStation(id) {
   const r = KL.station(id); if (!r) return home();
@@ -692,11 +728,11 @@ function openStation(id) {
 }
 function intro() {
   const e = EX, ov = $('exGo');
-  ov.innerHTML = `<div class="say" style="max-width:760px">${e.say}</div><div class="row" style="margin-top:14px">${e.demo ? '<button class="btn alt huge" data-act="demo">▶ Anhören</button>' : ''}${e.slow ? `<button class="btn alt" data-act="slow">${e.slowOn ? '🐢 langsam' : '🐇 normal'}</button>` : ''}<button class="btn pink huge" data-act="begin">${e.noMic ? 'Los!' : '🎤 Los!'}</button></div>${e.noMic ? '' : '<p class="muted">Halte die Klarinette bereit. Flauschi hört zu, du musst nichts mehr tippen.</p>'}`;
+  ov.innerHTML = `<div class="say" style="max-width:760px">${e.say}</div><div class="row" style="margin-top:14px">${e.demo ? '<button class="btn alt huge" data-act="demo">▶ Anhören</button>' : ''}${e.slow ? `<button class="btn alt" data-act="slow">${e.slowOn ? '🐢 langsam' : '🐇 normal'}</button>` : ''}<button class="btn pink huge" data-act="begin">${e.noMic ? 'Los!' : '🎤 Los!'}</button></div>${e.demo ? '<div class="demoV" id="demoV"></div>' : ''}${e.noMic ? '' : '<p class="muted">Halte die Klarinette bereit. Flauschi hört zu, du musst nichts mehr tippen.</p>'}`;
   ov.classList.add('on'); if (e.pre) e.pre();
 }
 async function begin() {
-  const e = EX; if (!e) return;
+  const e = EX; if (!e) return; stopPlay();
   if (!e.noMic && !(await micOn())) return micFail();
   $('exGo').classList.remove('on');
   if (e.noMic) { e.running = true; return e.begin(); }
@@ -704,9 +740,17 @@ async function begin() {
   let n = 3; const ov = $('exGo'); ov.innerHTML = `<div class="cnt">${n}</div><p class="say">Hände an die Klarinette …</p>`; ov.classList.add('on');
   const t = setInterval(() => { n--; if (EX !== e) return clearInterval(t); if (n > 0) { ov.querySelector('.cnt').textContent = n; } else { clearInterval(t); ov.classList.remove('on'); e.running = true; LISTEN = fr => { if (EX === e && e.running) e.frame(fr); }; e.begin(); } }, 800 / SPEED);
 }
+// Verständlicher Grund je Fehlerart von getUserMedia
+function micWhy() {
+  const e = MIC.err;
+  if (e === 'NotFoundError' || e === 'OverconstrainedError') return 'Ich finde kein Mikrofon an diesem Gerät. Für Eltern: Ist ein Mikrofon angeschlossen und eingeschaltet? Unter Windows: Einstellungen → Datenschutz → Mikrofon.';
+  if (e === 'NotAllowedError' || e === 'SecurityError') return 'Das Mikrofon ist gesperrt. Bitte tippe auf das Schloss oben neben der Adresse und erlaube das Mikrofon.';
+  if (e === 'NotReadableError' || e === 'AbortError') return 'Das Mikrofon wird gerade von einem anderen Programm benutzt. Bitte das andere Programm schließen.';
+  if (!window.isSecureContext || e === 'NoSecureContext') return 'Dieser Browser gibt das Mikrofon hier nicht frei. Für Eltern: Die Seite muss über https geöffnet werden.';
+  return 'Bitte erlaube das Mikrofon, wenn der Browser fragt.';
+}
 function micFail() {
-  const sec = window.isSecureContext;
-  $('exGo').innerHTML = `<div class="say" style="max-width:760px">🎤 Ich kann dich leider nicht hören.<br><span class="muted">${sec ? 'Bitte erlaube das Mikrofon, wenn der Browser fragt (oder in den Einstellungen der Seite).' : 'Dieser Browser gibt das Mikrofon hier nicht frei. Für Eltern: Die Seite muss über https oder localhost geöffnet werden (siehe Anleitung im Projekt).'} (${MIC.err})</span></div><div class="row"><button class="btn pink" data-act="begin">Nochmal versuchen</button><button class="btn alt" data-act="skipmic">Ohne Mikrofon (nur anhören)</button></div>`;
+  $('exGo').innerHTML = `<div class="say" style="max-width:760px">🎤 Ich kann dich leider nicht hören.<br><span class="muted">${micWhy()} (${MIC.err})</span></div><div class="row"><button class="btn pink" data-act="begin">Nochmal versuchen</button><button class="btn alt" data-act="skipmic">Ohne Mikrofon (nur anhören)</button></div>`;
 }
 let WL = null; function wake() { try { if (navigator.wakeLock && !WL) navigator.wakeLock.request('screen').then(w => { WL = w; w.addEventListener('release', () => { WL = null; }); }).catch(() => {}); } catch (e) {} }
 function noteStat(name, okHit, cents) { const n = S.nt[name] || (S.nt[name] = { n: 0, ok: 0, cs: 0, cn: 0 }); n.n++; if (okHit) n.ok++; if (cents != null && isFinite(cents)) { n.cs += cents; n.cn++; } }
@@ -1051,9 +1095,10 @@ function runEnd(won) {
 let TUNER = false;
 async function tuner() {
   show('tun'); $('tunB').innerHTML = '<p class="say">Einen Moment …</p>';
-  if (!(await micOn())) { $('tunB').innerHTML = `<p class="say">🎤 Kein Mikrofon (${MIC.err}). ${window.isSecureContext ? 'Bitte im Browser erlauben.' : 'Die Seite muss über https oder localhost geöffnet werden.'}</p>`; return; }
-  TUNER = true; $('tunB').innerHTML = `<div class="bigname" id="tunN" style="font-size:110px">–</div>${tunerHTML()}<p class="muted" id="tunF">Spiel einen Ton.</p>`;
-  LISTEN = fr => { if (!TUNER) return; if (fr.voiced && fr.a) { $('tunN').textContent = fr.a.name; needle(fr.a.cents); $('tunF').textContent = (fr.a.cents > 0 ? '+' : '') + Math.round(fr.a.cents) + ' Cent · notiert ' + fr.a.name + ' · Pegel ' + fr.rms.toFixed(3); } };
+  if (!(await micOn())) { $('tunB').innerHTML = `<p class="say">🎤 ${micWhy()} <span class="muted">(${MIC.err})</span></p><button class="btn pink" data-act="tuner">Nochmal versuchen</button>`; return; }
+  TUNER = true; $('tunB').innerHTML = `<div class="bigname" id="tunN" style="font-size:96px">–</div>${tunerHTML(true)}<p class="muted" id="tunF">Spiel einen Ton.</p>`;
+  let quiet = 0;
+  LISTEN = fr => { if (!TUNER) return; if (!(fr.voiced && fr.a)) { quiet += fr.dt; if (quiet > 0.6) needle(null); return; } quiet = 0; { $('tunN').textContent = fr.a.name; needle(fr.a.cents); $('tunF').textContent = (fr.a.cents > 0 ? '+' : '') + Math.round(fr.a.cents) + ' Cent · notiert ' + fr.a.name + ' · Pegel ' + fr.rms.toFixed(3); } };
 }
 
 /* ================= Elternbereich ================= */
@@ -1102,7 +1147,7 @@ document.addEventListener('click', e => {
   else if (a === 'isl') island(+b.dataset.n);
   else if (a === 'locked') toast('🔒 Das ist noch zu. Erst die Übungen davor schaffen!');
   else if (a === 'go') openStation(b.dataset.id);
-  else if (a === 'demo') { if (EX && EX.demo) EX.demo(); }
+  else if (a === 'demo') { if (isPlaying()) stopPlay(); else if (EX && EX.demo) { SHOWNOTES = true; EX.demo(); SHOWNOTES = false; } }
   else if (a === 'slow') { if (EX) { const on = !EX.slowOn; openStationBpm(EX.id, on ? Math.round(EX.st.bpm * 0.8) : EX.st.bpm, on); } }
   else if (a === 'begin') begin();
   else if (a === 'skipmic') { $('exGo').classList.remove('on'); if (EX && EX.demo) EX.demo(); toast('Ohne Mikrofon gibt es keine Sterne. Bitte die Eltern, das Mikrofon einzurichten.'); }
