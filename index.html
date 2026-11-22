@@ -324,7 +324,73 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.4.1","built":"22.11.2026 01:23","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.4.2","built":"22.11.2026 14:33","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script id="konto">/* Flauschi-Konto v1 – gemeinsames Punktekonto aller Flauschi-Lernapps (Klarinette, Englisch, Mathe, …).
+   Vertrag: docs/FLAUSCHI_KONTO.md. Diese Datei wird in jede Lern-App unverändert kopiert (Prüfsumme vergleichen).
+   Funktioniert nur, wenn alle Apps unter derselben Herkunft laufen: https://jaibai5.github.io/<app>/
+   Lern-Apps rufen nur earn() und setProfile() auf. Ausgeben (spend) darf nur die App mit Laden und Spiel. */
+(function (root) {
+  'use strict';
+  var KEY = 'flauschi_konto_v1', V = 1, LOG_MAX = 300, APP_RE = /^[a-z][a-z0-9-]{1,23}$/;
+
+  function today(d) { d = d || new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function int(x) { return Math.max(0, Math.floor(+x || 0)); }
+  function fresh() { return { v: V, stars: 0, tix: 0, name: '', char: '', own: [], wear: {}, set: { gameLimit: 5 }, apps: {}, log: [] }; }
+  function fill(o) {
+    var f = fresh(), k;
+    o.stars = int(o.stars); o.tix = int(o.tix);
+    for (k in f) if (o[k] === undefined || o[k] === null || typeof o[k] !== typeof f[k] || Array.isArray(o[k]) !== Array.isArray(f[k])) o[k] = f[k];
+    o.stars = int(o.stars); o.tix = int(o.tix); o.name = String(o.name).slice(0, 20);
+    return o;
+  }
+  function store() { try { return root.localStorage; } catch (e) { return null; } }
+  function read() {
+    var ls = store();
+    try { var o = JSON.parse((ls && ls.getItem(KEY)) || 'null'); if (o && typeof o === 'object' && !Array.isArray(o) && typeof o.v === 'number') return fill(o); } catch (e) {}
+    return fresh();
+  }
+  function write(o) { var ls = store(); try { if (!ls) return false; ls.setItem(KEY, JSON.stringify(o)); return true; } catch (e) { return false; } }
+  function checkApp(app) { if (!APP_RE.test(String(app))) throw new Error('FlauschiKonto: ungültiger App-Name "' + app + '" (klein, z. B. "englisch")'); }
+  function book(o, app, stars, tix, why) {
+    var a = o.apps[app] || (o.apps[app] = { stars: 0, tix: 0, last: '' });
+    if (stars > 0) a.stars += stars; if (tix > 0) a.tix += tix; a.last = today();
+    o.log.push({ t: Date.now(), app: app, stars: stars, tix: tix, why: String(why || '').slice(0, 60) });
+    if (o.log.length > LOG_MAX) o.log = o.log.slice(-LOG_MAX);
+  }
+
+  // Gutschrift für echte Lernleistung. Gibt den neuen Stand zurück.
+  function earn(app, stars, tix, why) {
+    checkApp(app); stars = int(stars); tix = int(tix);
+    var o = read(); if (!stars && !tix) return o;
+    o.stars += stars; o.tix += tix; book(o, app, stars, tix, why); write(o); return o;
+  }
+  // Ausgabe (Laden, Spielrunde). false, wenn nicht genug da ist; dann ändert sich nichts.
+  function spend(app, stars, tix, why) {
+    checkApp(app); stars = int(stars); tix = int(tix);
+    var o = read(); if (o.stars < stars || o.tix < tix) return false;
+    o.stars -= stars; o.tix -= tix; book(o, app, -stars, -tix, why); write(o); return o;
+  }
+  // Name und Figur: leere Werte überschreiben nie vorhandene.
+  function setProfile(p) {
+    p = p || {}; var o = read();
+    if (p.name && String(p.name).trim()) o.name = String(p.name).trim().slice(0, 20);
+    if (p.char && String(p.char).trim()) o.char = String(p.char).trim().slice(0, 12);
+    write(o); return o;
+  }
+  // Summe je App in den letzten n Tagen (für Elternbereiche): { klarinette: { stars, tix }, … }
+  function week(n) {
+    var from = Date.now() - (n || 7) * 864e5, out = {};
+    read().log.forEach(function (e) { if (e.t >= from && (e.stars > 0 || e.tix > 0)) { var s = out[e.app] || (out[e.app] = { stars: 0, tix: 0 }); s.stars += Math.max(0, e.stars); s.tix += Math.max(0, e.tix); } });
+    return out;
+  }
+  // Andere Tabs/Apps haben das Konto geändert.
+  function onChange(fn) { if (root.addEventListener) root.addEventListener('storage', function (e) { if (e.key === KEY) fn(read()); }); }
+  // Browser bitten, den Speicher nicht automatisch zu löschen (einmal beim Start aufrufen).
+  function persist() { try { if (root.navigator && navigator.storage && navigator.storage.persist) return navigator.storage.persist(); } catch (e) {} return Promise.resolve(false); }
+
+  root.FlauschiKonto = { KEY: KEY, V: V, read: read, earn: earn, spend: spend, setProfile: setProfile, week: week, onChange: onChange, persist: persist, today: today };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -551,7 +617,9 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
   // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
   // Version 4 (v0.3.0): neues Spiel (spiel.html) mit Feld game, Eltern-Einstellung set.help (Hilfe-Stufe der Klang-Formeln)
-  var SAVE_VERSION = 4;
+  // Version 5 (v0.4.2): Sterne, Tickets, Sachen, Kleidung, Figur, Name und Spielrunden-Limit liegen im gemeinsamen
+  //   Flauschi-Konto (ADR-006). Merker konto: 1 = schon ins Konto übernommen. Die Felder in S sind ab dann ein Spiegel.
+  var SAVE_VERSION = 5;
   // Neuer leerer Stand. Gemeinsam für App und Spiel, damit beide dieselben Felder kennen.
   // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
   // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
@@ -566,7 +634,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   function freshSave() {
     return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
       set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto', gfx: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
-      game: freshGame() };
+      game: freshGame(), konto: 0 };
   }
   // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
   // Rückgabe null, wenn obj kein Spielstand dieser App ist.
@@ -678,10 +746,76 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
     return { pay: pay, tix: tix, medal: medal, extra: extra, current: current };
   }
 
+  /* ---------- Gemeinsames Flauschi-Konto (ADR-006, docs/FLAUSCHI_KONTO.md) ---------- */
+  // Sterne, Tickets, Sachen (own), Kleidung (wear), Figur, Name und set.gameLimit gehören allen Flauschi-Apps.
+  // Die App behält sie in S als Spiegel. kontoLink bucht bei jedem Speichern nur die Änderung seit dem letzten Abgleich
+  // (mehr = earn, weniger = spend) und übernimmt danach den Kontostand. So zählen auch Buchungen anderer Apps (Englisch).
+  var KONTO_APP = 'klarinette';
+  function kint(x) { return Math.max(0, Math.floor(+x || 0)); }
+  function kontoEmpty(K) { return !K.stars && !K.tix && !K.own.length && !Object.keys(K.wear).length && !K.log.length; }
+  // Einmalige Übernahme eines Klarinetten-Stands ins Konto: addieren statt überschreiben, Sachen vereinigen,
+  // Kleidung/Figur/Name nur, wenn das Konto noch keine hat. Ändert K und S (S.konto = 1). Rückgabe: true, wenn übernommen.
+  function kontoMigrate(S, K, t, date) {
+    if (S.konto === 1) return false;
+    var s = kint(S.stars), x = kint(S.tix), wasEmpty = kontoEmpty(K);
+    if (s || x) {
+      K.stars += s; K.tix += x;
+      var a = K.apps[KONTO_APP] || (K.apps[KONTO_APP] = { stars: 0, tix: 0, last: '' }); a.stars += s; a.tix += x; a.last = date;
+      K.log.push({ t: t, app: KONTO_APP, stars: s, tix: x, why: 'Übernahme aus der Klarinette' });
+      if (K.log.length > 300) K.log = K.log.slice(-300);
+    }
+    (Array.isArray(S.own) ? S.own : []).forEach(function (id) { if (typeof id === 'string' && K.own.indexOf(id) < 0) K.own.push(id); });
+    if (!Object.keys(K.wear).length && S.wear && typeof S.wear === 'object') for (var k in S.wear) if (K.own.indexOf(S.wear[k]) >= 0) K.wear[k] = S.wear[k];
+    if (!K.char && S.char) K.char = String(S.char).slice(0, 12);
+    if (!K.name && S.name) K.name = String(S.name).slice(0, 20);
+    if (S.set && typeof S.set.gameLimit === 'number' && (wasEmpty || K.set.gameLimit === undefined || K.set.gameLimit === 5)) K.set.gameLimit = S.set.gameLimit;
+    S.konto = 1; return true;
+  }
+  // FK = window.FlauschiKonto, store = localStorage. Rückgabe { init, take, sync, note, replace, read }.
+  function kontoLink(FK, store) {
+    var base = null, why = '';
+    var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+    var raw = function (K) { try { store.setItem(FK.KEY, JSON.stringify(K)); return true; } catch (e) { return false; } };
+    function adopt(S, K) {
+      S.stars = K.stars; S.tix = K.tix; S.own = K.own.slice(); S.wear = clone(K.wear);
+      if (K.char) S.char = K.char; if (K.name) S.name = K.name;
+      if (typeof K.set.gameLimit === 'number') S.set.gameLimit = K.set.gameLimit;
+      base = { stars: K.stars, tix: K.tix, own: K.own.slice(), wear: JSON.stringify(K.wear), char: K.char, name: K.name, lim: K.set.gameLimit };
+      return K;
+    }
+    // Beim Start: alter Stand ohne Merker wird einmal übernommen. onlyIfEmpty (Datei, Sicherung): nur in ein leeres Konto,
+    // sonst würden schon übernommene Sterne doppelt zählen.
+    function take(S, onlyIfEmpty) {
+      var K = FK.read(), moved = false;
+      if (S.konto !== 1 && (!onlyIfEmpty || kontoEmpty(K))) moved = kontoMigrate(S, K, Date.now(), FK.today());
+      if (moved) raw(K); S.konto = 1;
+      adopt(S, K); return moved;
+    }
+    function sync(S) {
+      if (!base) return adopt(S, FK.read());
+      var w = why || 'Klarinette'; why = '';
+      var ds = Math.floor(+S.stars || 0) - base.stars, dt = Math.floor(+S.tix || 0) - base.tix;
+      if (ds > 0 || dt > 0) FK.earn(KONTO_APP, Math.max(0, ds), Math.max(0, dt), w);
+      if (ds < 0 || dt < 0) { var K0 = FK.read(); FK.spend(KONTO_APP, Math.min(Math.max(0, -ds), K0.stars), Math.min(Math.max(0, -dt), K0.tix), w); }
+      var K = FK.read(), ch = false;
+      (S.own || []).forEach(function (id) { if (base.own.indexOf(id) < 0 && K.own.indexOf(id) < 0) { K.own.push(id); ch = true; } });
+      if (JSON.stringify(S.wear || {}) !== base.wear) { K.wear = clone(S.wear || {}); ch = true; }
+      if (S.char && S.char !== base.char) { K.char = String(S.char).slice(0, 12); ch = true; }
+      if (S.name && S.name !== base.name) { K.name = String(S.name).slice(0, 20); ch = true; }
+      if (S.set.gameLimit !== base.lim && typeof S.set.gameLimit === 'number') { K.set.gameLimit = S.set.gameLimit; ch = true; }
+      if (ch) raw(K);
+      return adopt(S, K);
+    }
+    // Ganzes Konto ersetzen (nur nach Rückfrage, z. B. beim Laden einer Sicherungsdatei mit Konto)
+    function replace(S, K) { if (!K || typeof K !== 'object' || typeof K.v !== 'number') return false; raw(K); adopt(S, FK.read()); return true; }
+    return { init: function (S) { return take(S, false); }, take: function (S) { return take(S, true); }, sync: sync, replace: replace, read: function () { return FK.read(); },
+      note: function (t) { why = String(t || '').slice(0, 60); } };
+  }
+
   var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
     missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
-    knownNotes: knownNotes, station: station };
+    knownNotes: knownNotes, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
   root.KL = KL;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -1607,9 +1741,16 @@ function load() {
   return fresh();
 }
 let S = load();
+// Gemeinsames Flauschi-Konto (ADR-006): Sterne, Tickets, Sachen, Kleidung, Figur, Name und Spielrunden-Limit gelten für
+// alle Flauschi-Apps. S hält sie als Spiegel; KK.sync bucht beim Speichern die Änderungen und holt den Kontostand.
+const FK = window.FlauschiKonto || null, KK = FK ? KL.kontoLink(FK, localStorage) : null;
+const kontoDo = fn => { if (KK) try { fn(); } catch (e) {} };
+kontoDo(() => { if (KK.init(S)) try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });
+const kontoNote = t => kontoDo(() => KK.note(t));
 // Speichern: jede Änderung sofort; dazu eine Tagessicherung (die letzten 7 Tage bleiben), höchstens einmal pro Minute
 const SNAP = KEY + '_tag_'; let snapT = 0, lastJ = JSON.stringify(S);
 let save = () => {
+  kontoDo(() => KK.sync(S));
   try {
     const j = JSON.stringify(S); localStorage.setItem(KEY, j); lastJ = j;
     if (Date.now() - snapT > 60000 && S.stars + Object.keys(S.st).length > 0) {
@@ -1727,7 +1868,7 @@ function tick() {
   if (fr.voiced && EX && EX.running) {
     const r = KL.practiceTick(S, dt / SPEED, today());
     if (r.goal) { save(); confetti(); toast('🎉 Tagesziel geschafft' + (S.name ? ', ' + S.name : '') + '! ' + S.set.goal + ' Minuten Klarinette – super!', 4000); hud(); }
-    if (r.fleiss) { save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); }
+    if (r.fleiss) { kontoNote('Fleiß-Stern'); save(); toast('💪 Fleiß-Stern für 5 Minuten Spielen' + (S.name ? ', ' + S.name : '') + '!'); hud(); }
     if (t - LASTSAVE > 10) { LASTSAVE = t; save(); }
   }
   if (LISTEN) LISTEN(fr);
@@ -2171,6 +2312,7 @@ function finish(score) {
   let earned = e.st.type === 'learn' ? (score >= 1 ? 3 : score > 0.5 ? 1 : 0) : KL.starsFor(score, e.isl);
   // Sterne, Bonus, Abwechslung, Missionen, Ticket: KL.award in logic.js (gleiche Regeln im Spiel)
   const r = KL.award(S, { id: e.id, isl: e.isl, earned, date: today(), playable: PLAYABLE, medal: e.st.medal || 0 });
+  kontoNote(e.st.title); // Text im Konto-Protokoll (Elternbereich aller Apps)
   const pay = r.pay, tix = r.tix, current = r.current, extra = r.extra, medal = r.medal ? MEDAL[r.medal] : '';
   let unlock = '';
   const I = isl(e.isl);
@@ -2208,6 +2350,7 @@ const CONS = [{ id: 'life', n: 'Extra-Leben', ic: '❤️', p: 2, d: 'Für das n
 const item = id => ITEMS.find(i => i.id === id);
 // msg ist fertiges HTML (eigene Texte); ask = {id, kind} zeigt die Kauf-Rückfrage
 function shop(msg, ask) {
+  if (!Q.get('demo')) kontoDo(() => KK.sync(S)); // frischer Kontostand (andere Apps können gebucht haben)
   show('shop'); if (G3D()) window.K3DAPP.shop($('sAlp'), S); else drawAlp('sAlp'); $('shopT').textContent = '🛍️ ' + KL.genitive(CN()) + ' Laden';
   if (ask) { const x = ask.kind === 'c' ? CONS.find(c => c.id === ask.id) : item(ask.id); msg = `${x.ic} <b>${x.n}</b> für <b>${x.p} ⭐</b> kaufen?<div class="row" style="justify-content:flex-start"><button class="btn green" data-act="${ask.kind === 'c' ? 'buyc' : 'buy'}ok" data-id="${x.id}">✓ Ja, kaufen</button><button class="btn alt" data-act="shop">Nein</button></div>`; }
   $('shopMsg').innerHTML = msg || `Was soll ${CN()} anziehen? Tippe auf Gekauftes zum An- und Ausziehen.`;
@@ -2235,9 +2378,10 @@ function runMenu(msg) {
   $('runM').innerHTML = `<div class="card" style="max-height:96%;overflow:auto;text-align:center"><h2>${KL.genitive(CN())} Hüpfspiel</h2><p style="margin:0;font-weight:700">${msg || 'Tippe zum Springen. Sammle Karotten 🥕, spring über Hindernisse und erreiche die Fahne 🏁!'}</p><p class="muted">Tickets: ${S.tix} 🎟️ · heute noch ${Math.max(0, left)} Runden · ❤️ ${S.cons.life} · ⏳ ${S.cons.clock}</p>${h}<button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
 }
 function runGo(L) {
+  if (!Q.get('demo')) kontoDo(() => KK.sync(S));
   if (S.tix < 1) return runMenu('Du brauchst ein Ticket 🎟️. Tickets gibt es für jede Übung mit 2 oder 3 Sternen.');
   if (day().games >= S.set.gameLimit) return runMenu('Für heute ist die Spielzeit vorbei. Morgen geht es weiter! 🌙');
-  S.tix--; day().games++;
+  S.tix--; day().games++; kontoNote('Hüpfspiel Level ' + (L + 1));
   const w = WORLDS[Math.floor(L / 5)], gear = id => Object.values(S.wear).indexOf(id) >= 0;
   const slow = S.cons.clock > 0 ? (S.cons.clock--, 0.85) : 1, extra = S.cons.life > 0 ? (S.cons.life--, 1) : 0;
   save(); hud(); $('runM').style.display = 'none'; $('runF').style.background = w.sky; $('runG').style.background = w.gr;
@@ -2319,7 +2463,7 @@ function options(msg) {
   const ov = Object.keys(S.st).filter(id => best(id) > 0).length;
   $('optB').innerHTML = `<h1>⚙️ Optionen</h1>${msg ? `<p class="say">${msg}</p>` : ''}<div class="cols">
   <div class="card"><h2>Figur und Name</h2><div style="display:flex;gap:14px;align-items:center"><div style="width:130px;flex:none">${alpSVG(S.wear)}</div><div><p style="font-size:22px;margin:4px 0"><b>${CN()}</b> begleitet ${S.name ? '<b>' + esc(S.name) + '</b>' : 'dich'}.</p><button class="btn" data-act="who">🐾 Figur ändern</button><button class="btn alt" data-act="whoname">✏️ Namen ändern</button></div></div></div>
-  <div class="card"><h2>💾 Spielstand</h2><p>Jetzt: <b>${S.stars} ⭐</b>, ${S.tix} 🎟️, ${S.own.length} Sachen, ${ov} Übungen geschafft.</p><button class="btn green" data-act="export">💾 Sichern (Datei)</button><button class="btn alt" data-act="import">📂 Laden (Datei)</button><input type="file" id="impF" accept=".json,application/json,text/plain" style="display:none"><p><b>Automatisch:</b> gespeichert wird nach jeder Übung, alle 10 Sekunden beim Spielen und beim Schließen. ${autoFileOn() ? `Einmal pro Woche legt die App eine Sicherungsdatei in „Downloads“ ab${S.lastFile ? ' (zuletzt ' + new Date(S.lastFile).toLocaleDateString('de-DE') + ')' : ''}.` : 'Die wöchentliche Sicherungsdatei ist aus' + (S.set.autoFile === false ? '' : ' (auf Tablets automatisch, damit kein Download-Fenster das Kind stört)') + '. Einschalten im Elternbereich.'}</p><h3 style="margin:8px 0 2px">Tagessicherungen (letzte 7 Tage)</h3>${snapHTML()}<p class="muted">Der Spielstand bleibt bei Updates der App erhalten. Eine Sicherungsdatei hilft, wenn die Browserdaten gelöscht werden oder das Gerät wechselt. Laden ersetzt den jetzigen Stand; vorher wird er automatisch zwischengespeichert.</p>${hasUndo() ? '<button class="btn alt" data-act="undoimp">↩ Stand vor dem letzten Laden zurückholen</button>' : ''}</div>
+  <div class="card"><h2>💾 Spielstand</h2><p>Jetzt: <b>${S.stars} ⭐</b>, ${S.tix} 🎟️, ${S.own.length} Sachen, ${ov} Übungen geschafft.</p><p class="muted">${kontoWeek()}</p><button class="btn green" data-act="export">💾 Sichern (Datei)</button><button class="btn alt" data-act="import">📂 Laden (Datei)</button><input type="file" id="impF" accept=".json,application/json,text/plain" style="display:none"><p><b>Automatisch:</b> gespeichert wird nach jeder Übung, alle 10 Sekunden beim Spielen und beim Schließen. ${autoFileOn() ? `Einmal pro Woche legt die App eine Sicherungsdatei in „Downloads“ ab${S.lastFile ? ' (zuletzt ' + new Date(S.lastFile).toLocaleDateString('de-DE') + ')' : ''}.` : 'Die wöchentliche Sicherungsdatei ist aus' + (S.set.autoFile === false ? '' : ' (auf Tablets automatisch, damit kein Download-Fenster das Kind stört)') + '. Einschalten im Elternbereich.'}</p><h3 style="margin:8px 0 2px">Tagessicherungen (letzte 7 Tage)</h3>${snapHTML()}<p class="muted">Der Spielstand bleibt bei Updates der App erhalten. Eine Sicherungsdatei hilft, wenn die Browserdaten gelöscht werden oder das Gerät wechselt. Laden ersetzt den jetzigen Stand; vorher wird er automatisch zwischengespeichert.</p>${hasUndo() ? '<button class="btn alt" data-act="undoimp">↩ Stand vor dem letzten Laden zurückholen</button>' : ''}</div>
   <div class="card"><h2>👪 Für Eltern</h2><p>Übungszeit, Lernstand, Hausaufgabe, Tagesziel und Bewertung.</p><button class="btn alt" data-act="par">👪 Elternbereich</button><button class="btn alt" data-act="full">⛶ Vollbild an/aus</button></div>
   ${aboutHTML()}
   </div><div class="row"><button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
@@ -2340,10 +2484,11 @@ function restoreSnap(dayK) {
   if (!m) return options('⚠️ Diese Sicherung ist nicht lesbar.');
   if (!window.confirm(`Sicherung vom ${new Date(dayK).toLocaleDateString('de-DE')} zurückholen?
 
-Darin: ${m.stars} Sterne. Jetzt: ${S.stars} Sterne.
+Zurückgeholt wird der Lernstand der Klarinette (Inseln, Übungen, Zeiten).
+Sterne, Tickets und Sachen liegen im gemeinsamen Flauschi-Konto und bleiben, wie sie sind.
 Der jetzige Stand wird zwischengespeichert.`)) return options();
-  try { localStorage.setItem(UNDO, JSON.stringify(S)); } catch (e) {}
-  S = m; save(); hud(); options(`✓ Sicherung vom ${new Date(dayK).toLocaleDateString('de-DE')} geladen: ${S.stars} ⭐.`);
+  try { localStorage.setItem(UNDO, JSON.stringify({ app: 'flauschi-klarinette', state: S })); } catch (e) {}
+  S = m; kontoDo(() => KK.take(S)); save(); hud(); options(`✓ Sicherung vom ${new Date(dayK).toLocaleDateString('de-DE')} geladen: ${S.stars} ⭐.`);
 }
 function snapHTML() {
   const L = snapList(); if (!L.length) return '<p class="muted">Noch keine automatische Sicherung.</p>';
@@ -2351,7 +2496,7 @@ function snapHTML() {
 }
 const hasUndo = () => { try { return !!localStorage.getItem(UNDO); } catch (e) { return false; } };
 function exportSave(auto) {
-  const data = JSON.stringify({ app: 'flauschi-klarinette', version: KL.SAVE_VERSION, saved: new Date().toISOString(), state: S }, null, 1);
+  const data = JSON.stringify({ app: 'flauschi-klarinette', version: KL.SAVE_VERSION, saved: new Date().toISOString(), state: S, konto: KK ? KK.read() : undefined }, null, 1);
   const a = document.createElement('a'), nm = cleanName(S.name).replace(/[^A-Za-z0-9ÄÖÜäöüß-]/g, '') || 'kind';
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = `klarinette-spielstand-${nm}-${today()}.json`;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -2361,20 +2506,29 @@ function exportSave(auto) {
 function importSave(file) {
   const r = new FileReader();
   r.onload = () => {
-    let m = null, saved = '';
-    try { const o = JSON.parse(r.result); saved = o && o.saved ? new Date(o.saved).toLocaleDateString('de-DE') : ''; m = KL.migrateSave(o, fresh()); } catch (e) {}
+    let m = null, saved = '', fk = null;
+    try {
+      const o = JSON.parse(r.result); saved = o && o.saved ? new Date(o.saved).toLocaleDateString('de-DE') : ''; m = KL.migrateSave(o, fresh());
+      if (o && o.konto && typeof o.konto === 'object' && typeof o.konto.v === 'number') fk = o.konto;
+    } catch (e) {}
     if (!m) return options('⚠️ Diese Datei ist kein Spielstand der Klarinetten-App.');
-    if (!window.confirm(`Spielstand${saved ? ' vom ' + saved : ''} laden?\n\nIn der Datei: ${m.stars} Sterne, ${m.own.length} Sachen.\nJetzt: ${S.stars} Sterne, ${S.own.length} Sachen.\n\nDer jetzige Stand wird ersetzt (und zwischengespeichert).`)) return options();
-    try { localStorage.setItem(UNDO, JSON.stringify(S)); } catch (e) {}
-    S = m; save(); hud(); options(`✓ Spielstand geladen: ${S.stars} ⭐.`);
+    const done = x => Object.keys(x.st).filter(id => x.st[id] && x.st[id].best > 0).length;
+    if (!window.confirm(`Spielstand${saved ? ' vom ' + saved : ''} laden?\n\nLernstand der Klarinette – in der Datei: ${done(m)} Übungen geschafft, jetzt: ${done(S)}.\n\nDer jetzige Stand wird ersetzt (und zwischengespeichert).`)) return options();
+    // Das Konto gehört allen Lernapps: nur nach eigener Rückfrage ersetzen (Vertrag, Regel 8)
+    const K = KK ? KK.read() : null, kw = x => `${+x.stars || 0} ⭐, ${+x.tix || 0} 🎟️, ${Array.isArray(x.own) ? x.own.length : 0} Sachen`;
+    const swapK = !!(fk && K && window.confirm(`In der Datei ist auch das gemeinsame Flauschi-Konto (gilt für alle Lernapps, z. B. Englisch).\n\nIn der Datei: ${kw(fk)}\nJetzt: ${kw(K)}\n\nKonto auch ersetzen? (Abbrechen = Konto bleibt, wie es ist)`));
+    const undo = { app: 'flauschi-klarinette', state: S }; if (swapK) undo.konto = K;
+    try { localStorage.setItem(UNDO, JSON.stringify(undo)); } catch (e) {}
+    S = m; kontoDo(() => { if (swapK) KK.replace(S, fk); KK.take(S); }); save(); hud(); options(`✓ Spielstand geladen${swapK ? ', Konto ersetzt' : ''}: ${S.stars} ⭐.`);
   };
   r.readAsText(file);
 }
 function undoImport() {
-  let m = null; try { m = KL.migrateSave(JSON.parse(localStorage.getItem(UNDO)), fresh()); } catch (e) {}
+  let m = null, uk = null; try { const o = JSON.parse(localStorage.getItem(UNDO)); if (o && o.konto && typeof o.konto.v === 'number') uk = o.konto; m = KL.migrateSave(o, fresh()); } catch (e) {}
   if (!m) return options();
-  try { localStorage.setItem(UNDO, JSON.stringify(S)); } catch (e) {}
-  S = m; save(); hud(); options(`↩ Früherer Stand zurückgeholt: ${S.stars} ⭐.`);
+  const cur = { app: 'flauschi-klarinette', state: S }; if (uk && KK) cur.konto = KK.read();
+  try { localStorage.setItem(UNDO, JSON.stringify(cur)); } catch (e) {}
+  S = m; kontoDo(() => { if (uk) KK.replace(S, uk); KK.take(S); }); save(); hud(); options(`↩ Früherer Stand zurückgeholt: ${S.stars} ⭐.`);
 }
 
 /* ================= Elternbereich ================= */
@@ -2383,6 +2537,14 @@ function parGate() {
   show('par'); const a = 12 + Math.floor(Math.random() * 8), b = 3 + Math.floor(Math.random() * 7); GATE = a * b;
   const o = shuffle([GATE, GATE + b, GATE - a, GATE + 10]);
   $('parB').innerHTML = `<div class="card" style="max-width:640px;margin:30px auto;text-align:center"><h2>Elternbereich</h2><p style="font-size:24px">Bitte lösen: <b>${a} × ${b}</b></p><div class="opts">${o.map(v => `<button class="opt" data-act="gate" data-v="${v}">${v}</button>`).join('')}</div><button class="btn alt" data-act="opt">Zurück</button></div>`;
+}
+// Gemeinsames Konto: Wochensumme je Lernapp (FlauschiKonto.week) und Hinweis, dass Sterne allen Apps gehören
+const APPN = { klarinette: 'Klarinette', englisch: 'Englisch', mathe: 'Mathe', 'flauschi-land': 'Flauschi Land' };
+function kontoWeek() {
+  if (!FK) return '';
+  let w = {}; try { w = FK.week(7); } catch (e) {}
+  const ks = Object.keys(w).sort((a, b) => (a === 'klarinette' ? -1 : b === 'klarinette' ? 1 : a < b ? -1 : 1));
+  return '🤝 Sterne, Tickets und Sachen liegen im gemeinsamen Flauschi-Konto aller Lernapps. ' + (ks.length ? 'Diese Woche verdient: ' + ks.map(k => `${esc(APPN[k] || k)} ${w[k].stars} ⭐ ${w[k].tix} 🎟️`).join(' · ') : 'Diese Woche noch nichts verdient.');
 }
 function parents() {
   show('par'); const goal = S.set.goal, D = KL.diff(Math.min(S.unlocked, PLAYABLE), S.set.tolAdj);
@@ -2396,7 +2558,7 @@ function parents() {
   Object.keys(KL.NOTES).forEach(n => { const x = S.nt[n]; if (!x) return; const c = x.cn ? x.cs / x.cn : 0; notes += `<tr><td><b>${n}</b></td><td>${Math.round(x.ok / x.n * 100)} % von ${x.n}</td><td>${x.cn ? (c > 0 ? '+' : '') + Math.round(c) + ' Cent ' + (Math.abs(c) > 15 ? (c > 0 ? '(eher zu hoch)' : '(eher zu tief)') : '(gut)') : '–'}</td></tr>`; });
   const hwI = S.hw ? S.hw.isl : Math.min(S.unlocked, PLAYABLE);
   const sel = (id, vals, cur, lab) => `<select id="${id}">${vals.map(v => `<option value="${v[0]}"${String(v[0]) === String(cur) ? ' selected' : ''}>${v[1]}</option>`).join('')}</select>`;
-  $('parB').innerHTML = `<h1>👪 Elternbereich</h1><div class="cols">
+  $('parB').innerHTML = `<h1>👪 Elternbereich</h1><p class="say" style="box-shadow:none">${kontoWeek()}</p><div class="cols">
   <div class="card"><h2>Übungszeit (letzte 7 Tage, Minuten)</h2><div class="bars">${bars}<i class="goal" style="bottom:${goal / max * 100}%"></i></div><p style="margin-top:30px">Diese Woche: <b>${wMin} min</b>, Tagesziel an <b>${wHit} von 7</b> Tagen erreicht · Serie: <b>${streak()} Tage</b> 🔥<br>Heute: ${Math.round(td.sec / 60)} min echte Spielzeit, ${td.ex} Übungen, ${td.stars} ⭐ verdient, ${td.games} Spielrunden.</p><p class="muted">Gezählt wird nur die Zeit, in der wirklich ein Ton erklingt – nicht die Zeit, in der die App offen ist.</p></div>
   <div class="card"><h2>Hausaufgabe der Lehrkraft</h2><p>Lektion (= Insel, öffnet sie sofort): ${sel('hwI', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), hwI)}</p><div id="hwL">${hwList(hwI)}</div><p class="muted" id="hwSum">${hwSum()}</p><p><textarea id="hwT" rows="2" style="width:100%" placeholder="Notiz, z. B. Töne aushalten c d e f g, Kinn ruhig">${S.hw ? S.hw.txt || '' : ''}</textarea></p><button class="btn green" data-act="hwsave">Speichern</button><p class="muted">Häkchen gelten sofort, auch auf mehreren Inseln. Markierte Übungen schlägt „Heute üben“ zuerst vor, jede einmal pro Tag.</p></div>
   <div class="card"><h2>Lernstand</h2><table>${prog}</table>${gameProg()}<p class="muted">Eine Insel öffnet sich, wenn auf der vorigen alle 👑-Hauptaufgaben mindestens einen Stern haben. Bonusaufgaben (Quiz, Zusatzlieder, Medaillen-Stücke) dürfen offen bleiben. <b>Lehrer-Schlüssel:</b> Wählen Sie bei „Hausaufgabe“ die Lektion der Lehrkraft, dann ist diese Insel sofort offen. Es öffnet sich nichts von selbst nach Zeit (Ferien, Ausfall).</p></div>
@@ -2462,8 +2624,8 @@ document.addEventListener('click', e => {
   else if (a === 'back') { if (EX) island(EX.isl); else home(); }
   else if (a === 'shop') shop();
   else if (a === 'buy' || a === 'buyc') { const x = a === 'buy' ? item(b.dataset.id) : CONS.find(c => c.id === b.dataset.id); if (S.stars >= x.p) shop('', { id: x.id, kind: a === 'buy' ? 'i' : 'c' }); else shop(`Dafür brauchst du ${x.p} ⭐, du hast ${S.stars}. Übe noch ein bisschen!`); }
-  else if (a === 'buyok') { const it = item(b.dataset.id); if (S.stars >= it.p && S.own.indexOf(it.id) < 0) { S.stars -= it.p; S.own.push(it.id); S.wear[it.slot] = it.id; save(); sStar(); shop(`Oh, wie schön! Danke${cm()}! ${it.ic}`); anim('sAlp', 'salto'); } else shop(); }
-  else if (a === 'buycok') { const c = CONS.find(x => x.id === b.dataset.id); if (S.stars >= c.p) { S.stars -= c.p; S.cons[c.id]++; save(); sStar(); shop(c.ic + ' gekauft!'); } else shop(); }
+  else if (a === 'buyok') { const it = item(b.dataset.id); if (!Q.get('demo')) kontoDo(() => KK.sync(S)); if (S.stars >= it.p && S.own.indexOf(it.id) < 0) { kontoNote('Laden: ' + it.n); S.stars -= it.p; S.own.push(it.id); S.wear[it.slot] = it.id; save(); sStar(); shop(`Oh, wie schön! Danke${cm()}! ${it.ic}`); anim('sAlp', 'salto'); } else shop(); }
+  else if (a === 'buycok') { const c = CONS.find(x => x.id === b.dataset.id); if (!Q.get('demo')) kontoDo(() => KK.sync(S)); if (S.stars >= c.p) { kontoNote('Laden: ' + c.n); S.stars -= c.p; S.cons[c.id]++; save(); sStar(); shop(c.ic + ' gekauft!'); } else shop(); }
   else if (a === 'wear') { const w = item(b.dataset.id); if (S.wear[w.slot] === w.id) delete S.wear[w.slot]; else S.wear[w.slot] = w.id; save(); shop(); }
   else if (a === 'run') runMenu();
   else if (a === 'rungo') runGo(+b.dataset.l);
@@ -2475,7 +2637,7 @@ document.addEventListener('click', e => {
   else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else options(); }
   else if (a === 'hwsave') { hwSync(); S.hw.txt = $('hwT').value; save(); toast('Hausaufgabe gespeichert ✓'); }
   else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === 'auto' ? null : $('sFile').value === '1'; S.set.full = $('sFull').value; S.set.help = $('sHelp').value === 'auto' ? 'auto' : +$('sHelp').value; const gOld = S.set.gfx || 'auto'; if ($('sGfx')) S.set.gfx = $('sGfx').value; save(); if ((S.set.gfx || 'auto') !== gOld) { location.reload(); return; } hud(); toast('Gespeichert ✓'); parents(); }
-  else if (a === 'reset') { if (window.confirm('Wirklich den ganzen Spielstand löschen? Sterne, Sachen und Übungszeiten sind dann weg.')) { S = fresh(); save(); home(); } }
+  else if (a === 'reset') { if (window.confirm('Wirklich den Lernstand der Klarinette löschen? Inseln, Übungen und Übungszeiten sind dann weg.\n\nSterne, Tickets, Sachen, Figur und Name liegen im gemeinsamen Flauschi-Konto aller Lernapps und bleiben.')) { S = fresh(); S.konto = 1; kontoDo(() => KK.take(S)); save(); home(); } }
   else if (a === 'opt') options();
   else if (a === 'about') { options(); setTimeout(() => { const c = $('about'); if (c && c.scrollIntoView) c.scrollIntoView(); }, 30); }
   else if (a === 'info') toast(INFO[b.dataset.k](), 4000);
@@ -2515,6 +2677,13 @@ document.addEventListener('keydown', e => { if (screen === 'run' && (e.key === '
 /* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|run|par|tun|who|name|opt  ·  &wrong=1 */
 window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, PWA, get LASTSAVE() { return LASTSAVE; } };
 const demo = Q.get('demo');
+// Eine andere Flauschi-App (z. B. Englisch in einem anderen Tab) hat ins Konto gebucht: Anzeige sofort anpassen
+if (FK && !demo) FK.onChange(() => {
+  save(); hud();
+  if (screen === 'shop' && !document.querySelector('[data-act="buyok"],[data-act="buycok"]')) shop();
+  else if (screen === 'run' && !(G && G.on)) runMenu();
+});
+window.KLAPP.konto = () => KK && KK.read();
 if (demo) {
   S = fresh(); save = () => {}; S.unlocked = 6; if (Q.has('wrong')) window.KLWRONG = true; // &wrong=1: simulierter Spieler immer einen Ganzton zu hoch
   S.char = Q.get('char') || 'alpaka'; S.name = Q.get('name') || '';

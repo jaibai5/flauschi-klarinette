@@ -104,7 +104,7 @@
   </div>
   <p class="muted" id="ver"></p>
 </div>
-<script>window.KLMETA = {"version":"0.4.1","built":"22.11.2026 01:23","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.4.2","built":"22.11.2026 14:33","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script>/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -331,7 +331,9 @@
   /* ---------- Spielstand: alte oder fremde Stände übernehmen, ohne etwas zu verlieren ---------- */
   // Version 3 (v0.2.0): Tagesmissionen (mis), Vollbild-Einstellung, Wochen-Datei "automatisch" (null) statt fest an
   // Version 4 (v0.3.0): neues Spiel (spiel.html) mit Feld game, Eltern-Einstellung set.help (Hilfe-Stufe der Klang-Formeln)
-  var SAVE_VERSION = 4;
+  // Version 5 (v0.4.2): Sterne, Tickets, Sachen, Kleidung, Figur, Name und Spielrunden-Limit liegen im gemeinsamen
+  //   Flauschi-Konto (ADR-006). Merker konto: 1 = schon ins Konto übernommen. Die Felder in S sind ab dann ein Spiegel.
+  var SAVE_VERSION = 5;
   // Neuer leerer Stand. Gemeinsam für App und Spiel, damit beide dieselben Felder kennen.
   // set.autoFile: null = automatisch (am PC an, auf Tablets aus), true/false = von Eltern fest gewählt
   // set.full: 'auto' = Vollbild auf Tablets beim ersten Tippen, 'on' = immer, 'off' = nie
@@ -346,7 +348,7 @@
   function freshSave() {
     return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
       set: { goal: 15, gameLimit: 5, tolAdj: 0, a4: 440, mute: false, autoFile: null, full: 'auto', help: 'auto', gfx: 'auto' }, hop: { done: [], best: {} }, char: '', name: '', lastFile: '', mis: null,
-      game: freshGame() };
+      game: freshGame(), konto: 0 };
   }
   // fresh = neuer leerer Stand. Bekannte Felder werden übernommen, fehlende ergänzt; Zahlen bleiben Zahlen.
   // Rückgabe null, wenn obj kein Spielstand dieser App ist.
@@ -458,10 +460,76 @@
     return { pay: pay, tix: tix, medal: medal, extra: extra, current: current };
   }
 
+  /* ---------- Gemeinsames Flauschi-Konto (ADR-006, docs/FLAUSCHI_KONTO.md) ---------- */
+  // Sterne, Tickets, Sachen (own), Kleidung (wear), Figur, Name und set.gameLimit gehören allen Flauschi-Apps.
+  // Die App behält sie in S als Spiegel. kontoLink bucht bei jedem Speichern nur die Änderung seit dem letzten Abgleich
+  // (mehr = earn, weniger = spend) und übernimmt danach den Kontostand. So zählen auch Buchungen anderer Apps (Englisch).
+  var KONTO_APP = 'klarinette';
+  function kint(x) { return Math.max(0, Math.floor(+x || 0)); }
+  function kontoEmpty(K) { return !K.stars && !K.tix && !K.own.length && !Object.keys(K.wear).length && !K.log.length; }
+  // Einmalige Übernahme eines Klarinetten-Stands ins Konto: addieren statt überschreiben, Sachen vereinigen,
+  // Kleidung/Figur/Name nur, wenn das Konto noch keine hat. Ändert K und S (S.konto = 1). Rückgabe: true, wenn übernommen.
+  function kontoMigrate(S, K, t, date) {
+    if (S.konto === 1) return false;
+    var s = kint(S.stars), x = kint(S.tix), wasEmpty = kontoEmpty(K);
+    if (s || x) {
+      K.stars += s; K.tix += x;
+      var a = K.apps[KONTO_APP] || (K.apps[KONTO_APP] = { stars: 0, tix: 0, last: '' }); a.stars += s; a.tix += x; a.last = date;
+      K.log.push({ t: t, app: KONTO_APP, stars: s, tix: x, why: 'Übernahme aus der Klarinette' });
+      if (K.log.length > 300) K.log = K.log.slice(-300);
+    }
+    (Array.isArray(S.own) ? S.own : []).forEach(function (id) { if (typeof id === 'string' && K.own.indexOf(id) < 0) K.own.push(id); });
+    if (!Object.keys(K.wear).length && S.wear && typeof S.wear === 'object') for (var k in S.wear) if (K.own.indexOf(S.wear[k]) >= 0) K.wear[k] = S.wear[k];
+    if (!K.char && S.char) K.char = String(S.char).slice(0, 12);
+    if (!K.name && S.name) K.name = String(S.name).slice(0, 20);
+    if (S.set && typeof S.set.gameLimit === 'number' && (wasEmpty || K.set.gameLimit === undefined || K.set.gameLimit === 5)) K.set.gameLimit = S.set.gameLimit;
+    S.konto = 1; return true;
+  }
+  // FK = window.FlauschiKonto, store = localStorage. Rückgabe { init, take, sync, note, replace, read }.
+  function kontoLink(FK, store) {
+    var base = null, why = '';
+    var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+    var raw = function (K) { try { store.setItem(FK.KEY, JSON.stringify(K)); return true; } catch (e) { return false; } };
+    function adopt(S, K) {
+      S.stars = K.stars; S.tix = K.tix; S.own = K.own.slice(); S.wear = clone(K.wear);
+      if (K.char) S.char = K.char; if (K.name) S.name = K.name;
+      if (typeof K.set.gameLimit === 'number') S.set.gameLimit = K.set.gameLimit;
+      base = { stars: K.stars, tix: K.tix, own: K.own.slice(), wear: JSON.stringify(K.wear), char: K.char, name: K.name, lim: K.set.gameLimit };
+      return K;
+    }
+    // Beim Start: alter Stand ohne Merker wird einmal übernommen. onlyIfEmpty (Datei, Sicherung): nur in ein leeres Konto,
+    // sonst würden schon übernommene Sterne doppelt zählen.
+    function take(S, onlyIfEmpty) {
+      var K = FK.read(), moved = false;
+      if (S.konto !== 1 && (!onlyIfEmpty || kontoEmpty(K))) moved = kontoMigrate(S, K, Date.now(), FK.today());
+      if (moved) raw(K); S.konto = 1;
+      adopt(S, K); return moved;
+    }
+    function sync(S) {
+      if (!base) return adopt(S, FK.read());
+      var w = why || 'Klarinette'; why = '';
+      var ds = Math.floor(+S.stars || 0) - base.stars, dt = Math.floor(+S.tix || 0) - base.tix;
+      if (ds > 0 || dt > 0) FK.earn(KONTO_APP, Math.max(0, ds), Math.max(0, dt), w);
+      if (ds < 0 || dt < 0) { var K0 = FK.read(); FK.spend(KONTO_APP, Math.min(Math.max(0, -ds), K0.stars), Math.min(Math.max(0, -dt), K0.tix), w); }
+      var K = FK.read(), ch = false;
+      (S.own || []).forEach(function (id) { if (base.own.indexOf(id) < 0 && K.own.indexOf(id) < 0) { K.own.push(id); ch = true; } });
+      if (JSON.stringify(S.wear || {}) !== base.wear) { K.wear = clone(S.wear || {}); ch = true; }
+      if (S.char && S.char !== base.char) { K.char = String(S.char).slice(0, 12); ch = true; }
+      if (S.name && S.name !== base.name) { K.name = String(S.name).slice(0, 20); ch = true; }
+      if (S.set.gameLimit !== base.lim && typeof S.set.gameLimit === 'number') { K.set.gameLimit = S.set.gameLimit; ch = true; }
+      if (ch) raw(K);
+      return adopt(S, K);
+    }
+    // Ganzes Konto ersetzen (nur nach Rückfrage, z. B. beim Laden einer Sicherungsdatei mit Konto)
+    function replace(S, K) { if (!K || typeof K !== 'object' || typeof K.v !== 'number') return false; raw(K); adopt(S, FK.read()); return true; }
+    return { init: function (S) { return take(S, false); }, take: function (S) { return take(S, true); }, sync: sync, replace: replace, read: function () { return FK.read(); },
+      note: function (t) { why = String(t || '').slice(0, 60); } };
+  }
+
   var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
     missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
-    knownNotes: knownNotes, station: station };
+    knownNotes: knownNotes, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
   root.KL = KL;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
