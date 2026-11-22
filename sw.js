@@ -5,7 +5,7 @@
    - Alles andere (Symbole, vendor/): aus dem Speicher, sonst aus dem Netz und dann gespeichert.
    Der Spielstand liegt in localStorage und wird hier nie angefasst. */
 'use strict';
-const SW = {"version":"0.4.0","cache":"fk-0.4.0-4955240c64","core":["./","index.html","spiel.html","leistung.html","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png"],"extra":["vendor/phaser-4.2.1/phaser.min.js","vendor/three-0.187.0/three.module.js","vendor/three-0.187.0/three.core.js","assets/welt.bin"]};
+const SW = {"version":"0.4.1","cache":"fk-0.4.1-960ab848c2","core":["./","index.html","spiel.html","leistung.html","klang.html","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png"],"extra":["vendor/phaser-4.2.1/phaser.min.js","vendor/three-0.187.0/three.module.js","vendor/three-0.187.0/three.core.js","assets/welt.bin"]};
 
 self.addEventListener('install', e => {
   // core muss vollständig ankommen; extra (große Bibliotheken) nur versuchen

@@ -225,6 +225,11 @@ h2{margin:4px 0 8px;font-size:26px}
 /* 3D (v0.4, nur Testseite): Start, Karte und Laden mit three.js; ohne 3D gelten die Regeln oben */
 .bg3d{position:absolute;inset:0;z-index:0}
 #home.g3d{padding:0;overflow:hidden}
+#home.wait3d .tag{visibility:hidden}
+#home.wait3d{background:linear-gradient(#7fcfff 0%,#e6f7ff 48%,#5fcdf2 52%,#3fbfef 100%)}
+.ph3d{width:100%;aspect-ratio:204/246}
+@keyframes in3d{from{opacity:0}to{opacity:1}}
+.bg3d,.map3d,.fig3d canvas{animation:in3d .45s ease-out}
 #home.g3d .wrap{position:relative;z-index:1;padding:12px 16px;pointer-events:none}
 #home.g3d .wrap>*{pointer-events:auto}
 #home.g3d .hfig{pointer-events:none}
@@ -319,7 +324,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.4.0","built":"22.11.2026 00:36","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.4.1","built":"22.11.2026 01:23","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="logic">/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -917,6 +922,10 @@ K3D.ready = new Promise(res => {
       done = true; K3D.ok = true; K3D.T = T; res(true);
     } catch (e) { fail(String(e && e.message || e)); }
   };
+  // 2D-Wunsch und fehlendes WebGL sofort erkennen, damit die App ohne Wartezeit 2D zeichnet
+  if (Q.get('g') === '2d') return fail('2D per Adresse');
+  if (pref2d() && Q.get('g') !== '3d') return fail('2D gewählt');
+  try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) return fail('kein WebGL'); } catch (e) { return fail('kein WebGL'); }
   if (window.THREE) go(); else { window.addEventListener('three-ready', go, { once: true }); setTimeout(() => { if (!window.THREE) fail('three.js nicht geladen'); }, 9000); }
 });
 
@@ -1218,7 +1227,13 @@ const WEAR = {
   },
   tail: { tailbow: () => { const g = grp(at(ball(0.025, 0xffd23f), 0, 0.06, 0)); [-1, 1].forEach(s => { const c = at(cone(0.04, 0.08, 0xff5a8a), 0, 0.06, s * 0.05); c.rotation.x = s * Math.PI / 2; g.add(c); }); return g; } },
   back: {
-    wings: F => { const g = grp(); F.wing = []; [-1, 1].forEach(s => { const p = new T.Group(); p.position.set(0, 0, s * 0.08); const w = at(ell(0.2, 0.025, 0.1, 0xffffff), -0.08, 0.04, s * 0.14); w.rotation.z = 0.5; p.add(w); g.add(p); F.wing.push(p); p.side = s; }); return g; },
+    // Federflügel: je Seite drei Federn als Fächer, aufgestellt nach oben-hinten; pose() kippt sie seitlich nach außen und schlägt damit
+    wings: F => { const g = grp(); F.wing = []; [-1, 1].forEach(s => {
+      const p = new T.Group(); p.position.set(-0.03, 0.02, s * 0.11); p.scale.setScalar(1.5);
+      [[1.25, 0.2, 0xffffff], [0.85, 0.24, 0xf4faff], [0.45, 0.2, 0xe2f1ff], [0.1, 0.15, 0xd3eaff]].forEach(([a, L, col]) => {
+        const f = at(ell(L / 2, 0.048, 0.016, col, { seg: 14 }), -Math.cos(a) * L * 0.5, Math.sin(a) * L * 0.5, 0); f.rotation.z = Math.PI - a; p.add(f); });
+      p.add(at(ball(0.045, 0xffffff, { seg: 12 }), 0, 0.01, 0));
+      g.add(p); F.wing.push(p); p.side = s; }); return g; },
     blanket: () => { const g = grp(); const b = at(mesh(new T.CylinderGeometry(0.21, 0.21, 0.32, 16, 1, true, -Math.PI / 2 - 1.1, 2.2), 0xa996ff, { side: 1 }), 0, -0.1, 0); b.rotation.x = Math.PI / 2; g.add(b); return g; },
     cape: F => { const g = grp(); const piv = new T.Group(); piv.position.set(0.12, 0.02, 0); const c = at(box(0.46, 0.02, 0.44, 0xe0483e), -0.23, 0, 0); piv.add(c); g.add(piv); F.cape = piv; return g; }
   },
@@ -1278,7 +1293,7 @@ function pose(F, t, mode) {
   if (!F.eyeM) { F.eyeM = []; H.children.forEach(c => { if (c.isMesh && c.material.color && c.material.color.getHex() === 0x2d2238 && c.scale.x < 0.05) F.eyeM.push(c); }); }
   const bl = (t % 4.2) > 4.05; F.eyeM.forEach(e => { e.scale.y = bl ? e.scale.x * 0.15 : e.scale.x; });
   F.TL.rotation.x = Math.sin(t * (mode === 'run' ? 10 : 3)) * 0.25; F.TL.rotation.z = Math.sin(t * 2) * 0.1;
-  if (F.wing) F.wing.forEach(w => { w.rotation.x = w.side * (0.3 + Math.sin(t * (mode === 'float' ? 16 : 3)) * (mode === 'float' ? 0.5 : 0.12)); });
+  if (F.wing) F.wing.forEach(w => { w.rotation.x = w.side * (0.42 + Math.sin(t * (mode === 'float' ? 16 : 3)) * (mode === 'float' ? 0.5 : 0.12)); });
   if (F.cape) F.cape.rotation.z = 0.55 + Math.sin(t * (mode === 'run' ? 10 : 2)) * (mode === 'run' ? 0.15 : 0.05) - (mode === 'run' || mode === 'float' ? 0.35 : 0);
   if (F.flyW) { F.FR.position.y = 1.2 + Math.sin(t * 2) * 0.08; F.FR.position.x = 0.5 + Math.sin(t * 1.3) * 0.08; F.flyW.forEach(w => { w.rotation.x = w.side * Math.sin(t * 20) * 0.8; }); }
   else if (F.FR.children.length && !F.chick) F.FR.position.y = 1.15 + Math.sin(t * 3) * 0.05;
@@ -1723,7 +1738,8 @@ const { CHARS, charOf, charInner, fingSVG, CLAR_ICON, staffSVG, single, needle, 
 const CN = () => charOf(S.char).n; // Name der Figur für Texte
 // 3D (nur Testseite, src/k3d.js + k3d_app.js): sobald K3D bereit ist, werden Figuren als 3D-Standbild gezeigt, Start, Karte und Laden leben in 3D
 const G3D = () => !!(window.K3D && window.K3D.ok && window.K3DAPP);
-const alpSVG = (w, cid) => G3D() ? window.K3DAPP.img(cid || S.char, w) : `<svg viewBox="-2 -36 204 246" xmlns="http://www.w3.org/2000/svg">${charInner(cid || S.char, w)}</svg>`;
+const P3D = () => !!(window.K3D && !window.K3D.ok && !window.K3D.failed); // 3D lädt noch: kein 2D-Bild zeigen, sonst springt es beim Start von 2D auf 3D
+const alpSVG = (w, cid) => P3D() ? '<div class="ph3d"></div>' : G3D() ? window.K3DAPP.img(cid || S.char, w) : `<svg viewBox="-2 -36 204 246" xmlns="http://www.w3.org/2000/svg">${charInner(cid || S.char, w)}</svg>`;
 function drawAlp(id) { const el = $(id); if (el) el.innerHTML = alpSVG(S.wear); }
 function anim(id, cls) { const el = $(id); if (!el) return; el.classList.remove('salto', 'hop'); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 950); }
 
@@ -1811,6 +1827,7 @@ function nextStation() {
 function home() {
   if (!S.char) return who('char', true);
   show('home'); drawAlp('hAlp'); $('hTag').textContent = CN();
+  $('home').classList.remove('g3d'); $('home').classList.toggle('wait3d', P3D()); if (P3D()) $('home').classList.add('g3d'); // gleich im 3D-Aufbau warten (Himmel, Meer), kein 2D-Bild dazwischen
   if (G3D()) window.K3DAPP.home($('home'), S, $('hAlp'));
   const d = day(), left = Math.max(0, S.set.goal - Math.floor(d.sec / 60)), h = new Date().getHours(), nm = S.name ? ' ' + esc(S.name) : '';
   const hi = h < 11 ? `Guten Morgen${cm()}!` : h < 17 ? `Hallo${nm}!` : `Guten Abend${cm()}!`;
@@ -2414,7 +2431,7 @@ function techHTML() {
     : PWA.installed ? '✅ Auf den Startbildschirm gelegt. Bitte ab jetzt über das Symbol starten.'
     : !WEB ? 'Startbildschirm geht nur über die Internet-Adresse der App, nicht als Datei.'
     : '<b>Startbildschirm:</b> Dieser Browser bietet der App gerade keine Installation an (Knopf erscheint, sobald er es tut). Möglich: im Browser-Menü „Zum Startbildschirm hinzufügen“ bzw. „Verknüpfung erstellen“. In einem Kinderprofil ist das oft gesperrt; dann im Erwachsenen-Profil versuchen.'}</p>
-  ${WEB ? `<p><b>Grafik:</b> ${G3D() ? '✅ 3D läuft' + (window.K3D.low ? ' (Auflösung automatisch gesenkt, damit es flüssig bleibt)' : '') : window.K3D && window.K3D.failed ? '2D (' + esc(window.K3D.err) + ')' : '⏳ 3D wird geladen …'}. Umschalten unter „Einstellungen“ → Grafik.<br><a href="alt/" class="muted">Ältere Version v0.3.0 (Notlösung, gleicher Spielstand)</a></p>` : ''}
+  ${WEB ? `<p><b>Grafik:</b> ${G3D() ? '✅ 3D läuft' + (window.K3D.low ? ' (Auflösung automatisch gesenkt, damit es flüssig bleibt)' : '') : window.K3D && window.K3D.failed ? '2D (' + esc(window.K3D.err) + ')' : '⏳ 3D wird geladen …'}. Umschalten unter „Einstellungen“ → Grafik.<br><a href="alt/" class="muted">Ältere Version v0.3.0 (Notlösung, gleicher Spielstand)</a></p><p><b>🎵 Eltern-Klarinette:</b> Prüfen ohne Kind und ohne Klarinette. Auf dem <b>Handy</b> öffnen: <b>${esc(location.host + location.pathname.replace(/[^/]*$/, ''))}klang.html</b>. Das Handy spielt Töne, das Tablet hört zu. <a href="klang.html" class="muted">Hier öffnen</a></p>` : ''}
   ${WEB ? '<p><a class="btn alt" href="leistung.html" style="text-decoration:none;display:inline-block">📊 Leistungstest (2D/3D)</a></p><p class="muted">Misst, wie flüssig das Gerät Spiele und 3D zeigt (etwa 2 Minuten). Hilft bei der Planung des neuen Hüpfspiels. Der Spielstand wird nicht verändert.</p>' : ''}`;
 }
 function hwList(n) { const ids = S.hw && S.hw.ids ? S.hw.ids : []; return isl(n).st.map(s => `<label style="display:block;font-size:18px"><input type="checkbox" value="${s.id}"${ids.indexOf(s.id) >= 0 ? ' checked' : ''}> ${ICON[s.type]} ${s.title}${s.main ? ' 👑' : ''}</label>`).join(''); }
@@ -2513,7 +2530,7 @@ if (demo) {
   else home();
 } else home();
 // 3D wird nachgeladen: dann den aktuellen Bildschirm neu zeichnen (Übungen bleiben, wie sie sind)
-if (window.K3D) window.K3D.ready.then(ok => { if (!ok) return; if (screen === 'home') home(); else if (screen === 'map') map(); else if (screen === 'shop') shop(); else if (screen === 'who') who(WHO_STEP); else if (screen === 'opt') options(); });
+if (window.K3D) window.K3D.ready.then(() => { if (screen === 'home') home(); else if (screen === 'map') map(); else if (screen === 'shop') shop(); else if (screen === 'who') who(WHO_STEP); else if (screen === 'opt') options(); else if (screen === 'ex') drawAlp('exAlp'); else if (screen === 'run' && !(G && G.on)) $('runA').innerHTML = alpSVG(S.wear); });
 })();
 </script>
 </body>
