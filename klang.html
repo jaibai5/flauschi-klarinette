@@ -104,7 +104,7 @@
   </div>
   <p class="muted" id="ver"></p>
 </div>
-<script>window.KLMETA = {"version":"0.4.2","built":"22.11.2026 14:33","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.5.0","built":"26.11.2026 19:17","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script>/* Flauschis Klarinetten-Abenteuer · Logik ohne DOM (wird in die HTML-Datei eingebettet und von tests/ geprüft).
    Alle Notennamen sind NOTIERT (B-Klarinette). Klingend = notiert − 2 Halbtöne. */
 (function (root) {
@@ -343,7 +343,8 @@
   function freshGame() {
     // intro: Vorspann gesehen · spells: { id: { lv, ok: [n1, n2, n3], gold, day } } gelernte Klang-Formeln
     // coins: Noten-Münzen · stickers: Sticker-IDs · lv/gold/boss/medals/scenes/rec: Abenteuer und Klang-Reise (ab v0.3.1)
-    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {} };
+    // diff: Schwierigkeit im Klang-Abenteuer, 1 Leicht (Vorgabe: viel Zeit zum Umgreifen), 2 Mittel, 3 Schwer (ab v0.5.0)
+    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {}, diff: 1 };
   }
   function freshSave() {
     return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
@@ -379,6 +380,7 @@
       if (worlds) { g.coins += worlds * 20; if (g.stickers.indexOf('althase') < 0) g.stickers.push('althase'); }
     }
     if (out.set && [1, 2, 3, 'auto'].indexOf(out.set.help) < 0) out.set.help = 'auto';
+    if ([1, 2, 3].indexOf(g.diff) < 0) g.diff = 1;
     out.v = SAVE_VERSION;
     return out;
   }

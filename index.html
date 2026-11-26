@@ -112,18 +112,6 @@ h2{margin:4px 0 8px;font-size:26px}
 #shop .top{display:flex;gap:16px;align-items:center}
 #sAlp{width:170px;flex:none}
 /* Spiel */
-#run{padding:0}
-#runF{position:absolute;inset:0;overflow:hidden;touch-action:none}
-#runG{position:absolute;left:0;right:0;bottom:0;height:56px}
-#runA{position:absolute;left:50px;bottom:56px;width:100px;z-index:3}
-#runA.inv{opacity:.5}
-.ob{position:absolute;left:0;font-size:40px;line-height:1;z-index:2}
-#runH{position:absolute;left:10px;top:10px;display:flex;gap:6px;z-index:4}
-#runM{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;background:rgba(255,255,255,.55)}
-.lvl{display:grid;grid-template-columns:repeat(5,64px);gap:8px;justify-content:center;margin:8px}
-.lvl button{height:60px;border:0;border-radius:16px;font-size:20px;font-weight:900;background:#fff;box-shadow:0 4px 0 #d9cbe8}
-.lvl button.done{background:#c9f2c4}
-.lvl button:disabled{opacity:.35}
 /* Eltern */
 #par table{border-collapse:collapse;width:100%;font-size:17px}
 #par td,#par th{border-bottom:1px solid #eee3f5;padding:6px;text-align:left}
@@ -198,7 +186,6 @@ h2{margin:4px 0 8px;font-size:26px}
 .nmalp{width:220px;flex:none}
 #nameI{width:100%;font-size:34px;font-weight:800;padding:10px 16px;border-radius:18px;border:3px solid #d9cbe8;font-family:inherit;color:#3a2d4a;margin:8px 0}
 #opt .card{margin-bottom:12px}
-.lvl button:disabled{opacity:.6;background:#eee8f3}
 @media (orientation:portrait){.chars{grid-template-columns:1fr 1fr}.namebox{flex-direction:column}.qz{flex-direction:column}.qz .opts{width:100%}.exrow{flex-wrap:wrap}}
 @media (max-height:620px){.chr svg{max-width:140px}.nmalp{width:170px}}
 /* v0.2.0: Tagesmissionen, Versionshinweis, falscher Ton, Zusatzmeldungen im Ergebnis */
@@ -262,6 +249,7 @@ h2{margin:4px 0 8px;font-size:26px}
 img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:none}
 .chr img.f3d{max-width:190px}
 @media (max-height:620px){.lab3d span{font-size:16px}.lab3d{min-width:100px;padding:3px 10px 4px}#sAlp.fig3d{height:160px}.chr img.f3d{max-width:150px}}
+#bLand small{font-size:16px;opacity:.9;font-weight:700}
 </style>
 </head>
 <body>
@@ -286,11 +274,11 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
           <button class="btn" style="flex:1" data-act="map">🗺️ Inseln</button>
           <button class="btn" style="flex:1" data-act="tuner">🔍 Ton-Lupe</button>
         </div>
-        <button class="btn pink" id="bGame" data-act="game" style="display:none">✨ Klang-Abenteuer <small style="font-size:16px;opacity:.9">Ton-Hüpfer · Zauberbuch</small></button>
+        <button class="btn pink" id="bGame" data-act="game" style="display:none">✨ Klang-Abenteuer <small style="font-size:16px;opacity:.9">Ton-Hüpfer · Klang-Reise</small></button>
         <div class="mlab">Belohnung</div>
         <div class="row" style="justify-content:stretch">
           <button class="btn green" style="flex:1" data-act="shop">🛍️ Laden</button>
-          <button class="btn green" style="flex:1" data-act="run">🎮 Hüpfspiel</button>
+          <button class="btn green" style="flex:1" id="bLand" data-act="land">🎮 Flauschi Land</button>
         </div>
       </div>
     </div><div class="ver" id="hVer" data-act="about"></div></section>
@@ -309,10 +297,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
     <section class="scr" id="shop">
       <div class="top"><div id="sAlp"></div><div><h1 id="shopT">🛍️ Laden</h1><p class="say" id="shopMsg"></p></div></div>
       <h2>Kleidung</h2><div class="grid" id="shopG"></div>
-      <h2>🎮 Spiel-Ausrüstung</h2><div class="grid" id="shopG2"></div>
     </section>
-
-    <section class="scr" id="run"><div id="runF"><div id="runG"></div><div id="runA"></div><div id="runH"></div><div id="runM"></div></div></section>
 
     <section class="scr" id="tun"><h1>🔍 Ton-Lupe</h1><div id="tunB" style="display:flex;flex-direction:column;align-items:center"></div><p class="muted" style="text-align:center">Zeigt den gespielten Ton (notiert für B-Klarinette) und ob er zu hoch oder zu tief ist.</p></section>
 
@@ -324,7 +309,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.4.2","built":"22.11.2026 14:33","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.5.0","built":"26.11.2026 19:17","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="konto">/* Flauschi-Konto v1 – gemeinsames Punktekonto aller Flauschi-Lernapps (Klarinette, Englisch, Mathe, …).
    Vertrag: docs/FLAUSCHI_KONTO.md. Diese Datei wird in jede Lern-App unverändert kopiert (Prüfsumme vergleichen).
    Funktioniert nur, wenn alle Apps unter derselben Herkunft laufen: https://jaibai5.github.io/<app>/
@@ -629,7 +614,8 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   function freshGame() {
     // intro: Vorspann gesehen · spells: { id: { lv, ok: [n1, n2, n3], gold, day } } gelernte Klang-Formeln
     // coins: Noten-Münzen · stickers: Sticker-IDs · lv/gold/boss/medals/scenes/rec: Abenteuer und Klang-Reise (ab v0.3.1)
-    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {} };
+    // diff: Schwierigkeit im Klang-Abenteuer, 1 Leicht (Vorgabe: viel Zeit zum Umgreifen), 2 Mittel, 3 Schwer (ab v0.5.0)
+    return { intro: false, spells: {}, coins: 0, stickers: [], lv: {}, gold: [], boss: [], medals: [], scenes: [], rec: {}, diff: 1 };
   }
   function freshSave() {
     return { v: SAVE_VERSION, stars: 0, tix: 0, own: [], wear: {}, cons: { life: 0, clock: 0 }, unlocked: 5, st: {}, days: {}, nt: {}, hw: null, bonus: 0,
@@ -665,6 +651,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
       if (worlds) { g.coins += worlds * 20; if (g.stickers.indexOf('althase') < 0) g.stickers.push('althase'); }
     }
     if (out.set && [1, 2, 3, 'auto'].indexOf(out.set.help) < 0) out.set.help = 'auto';
+    if ([1, 2, 3].indexOf(g.diff) < 0) g.diff = 1;
     out.v = SAVE_VERSION;
     return out;
   }
@@ -1766,6 +1753,8 @@ function snapList() { const out = []; try { for (let i = 0; i < localStorage.len
 const saveIfChanged = () => { if (JSON.stringify(S) !== lastJ) save(); };
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveIfChanged(); });
 window.addEventListener('pagehide', saveIfChanged);
+// Zurück aus Flauschi Land (oder anderer Lernapp): Seite kommt evtl. aus dem Zwischenspeicher des Browsers -> Konto neu lesen
+window.addEventListener('pageshow', e => { if (e.persisted && !Q.get('demo')) { save(); hud(); if (screen === 'shop' && !document.querySelector('[data-act="buyok"]')) shop(); } });
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} // Browser soll den Speicher nicht von selbst leeren
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cm = () => S.name ? ', ' + esc(S.name) : ''; // ", Lina" oder nichts
@@ -1916,7 +1905,7 @@ function streak() {
 }
 function hud() {
   const d = day(), m = Math.floor(d.sec / 60);
-  $('hStar').textContent = '⭐ ' + S.stars; $('hTix').textContent = '🎟️ ' + S.tix; $('hFire').textContent = '🔥 ' + streak();
+  $('hStar').textContent = '⭐ ' + S.stars; $('hTix').textContent = '🎟️ ' + S.tix; landBtn(); $('hFire').textContent = '🔥 ' + streak();
   $('tday').innerHTML = `<i style="width:${Math.min(100, d.sec / (S.set.goal * 60) * 100)}%"></i><span>⏱ ${m}/${S.set.goal} min</span>`;
   $('bSnd').textContent = S.set.mute ? '🔇' : '🔊';
   $('bHome').style.visibility = screen === 'home' || (screen === 'who' && !S.char) ? 'hidden' : 'visible';
@@ -1925,12 +1914,12 @@ function hud() {
 // Erklärung der Zeichen in der Kopfzeile (Tipp darauf)
 const INFO = {
   star: () => `⭐ Sterne: Du hast ${S.stars}. Damit kaufst du im Laden Sachen für ${CN()}.`,
-  tix: () => `🎟️ Tickets: Du hast ${S.tix}. Ein Ticket = eine Runde Hüpfspiel. Es gibt eins für jede Übung mit 2 oder 3 Sternen.`,
+  tix: () => `🎟️ Tickets: Du hast ${S.tix}. Ein Ticket = eine Runde in Flauschi Land, dem Spiel für alle Lernapps. Es gibt eins für jede Übung mit 2 oder 3 Sternen.`,
   fire: () => `🔥 Serie: ${streak()} Tage hintereinander das Tagesziel geschafft.`,
   day: () => `⏱ Heute ${Math.floor(day().sec / 60)} von ${S.set.goal} Minuten Klarinette gespielt.`,
   chest: () => S.mis && S.mis.chest ? '🎉 Die Schatztruhe ist offen! Morgen gibt es neue Missionen.' : '🎁 Schaffe alle Missionen von heute, dann öffnet sich die Schatztruhe: +3 ⭐ und +1 🎟️.'
 };
-function show(id) { stopEx(); stopRun(); TUNER = false; screen = id; if (window.K3DAPP) window.K3DAPP.leave(); document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === id)); hud(); }
+function show(id) { stopEx(); TUNER = false; screen = id; if (window.K3DAPP) window.K3DAPP.leave(); document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === id)); hud(); }
 let toastT = 0;
 function toast(t, ms) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { e.style.display = 'none'; }, ms || 2600); }
 function confetti() { const e = ['⭐', '🎵', '🌈', '💜', '🎉', '✨', '🎶']; for (let i = 0; i < 18; i++) { const s = document.createElement('span'); s.className = 'conf'; s.textContent = pick(e); s.style.left = (3 + Math.random() * 92) + '%'; s.style.animationDelay = Math.random() * 0.6 + 's'; document.body.appendChild(s); setTimeout(() => s.remove(), 3400); } }
@@ -1976,7 +1965,7 @@ function home() {
   $('hSay').innerHTML = hi + ' ' + (left ? `Noch <b>${left} Minuten</b> Klarinette, dann ist dein Tagesziel geschafft.` : 'Tagesziel geschafft! 🎉 Du bist super!') + (nx ? `<br><span class="muted">Als Nächstes: ${nx.isl.icon} ${nx.st.title}</span>` : '');
   $('hMis').innerHTML = misHTML(); saveIfChanged();
   $('hVer').textContent = 'v' + META.version + (META.built ? ' · ' + META.built : '');
-  $('bGame').style.display = WEB ? '' : 'none'; // neues Spiel nur auf der Testseite (Phaser), die Datei-Version behält das alte Hüpfspiel
+  $('bGame').style.display = WEB ? '' : 'none'; // Klang-Abenteuer nur auf der Testseite
 }
 let MAPLIST = false;
 function map() {
@@ -2026,7 +2015,7 @@ function tunerHTML(big, hold) { return window.KLDRAW.gaugeSVG(TUNER ? 10 : (EX &
 function setHint(t) { const e = $('exHint'); if (e) e.innerHTML = t; }
 function openStation(id) {
   const r = KL.station(id); if (!r) return home();
-  stopEx(); TUNER = false; stopRun(); exShell(r.st.title);
+  stopEx(); TUNER = false; exShell(r.st.title);
   const D = KL.diff(r.isl.n, S.set.tolAdj);
   EX = (TYPES[r.st.type])(r.st, D, r.isl.n); EX.id = id; EX.st = r.st; EX.isl = r.isl.n; EX.D = D;
   intro();
@@ -2340,96 +2329,30 @@ const ITEMS = [
   { id: 'starglasses', n: 'Sternenbrille', slot: 'eyes', p: 5, ic: '🌟', mi: 5 }, { id: 'wizard', n: 'Zauberhut', slot: 'hat', p: 5, ic: '🧙', mi: 5 },
   { id: 'chick', n: 'Küken-Freund', slot: 'friend', p: 5, ic: '🐥', mi: 5 }, { id: 'cape', n: 'Helden-Cape', slot: 'back', p: 6, ic: '🦸', mi: 6 },
   { id: 'sparkle', n: 'Glitzer', slot: 'fx', p: 6, ic: '✨', mi: 6 }, { id: 'crown', n: 'Krone', slot: 'hat', p: 8, ic: '👑', mi: 6 },
-  // Spiel-Ausrüstung mit Vorteil im Hüpfspiel (muss getragen werden)
-  { id: 'helmet', n: 'Sturzhelm', slot: 'hat', p: 3, ic: '⛑️', mi: 2, gear: 'Ein Treffer pro Level ist frei' },
-  { id: 'turbo', n: 'Turbo-Schuhe', slot: 'feet', p: 4, ic: '👟', mi: 3, gear: 'Springt höher' },
-  { id: 'magnet', n: 'Karotten-Magnet', slot: 'friend', p: 5, ic: '🧲', mi: 4, gear: 'Zieht Karotten an' },
-  { id: 'wings', n: 'Flügel', slot: 'back', p: 7, ic: '🪽', mi: 5, gear: 'Doppelsprung in der Luft' }
+  // früher Spiel-Ausrüstung für das alte Hüpfspiel, jetzt normale Kleidung
+  { id: 'helmet', n: 'Sturzhelm', slot: 'hat', p: 3, ic: '⛑️', mi: 2 },
+  { id: 'turbo', n: 'Turbo-Schuhe', slot: 'feet', p: 4, ic: '👟', mi: 3 },
+  { id: 'magnet', n: 'Karotten-Magnet', slot: 'friend', p: 5, ic: '🧲', mi: 4 },
+  { id: 'wings', n: 'Flügel', slot: 'back', p: 7, ic: '🪽', mi: 5 }
 ];
-const CONS = [{ id: 'life', n: 'Extra-Leben', ic: '❤️', p: 2, d: 'Für das nächste Level' }, { id: 'clock', n: 'Zeitlupe', ic: '⏳', p: 2, d: 'Nächstes Level langsamer' }];
 const item = id => ITEMS.find(i => i.id === id);
 // msg ist fertiges HTML (eigene Texte); ask = {id, kind} zeigt die Kauf-Rückfrage
 function shop(msg, ask) {
   if (!Q.get('demo')) kontoDo(() => KK.sync(S)); // frischer Kontostand (andere Apps können gebucht haben)
   show('shop'); if (G3D()) window.K3DAPP.shop($('sAlp'), S); else drawAlp('sAlp'); $('shopT').textContent = '🛍️ ' + KL.genitive(CN()) + ' Laden';
-  if (ask) { const x = ask.kind === 'c' ? CONS.find(c => c.id === ask.id) : item(ask.id); msg = `${x.ic} <b>${x.n}</b> für <b>${x.p} ⭐</b> kaufen?<div class="row" style="justify-content:flex-start"><button class="btn green" data-act="${ask.kind === 'c' ? 'buyc' : 'buy'}ok" data-id="${x.id}">✓ Ja, kaufen</button><button class="btn alt" data-act="shop">Nein</button></div>`; }
+  if (ask) { const x = item(ask.id); msg = `${x.ic} <b>${x.n}</b> für <b>${x.p} ⭐</b> kaufen?<div class="row" style="justify-content:flex-start"><button class="btn green" data-act="buyok" data-id="${x.id}">✓ Ja, kaufen</button><button class="btn alt" data-act="shop">Nein</button></div>`; }
   $('shopMsg').innerHTML = msg || `Was soll ${CN()} anziehen? Tippe auf Gekauftes zum An- und Ausziehen.`;
-  const card = it => { const own = S.own.indexOf(it.id) >= 0, lock = it.mi > S.unlocked; return `<button class="item${own ? ' own' : ''}${S.wear[it.slot] === it.id ? ' wear' : ''}${lock ? ' lock' : ''}" data-act="${lock ? 'locked' : own ? 'wear' : 'buy'}" data-id="${it.id}"><b>${it.ic}</b>${it.n}<small>${lock ? '🔒 ab Insel ' + it.mi : own ? (S.wear[it.slot] === it.id ? 'trägt ' + CN() : 'gehört dir') : it.p + ' ⭐'}</small>${it.gear ? `<small>🎮 ${it.gear}</small>` : ''}</button>`; };
-  $('shopG').innerHTML = ITEMS.filter(i => !i.gear).map(card).join('');
-  $('shopG2').innerHTML = ITEMS.filter(i => i.gear).map(card).join('') + CONS.map(c => `<button class="item" data-act="buyc" data-id="${c.id}"><b>${c.ic}</b>${c.n}<small>${c.p} ⭐ · du hast ${S.cons[c.id]}</small><small>🎮 ${c.d}</small></button>`).join('');
+  const card = it => { const own = S.own.indexOf(it.id) >= 0, lock = it.mi > S.unlocked; return `<button class="item${own ? ' own' : ''}${S.wear[it.slot] === it.id ? ' wear' : ''}${lock ? ' lock' : ''}" data-act="${lock ? 'locked' : own ? 'wear' : 'buy'}" data-id="${it.id}"><b>${it.ic}</b>${it.n}<small>${lock ? '🔒 ab Insel ' + it.mi : own ? (S.wear[it.slot] === it.id ? 'trägt ' + CN() : 'gehört dir') : it.p + ' ⭐'}</small></button>`; };
+  $('shopG').innerHTML = ITEMS.map(card).join('');
 }
 
-/* ================= Hüpfspiel: 4 Welten × 5 Level ================= */
-const WORLDS = [
-  { n: 'Blumenwiese', sky: 'linear-gradient(#bfe9ff,#f0fbff)', gr: '#8ee08a', ob: ['🌵', '🪨', '🍄'], fly: '🐝' },
-  { n: 'Sandwüste', sky: 'linear-gradient(#ffe2a8,#fff6e0)', gr: '#f1c27d', ob: ['🌵', '🦂', '🪨'], fly: '🦅' },
-  { n: 'Schneeberg', sky: 'linear-gradient(#cfe3ff,#ffffff)', gr: '#e8f1ff', ob: ['⛄', '🧊', '🌲'], fly: '❄️' },
-  { n: 'Regenbogenland', sky: 'linear-gradient(#ffd1f0,#e6dcff)', gr: '#c6a8ff', ob: ['💎', '🍭', '🌈'], fly: '🦄' }
-];
-let G = null;
-function stopRun() { if (G) G.on = false; G = null; }
-function runMenu(msg) {
-  show('run'); const lv = S.hop.done.length; let h = '';
-  WORLDS.forEach((w, wi) => { h += `<div style="font-weight:800;margin-top:6px">${w.ob[0]} ${w.n}</div><div class="lvl">`; for (let l = 0; l < 5; l++) { const n = wi * 5 + l, b = S.hop.best[n] || 0; h += `<button data-act="rungo" data-l="${n}" class="${S.hop.done.indexOf(n) >= 0 ? 'done' : ''}" ${n > lv ? 'disabled aria-label="gesperrt"' : ''}>${n > lv ? '🔒' : n + 1}<br><small>${'⭐'.repeat(b)}</small></button>`; } h += '</div>'; });
-  const left = S.set.gameLimit - day().games;
-  $('runA').innerHTML = alpSVG(S.wear); $('runA').style.transform = ''; $('runH').innerHTML = ''; $('runF').querySelectorAll('.ob').forEach(o => o.remove());
-  $('runF').style.background = WORLDS[0].sky; $('runG').style.background = WORLDS[0].gr;
-  $('runM').style.display = 'flex';
-  $('runM').innerHTML = `<div class="card" style="max-height:96%;overflow:auto;text-align:center"><h2>${KL.genitive(CN())} Hüpfspiel</h2><p style="margin:0;font-weight:700">${msg || 'Tippe zum Springen. Sammle Karotten 🥕, spring über Hindernisse und erreiche die Fahne 🏁!'}</p><p class="muted">Tickets: ${S.tix} 🎟️ · heute noch ${Math.max(0, left)} Runden · ❤️ ${S.cons.life} · ⏳ ${S.cons.clock}</p>${h}<button class="btn alt" data-act="home">🏠 Zurück</button></div>`;
-}
-function runGo(L) {
-  if (!Q.get('demo')) kontoDo(() => KK.sync(S));
-  if (S.tix < 1) return runMenu('Du brauchst ein Ticket 🎟️. Tickets gibt es für jede Übung mit 2 oder 3 Sternen.');
-  if (day().games >= S.set.gameLimit) return runMenu('Für heute ist die Spielzeit vorbei. Morgen geht es weiter! 🌙');
-  S.tix--; day().games++; kontoNote('Hüpfspiel Level ' + (L + 1));
-  const w = WORLDS[Math.floor(L / 5)], gear = id => Object.values(S.wear).indexOf(id) >= 0;
-  const slow = S.cons.clock > 0 ? (S.cons.clock--, 0.85) : 1, extra = S.cons.life > 0 ? (S.cons.life--, 1) : 0;
-  save(); hud(); $('runM').style.display = 'none'; $('runF').style.background = w.sky; $('runG').style.background = w.gr;
-  G = { on: true, L, w, len: 30 + L * 1.5, dist: 0, sp: (230 + L * 16) * slow, gapT: Math.max(0.62, 1.3 - L * 0.034), fly: L < 2 ? 0 : 0.12 + L * 0.016, dbl: L >= 8 ? 0.15 + (L - 8) * 0.02 : 0,
-    car: 0, carN: 0, hp: 3 + extra, y: 0, vy: 0, objs: [], nxt: 1.2, inv: 0, last: 0, jumps: 0,
-    shield: gear('helmet') ? 1 : 0, jumpV: gear('turbo') ? 760 : 680, wings: gear('wings'), magnet: gear('magnet'), flag: null };
-  requestAnimationFrame(runTick);
-}
-// Pause: Spiel anhalten, Weiter oder Aufhören
-function runPause() {
-  if (!G || !G.on) return; G.on = false;
-  $('runM').style.display = 'flex';
-  $('runM').innerHTML = `<div class="card" style="text-align:center"><h2>⏸ Pause</h2><div class="row"><button class="btn green huge" data-act="runresume">▶ Weiter</button><button class="btn alt" data-act="runquit">Aufhören</button></div><p class="muted">Beim Aufhören ist das Ticket für diese Runde verbraucht.</p></div>`;
-}
-function runResume() { if (!G) return; $('runM').style.display = 'none'; G.on = true; G.last = 0; requestAnimationFrame(runTick); }
-function runJump() { if (!G || !G.on) return; if (G.y === 0) { G.vy = G.jumpV; G.jumps = 1; blip(520, 0, 0.08); } else if (G.wings && G.jumps === 1) { G.vy = G.jumpV * 0.85; G.jumps = 2; blip(700, 0, 0.08); } }
-function spawn(Fw, emoji, y, car, h) { const el = document.createElement('span'); el.className = 'ob'; el.textContent = emoji; el.style.bottom = (56 + y) + 'px'; $('runF').appendChild(el); G.objs.push({ el, x: Fw + 20, y, car, w: 36, h: h || 40 }); }
-function runTick(ts) {
-  if (!G || !G.on) return; const dt = Math.min(0.05, (ts - (G.last || ts)) / 1000); G.last = ts;
-  const Fw = $('runF').clientWidth, a = $('runA');
-  G.dist += dt; G.inv -= dt; G.vy -= 1900 * dt; G.y += G.vy * dt; if (G.y <= 0) { G.y = 0; G.vy = 0; G.jumps = 0; }
-  a.style.transform = `translate(0,${-G.y}px)`; a.classList.toggle('inv', G.inv > 0);
-  G.nxt -= dt;
-  if (G.dist < G.len && G.nxt <= 0) {
-    const r = Math.random();
-    if (r < 0.38) { G.carN++; spawn(Fw, '🥕', pick([6, 70, 110]), true, 34); }
-    else if (r < 0.38 + G.fly) spawn(Fw, G.w.fly, pick([70, 95]), false, 34);
-    else { spawn(Fw, pick(G.w.ob), 0, false, 42); if (Math.random() < G.dbl) setTimeout(() => { if (G && G.on) spawn(Fw, pick(G.w.ob), 0, false, 42); }, 150); }
-    G.nxt = G.gapT + Math.random() * 0.7;
-  }
-  if (G.dist >= G.len && !G.flag) { const el = document.createElement('span'); el.className = 'ob'; el.textContent = '🏁'; el.style.bottom = '56px'; el.style.fontSize = '64px'; $('runF').appendChild(el); G.flag = { el, x: Fw + 40 }; }
-  if (G.flag) { G.flag.x -= G.sp * dt; G.flag.el.style.transform = `translate(${G.flag.x}px,0)`; if (G.flag.x < 120) return runEnd(true); }
-  for (let i = G.objs.length - 1; i >= 0; i--) {
-    const b = G.objs[i]; if (b.car && G.magnet && b.x < 360 && b.x > 60) b.y += ((G.y + 40) - b.y) * Math.min(1, dt * 6), b.el.style.bottom = (56 + b.y) + 'px';
-    b.x -= G.sp * dt; b.el.style.transform = `translate(${b.x}px,0)`;
-    const hit = b.x < 50 + 82 && b.x + b.w > 50 + 22 && b.y < G.y + 92 && b.y + b.h > G.y + 8; let gone = b.x < -60;
-    if (hit && b.car) { G.car++; blip(880, 0, 0.08); gone = true; }
-    else if (hit && G.inv <= 0) { if (G.shield > 0) { G.shield--; toast('⛑️ Der Helm hat dich beschützt!'); } else { G.hp--; sBad(); } G.inv = 1.2; }
-    if (gone) { b.el.remove(); G.objs.splice(i, 1); }
-  }
-  $('runH').innerHTML = `<span class="chip">🥕 ${G.car}</span><span class="chip">${'❤️'.repeat(Math.max(0, G.hp))}</span>${G.shield ? '<span class="chip">⛑️</span>' : ''}<span class="chip">🏁 ${Math.max(0, Math.round((1 - G.dist / G.len) * 100))}%</span><button class="ib" data-act="runpause" aria-label="Pause">⏸</button>`;
-  if (G.hp <= 0) return runEnd(false);
-  requestAnimationFrame(runTick);
-}
-function runEnd(won) {
-  const L = G.L, frac = G.carN ? G.car / G.carN : 1, st = won ? (frac >= 0.8 ? 3 : frac >= 0.5 ? 2 : 1) : 0; G.on = false; G = null;
-  if (won) { if (S.hop.done.indexOf(L) < 0) S.hop.done.push(L); S.hop.best[L] = Math.max(S.hop.best[L] || 0, st); confetti(); }
-  save(); runMenu(won ? `Level ${L + 1} geschafft! ${'⭐'.repeat(st)} ${L % 5 === 4 ? '🏆 Welt geschafft!' : ''}` : 'Oh nein, keine Leben mehr. Versuch es nochmal!');
+/* ================= Flauschi Land (gemeinsames Belohnungsspiel aller Lernapps, eigenes Projekt) ================= */
+// Das alte Tasten-Hüpfspiel ist seit v0.5.0 entfernt. Tickets gelten in Flauschi Land (gleiches Konto, ADR-006).
+const LAND_URL = '../flauschi-land/?from=klarinette';
+function landBtn() { const b = $('bLand'); if (b) b.innerHTML = '🎮 Flauschi Land <small>' + S.tix + ' 🎟️</small>'; }
+function openLand() {
+  if (!WEB) { toast('🎮 Flauschi Land gibt es auf der Testseite im Internet. Deine Tickets warten dort.', 4000); return; }
+  save(); location.href = LAND_URL;
 }
 
 /* ================= Ton-Lupe (Stimmhilfe, auch zum Prüfen des Mikrofons) ================= */
@@ -2565,7 +2488,7 @@ function parents() {
   <div class="card"><h2>Ton-Bericht</h2>${notes ? `<table><tr><th>Ton</th><th>Treffer</th><th>Stimmung im Schnitt</th></tr>${notes}</table>` : '<p>Noch keine Töne gespielt.</p>'}<p class="muted">Ist ein Ton dauerhaft zu hoch oder zu tief, lohnt eine Frage an die Lehrkraft (Ansatz, Blatt, Birne).</p></div>
   <div class="card"><h2>Einstellungen</h2><table>
    <tr><td>Tagesziel</td><td>${sel('sGoal', [5, 10, 15, 20, 25, 30].map(v => [v, v + ' Minuten']), goal)}</td></tr>
-   <tr><td>Spielrunden pro Tag</td><td>${sel('sLim', [0, 2, 3, 5, 8, 10].map(v => [v, v]), S.set.gameLimit)}</td></tr>
+   <tr><td>Flauschi Land: Runden pro Tag</td><td>${sel('sLim', [0, 2, 3, 5, 8, 10].map(v => [v, v]), S.set.gameLimit)}</td></tr>
    <tr><td>Offene Inseln bis</td><td>${sel('sUnl', Array.from({ length: PLAYABLE }, (_, i) => [i + 1, (i + 1) + '. ' + isl(i + 1).name]), Math.min(S.unlocked, PLAYABLE))}</td></tr>
    <tr><td>Tonprüfung</td><td>${sel('sTol', [[10, 'großzügig'], [0, 'normal'], [-10, 'streng']], S.set.tolAdj)}</td></tr>
    <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr>
@@ -2594,7 +2517,7 @@ function techHTML() {
     : !WEB ? 'Startbildschirm geht nur über die Internet-Adresse der App, nicht als Datei.'
     : '<b>Startbildschirm:</b> Dieser Browser bietet der App gerade keine Installation an (Knopf erscheint, sobald er es tut). Möglich: im Browser-Menü „Zum Startbildschirm hinzufügen“ bzw. „Verknüpfung erstellen“. In einem Kinderprofil ist das oft gesperrt; dann im Erwachsenen-Profil versuchen.'}</p>
   ${WEB ? `<p><b>Grafik:</b> ${G3D() ? '✅ 3D läuft' + (window.K3D.low ? ' (Auflösung automatisch gesenkt, damit es flüssig bleibt)' : '') : window.K3D && window.K3D.failed ? '2D (' + esc(window.K3D.err) + ')' : '⏳ 3D wird geladen …'}. Umschalten unter „Einstellungen“ → Grafik.<br><a href="alt/" class="muted">Ältere Version v0.3.0 (Notlösung, gleicher Spielstand)</a></p><p><b>🎵 Eltern-Klarinette:</b> Prüfen ohne Kind und ohne Klarinette. Auf dem <b>Handy</b> öffnen: <b>${esc(location.host + location.pathname.replace(/[^/]*$/, ''))}klang.html</b>. Das Handy spielt Töne, das Tablet hört zu. <a href="klang.html" class="muted">Hier öffnen</a></p>` : ''}
-  ${WEB ? '<p><a class="btn alt" href="leistung.html" style="text-decoration:none;display:inline-block">📊 Leistungstest (2D/3D)</a></p><p class="muted">Misst, wie flüssig das Gerät Spiele und 3D zeigt (etwa 2 Minuten). Hilft bei der Planung des neuen Hüpfspiels. Der Spielstand wird nicht verändert.</p>' : ''}`;
+  ${WEB ? '<p><a class="btn alt" href="leistung.html" style="text-decoration:none;display:inline-block">📊 Leistungstest (2D/3D)</a></p><p class="muted">Misst, wie flüssig das Gerät Spiele und 3D zeigt (etwa 2 Minuten). Der Spielstand wird nicht verändert.</p>' : ''}`;
 }
 function hwList(n) { const ids = S.hw && S.hw.ids ? S.hw.ids : []; return isl(n).st.map(s => `<label style="display:block;font-size:18px"><input type="checkbox" value="${s.id}"${ids.indexOf(s.id) >= 0 ? ' checked' : ''}> ${ICON[s.type]} ${s.title}${s.main ? ' 👑' : ''}</label>`).join(''); }
 
@@ -2623,15 +2546,10 @@ document.addEventListener('click', e => {
   else if (a === 'nextst') openStation(EX && EX.nextId ? EX.nextId : nextStation());
   else if (a === 'back') { if (EX) island(EX.isl); else home(); }
   else if (a === 'shop') shop();
-  else if (a === 'buy' || a === 'buyc') { const x = a === 'buy' ? item(b.dataset.id) : CONS.find(c => c.id === b.dataset.id); if (S.stars >= x.p) shop('', { id: x.id, kind: a === 'buy' ? 'i' : 'c' }); else shop(`Dafür brauchst du ${x.p} ⭐, du hast ${S.stars}. Übe noch ein bisschen!`); }
+  else if (a === 'buy') { const x = item(b.dataset.id); if (S.stars >= x.p) shop('', { id: x.id }); else shop(`Dafür brauchst du ${x.p} ⭐, du hast ${S.stars}. Übe noch ein bisschen!`); }
   else if (a === 'buyok') { const it = item(b.dataset.id); if (!Q.get('demo')) kontoDo(() => KK.sync(S)); if (S.stars >= it.p && S.own.indexOf(it.id) < 0) { kontoNote('Laden: ' + it.n); S.stars -= it.p; S.own.push(it.id); S.wear[it.slot] = it.id; save(); sStar(); shop(`Oh, wie schön! Danke${cm()}! ${it.ic}`); anim('sAlp', 'salto'); } else shop(); }
-  else if (a === 'buycok') { const c = CONS.find(x => x.id === b.dataset.id); if (!Q.get('demo')) kontoDo(() => KK.sync(S)); if (S.stars >= c.p) { kontoNote('Laden: ' + c.n); S.stars -= c.p; S.cons[c.id]++; save(); sStar(); shop(c.ic + ' gekauft!'); } else shop(); }
   else if (a === 'wear') { const w = item(b.dataset.id); if (S.wear[w.slot] === w.id) delete S.wear[w.slot]; else S.wear[w.slot] = w.id; save(); shop(); }
-  else if (a === 'run') runMenu();
-  else if (a === 'rungo') runGo(+b.dataset.l);
-  else if (a === 'runpause') runPause();
-  else if (a === 'runresume') runResume();
-  else if (a === 'runquit') { stopRun(); runMenu('Runde beendet. Bis zum nächsten Mal!'); }
+  else if (a === 'land') openLand();
   else if (a === 'tuner') tuner();
   else if (a === 'par') parGate();
   else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else options(); }
@@ -2671,17 +2589,15 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
 function openStationBpm(id, bpm, slowOn) { const r = KL.station(id); const st = Object.assign({}, r.st, { bpm }); stopEx(); exShell(r.st.title); const D = KL.diff(r.isl.n, S.set.tolAdj); EX = TYPES[st.type](st, D, r.isl.n); EX.id = id; EX.st = r.st; EX.isl = r.isl.n; EX.D = D; EX.slowOn = slowOn; intro(); }
 // Vollbild auf dem Tablet: pointerup/click zählen als Tippen (pointerdown bei Touch nicht)
 document.addEventListener('pointerup', fullOn, true);
-$('runF').addEventListener('pointerdown', e => { if (G && G.on && !(e.target.closest && e.target.closest('[data-act]'))) { e.preventDefault(); runJump(); } });
-document.addEventListener('keydown', e => { if (screen === 'run' && (e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); runJump(); } });
 
-/* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|run|par|tun|who|name|opt  ·  &wrong=1 */
+/* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|home|par|tun|who|name|opt  ·  &wrong=1 */
 window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, PWA, get LASTSAVE() { return LASTSAVE; } };
 const demo = Q.get('demo');
 // Eine andere Flauschi-App (z. B. Englisch in einem anderen Tab) hat ins Konto gebucht: Anzeige sofort anpassen
 if (FK && !demo) FK.onChange(() => {
   save(); hud();
-  if (screen === 'shop' && !document.querySelector('[data-act="buyok"],[data-act="buycok"]')) shop();
-  else if (screen === 'run' && !(G && G.on)) runMenu();
+  if (screen === 'shop' && !document.querySelector('[data-act="buyok"]')) shop();
+  else if (screen === 'home') landBtn();
 });
 window.KLAPP.konto = () => KK && KK.read();
 if (demo) {
@@ -2690,7 +2606,7 @@ if (demo) {
   if (demo === 'shop') { S.stars = 30; S.own = ['phones', 'notes', 'helmet', 'wings']; S.wear = { hat: 'phones', fx: 'notes', back: 'wings' }; shop(); }
   else if (demo === 'par') { for (let i = 0; i < 7; i++) S.days[dayKey(i)] = { sec: [900, 1200, 300, 0, 1000, 600, 950][i], ex: 4, stars: 3, fs: 2, games: 2 }; S.nt = { "c'": { n: 20, ok: 18, cs: -120, cn: 18 }, "d'": { n: 15, ok: 14, cs: 40, cn: 14 }, h: { n: 10, ok: 6, cs: -210, cn: 6 } }; ['L3-lied', 'L4-lied', 'L3-d'].forEach(id => { stat(id).best = 2; }); parents(); }
   else if (demo === 'map') map();
-  else if (demo === 'run') { S.tix = 3; runMenu(); }
+  else if (demo === 'home') { S.tix = 3; home(); }
   else if (demo === 'tun') tuner();
   else if (demo === 'who') { S.char = ''; who('char', true); }
   else if (demo === 'name') who('name', true);
@@ -2699,7 +2615,7 @@ if (demo) {
   else home();
 } else home();
 // 3D wird nachgeladen: dann den aktuellen Bildschirm neu zeichnen (Übungen bleiben, wie sie sind)
-if (window.K3D) window.K3D.ready.then(() => { if (screen === 'home') home(); else if (screen === 'map') map(); else if (screen === 'shop') shop(); else if (screen === 'who') who(WHO_STEP); else if (screen === 'opt') options(); else if (screen === 'ex') drawAlp('exAlp'); else if (screen === 'run' && !(G && G.on)) $('runA').innerHTML = alpSVG(S.wear); });
+if (window.K3D) window.K3D.ready.then(() => { if (screen === 'home') home(); else if (screen === 'map') map(); else if (screen === 'shop') shop(); else if (screen === 'who') who(WHO_STEP); else if (screen === 'opt') options(); else if (screen === 'ex') drawAlp('exAlp'); });
 })();
 </script>
 </body>
