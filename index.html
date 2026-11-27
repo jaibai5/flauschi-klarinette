@@ -72,8 +72,8 @@ h2{margin:4px 0 8px;font-size:26px}
 #exTop h2{flex:1;margin:0}
 #exBody{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0}
 #exL{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:100%}
-#exR{width:170px;display:flex;flex-direction:column;align-items:center;gap:6px}
-#exFing svg{width:150px;height:auto}
+#exR{width:200px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#exFing svg{height:min(400px,62vh);width:auto;display:block}
 #exAlp{width:140px}
 .bigname{font-size:64px;font-weight:900;line-height:1}
 .staff{width:100%;max-width:980px}
@@ -91,6 +91,11 @@ h2{margin:4px 0 8px;font-size:26px}
 .dots i.ok{background:#2fb35a;border-color:#1d7d3c}
 .dots i.bad{background:#ff4f8b;border-color:#c2185b}
 .dots i.now{border-color:#7b5cff;background:#d8ccff}
+.row.r3 .btn{white-space:nowrap;padding-left:12px;padding-right:12px}
+.dots i.mid{background:#ffd23f;border-color:#d9a400}
+/* Noten lesen: Fragezeichen statt Buchstabe, große Note */
+.bigname.nlq{color:#c9b8dc}
+.staff.nl{width:260px;flex:none}
 .ring{width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;background:#e9f6ff;border:8px solid #7cc8ff;transition:transform 1s linear}
 .ov{position:absolute;inset:0;background:rgba(255,246,252,.94);display:none;align-items:center;justify-content:center;z-index:8;flex-direction:column;text-align:center;padding:16px}
 .ov.on{display:flex}
@@ -134,7 +139,7 @@ h2{margin:4px 0 8px;font-size:26px}
 .conf{position:fixed;top:-40px;font-size:34px;animation:fall 2.6s linear forwards;z-index:30;pointer-events:none}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 @media (orientation:portrait){#home .wrap{flex-direction:column}#hAlp{width:44vw}#exBody{flex-direction:column}#exR{flex-direction:row;width:auto}.cols{grid-template-columns:1fr}}
-@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{width:116px}#exAlp{width:66px}}
+@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{height:min(330px,58vh)}#exAlp{width:66px}}
 .gauge{width:min(230px,60%);height:auto;display:block;margin:2px auto}
 .gauge.big{width:min(460px,90%)}
 .gauge .nd{transform-origin:150px 150px;transform-box:view-box;transition:transform .12s ease-out,opacity .3s}
@@ -144,7 +149,7 @@ h2{margin:4px 0 8px;font-size:26px}
 .demoV .dn{display:flex;flex-direction:column;align-items:center}
 .demoV .dn .bigname{font-size:52px;line-height:1}
 .demoV .staff{width:170px}
-.demoV .df svg{height:170px;width:auto}
+.demoV .df svg{height:210px;width:auto}
 .ov.demo .say{font-size:20px;padding:10px 18px}
 .ov.demo .btn.huge{padding-top:8px;padding-bottom:8px}
 .ov.demo>p.muted{display:none}
@@ -270,8 +275,9 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
         <button class="btn pink huge" data-act="today">▶ Heute üben</button>
         <div id="hMis"></div>
         <div class="mlab">Üben</div>
-        <div class="row" style="justify-content:stretch">
+        <div class="row r3" style="justify-content:stretch">
           <button class="btn" style="flex:1" data-act="map">🗺️ Inseln</button>
+          <button class="btn" style="flex:1" data-act="read">🎼 Noten lesen</button>
           <button class="btn" style="flex:1" data-act="tuner">🔍 Ton-Lupe</button>
         </div>
         <button class="btn pink" id="bGame" data-act="game" style="display:none">✨ Klang-Abenteuer <small style="font-size:16px;opacity:.9">Ton-Hüpfer · Klang-Reise</small></button>
@@ -309,7 +315,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   </main>
 </div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.5.0","built":"26.11.2026 19:17","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.6.0","built":"27.11.2026 21:41","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="konto">/* Flauschi-Konto v1 – gemeinsames Punktekonto aller Flauschi-Lernapps (Klarinette, Englisch, Mathe, …).
    Vertrag: docs/FLAUSCHI_KONTO.md. Diese Datei wird in jede Lern-App unverändert kopiert (Prüfsumme vergleichen).
    Funktioniert nur, wenn alle Apps unter derselben Herkunft laufen: https://jaibai5.github.io/<app>/
@@ -595,6 +601,20 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
     return out;
   }
   function knownNotes(island) { var s = []; ISLANDS.forEach(function (i) { if (i.n <= island) i.notes.forEach(function (x) { if (s.indexOf(x) < 0) s.push(x); }); }); return s; }
+
+  /* ---------- Notenlesen (Startseite, seit v0.6.0) ---------- */
+  // Eine Runde: READ_N Noten aus den gelernten Tönen (mindestens die von Insel 3), nie zweimal derselbe Ton hintereinander.
+  var READ_N = 8;
+  function readNotes(island, n, seed) {
+    var pool = knownNotes(Math.max(3, island)).filter(function (x) { return NOTES[x]; }), out = [], sd = (Math.abs(Math.floor(seed || 1)) % 2147483646) + 1;
+    var rnd = function () { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    while (out.length < (n || READ_N)) { var x = pool[Math.floor(rnd() * pool.length)]; if (pool.length < 2 || x !== out[out.length - 1]) out.push(x); }
+    return out;
+  }
+  // Hilfe-Stufen: 0 = ohne Hilfe, 1 = Buchstabe, 2 = dazu der Griff, 3 = dazu wird der Ton vorgespielt. Wertung je Note:
+  var READ_SCORE = [1, 0.8, 0.6, 0.4];
+  function readScore(helps) { if (!helps || !helps.length) return 0; var t = 0; helps.forEach(function (h) { t += READ_SCORE[Math.max(0, Math.min(3, h | 0))]; }); return t / helps.length; }
+  function readId(island) { return 'NL-' + island; } // eigene Wertung je Insel: neue Töne, neue Sterne
   function station(id) { for (var i = 0; i < ISLANDS.length; i++) for (var j = 0; j < ISLANDS[i].st.length; j++) if (ISLANDS[i].st[j].id === id) return { isl: ISLANDS[i], st: ISLANDS[i].st[j], idx: j }; return null; }
   // Titel eigener Verlagsstücke, die NICHT verwendet werden dürfen (Prüfung in tests/test_logic.mjs)
   var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
@@ -802,7 +822,7 @@ img.f3d{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:
   var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
     missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
-    knownNotes: knownNotes, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
+    knownNotes: knownNotes, READ_N: READ_N, READ_SCORE: READ_SCORE, readNotes: readNotes, readScore: readScore, readId: readId, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
   root.KL = KL;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -2020,6 +2040,13 @@ function openStation(id) {
   EX = (TYPES[r.st.type])(r.st, D, r.isl.n); EX.id = id; EX.st = r.st; EX.isl = r.isl.n; EX.D = D;
   intro();
 }
+// Noten lesen: freie Übung von der Startseite mit den Tönen bis zur offenen Insel, eigene Sterne je Insel (KL.readId)
+function openRead() {
+  stopEx(); TUNER = false; exShell('🎼 Noten lesen');
+  const n = Math.min(S.unlocked, PLAYABLE), D = KL.diff(n, S.set.tolAdj), st = { id: KL.readId(n), type: 'read', title: 'Noten lesen' };
+  EX = TYPES.read(st, D, n); EX.id = st.id; EX.st = st; EX.isl = n; EX.D = D; EX.free = true;
+  intro();
+}
 function intro() {
   const e = EX, ov = $('exGo');
   ov.innerHTML = `<div class="say" style="max-width:760px">${e.say}</div><div class="row" style="margin-top:14px">${e.demo ? '<button class="btn alt huge" data-act="demo">▶ Anhören</button>' : ''}${e.slow ? `<button class="btn alt" data-act="slow">${e.slowOn ? '🐢 langsam' : '🐇 normal'}</button>` : ''}<button class="btn pink huge" data-act="begin">${e.noMic ? 'Los!' : '🎤 Los!'}</button></div>${e.demo ? '<div class="demoV" id="demoV"></div>' : ''}${e.noMic ? '' : '<p class="muted">Halte die Klarinette bereit. ' + CN() + ' hört zu, du musst nichts mehr tippen.</p>'}`;
@@ -2253,6 +2280,48 @@ const TYPES = {
       want() { return { f: 700, rms: 0.08 }; }
     };
   },
+  /* ----- Noten lesen (Startseite): Note sehen und spielen. 💡 Hilfe zeigt nacheinander Buchstabe, Griff und spielt den Ton vor ----- */
+  read(st, D, islN) {
+    const notes = KL.readNotes(islN, KL.READ_N, Q.has('seed') ? +Q.get('seed') : Date.now()), w = waiter(D), helps = [], NEED = 0.6;
+    const HELP = ['💡 Hilfe: Buchstabe', '💡 Hilfe: Griff', '💡 Hilfe: Ton anhören', '▶ Nochmal anhören'];
+    let k = 0, lv = 0, miss = 0, wait = 0;
+    const e = {
+      get note() { return notes[k]; }, get lv() { return lv; }, notes, helps, // für Tests
+      say: `Noten lesen 🎼<br>Du siehst eine Note. Welche ist es? Spiel sie auf der Klarinette!<br><span class="muted">Weißt du sie nicht, tippe auf 💡 Hilfe. Erst kommt der Buchstabe, dann der Griff, dann der Ton.</span>`,
+      pre() { $('exL').innerHTML = `<div class="staff nl">${single(notes[0])}</div>`; },
+      begin() { this.show(); },
+      show() {
+        const n = notes[k]; lv = 0; miss = 0; wait = 0; w.reset(); holdP(0); $('exFing').innerHTML = '';
+        $('exL').innerHTML = `<div class="dots">${notes.map((x, i) => `<i class="${i < k ? (helps[i] ? 'mid' : 'ok') : i === k ? 'now' : ''}"></i>`).join('')}</div>
+        <div class="exrow"><div class="nb"><div class="bigname nlq" id="nlN">?</div><div class="staff nl">${single(n)}</div></div>${tunerHTML(false, true)}</div>
+        <div class="row" style="margin:4px 0"><button class="btn alt" id="nlH" data-act="nlhelp">${HELP[0]}</button></div><div class="hint" id="exHint">Welche Note ist das? Spiel sie!</div>`;
+      },
+      help() {
+        if (!this.running || wait) return;
+        const n = notes[k]; if (lv < 3) lv++;
+        const q = $('nlN'); if (q) { q.textContent = n; q.classList.remove('nlq'); }
+        if (lv >= 2) $('exFing').innerHTML = fingSVG(n);
+        if (lv >= 3) playSeq([{ name: n, beats: 2 }], 60);
+        const b = $('nlH'); if (b) b.textContent = HELP[lv];
+        setHint(lv === 1 ? `Das ist ein <b>${n}</b>. Spiel ihn!` : lv === 2 ? `So greifst du <b>${n}</b>: ${KL.fingerText(n)}.` : `Hör gut zu: so klingt <b>${n}</b>.`);
+      },
+      frame(fr) {
+        if (wait) return;
+        const n = notes[k], r = w.step(fr, n, NEED); holdP(w.hold / NEED);
+        // Ohne Hilfe nicht verraten, welcher Ton gesucht ist: nur den gespielten Ton und die Richtung nennen
+        if (r === 'miss') { sBad(); miss++; const m = KL.NOTES[w.wName] ? KL.NOTES[w.wName].midi : null; setHint(lv || w.wName === n ? w.hint(n) : `<span class="wrong">Du spielst <b>${w.wName}</b>.</span> ${m == null ? '' : m < KL.NOTES[n].midi ? 'Die Note ist <b>höher</b> ⬆' : 'Die Note ist <b>tiefer</b> ⬇'}${miss >= 2 && lv < 3 ? '<br><span class="muted">Tipp auf 💡 Hilfe!</span>' : ''}`); }
+        if (w.idle > 8) { w.idle = 0; if (lv < 3) setHint('Schau dir die Note genau an … oder tippe auf 💡 Hilfe.'); }
+        if (r === 'ok') {
+          sOk(); anim('exAlp', 'hop'); noteStat(n, true, avg(w.cs)); helps[k] = lv; k++; wait = 1; needle(null);
+          const q = $('nlN'); if (q) { q.textContent = n; q.classList.remove('nlq'); }
+          setHint(`✓ Richtig, das ist <b>${n}</b>!`);
+          setTimeout(() => { if (EX !== this || !this.running) return; if (k >= notes.length) finish(KL.readScore(helps)); else this.show(); }, 900 / SPEED);
+        }
+      },
+      want(t) { return wait ? autoWant(null) : autoWant(notes[k], t); }
+    };
+    return e;
+  },
   /* ----- Quiz ohne Klarinette ----- */
   quiz(st, D, islN) {
     const known = KL.knownNotes(Math.max(islN, 3)), Qs = [], ALL = ['h', "c'", "d'", "e'", "f'", "g'"];
@@ -2309,9 +2378,9 @@ function finish(score) {
   if (e.isl === S.unlocked && e.isl < PLAYABLE && KL.islandPassed(I, best)) { S.unlocked++; unlock = `<p class="say">🗺️ Neue Insel offen: ${isl(S.unlocked).icon} ${isl(S.unlocked).name}!${I.st.some(x => best(x.id) < 1) ? '<br><span class="muted">Die übrigen Aufgaben auf ' + I.name + ' kannst du später nachholen.</span>' : ''}</p>`; }
   save(); hud();
   const c = cm(), msg = earned === 3 ? pick([`Wow${c}, perfekt gespielt!`, `Spitze${c}! Das klingt richtig gut!`, `Super${c} – du bist ein Klarinetten-Profi!`]) : earned === 2 ? pick([`Gut gemacht${c}! Noch ein bisschen üben, dann wird es perfekt.`, `Klasse${c}! Fast alles richtig.`]) : earned === 1 ? `Ein guter Anfang${c}! Probier es gleich nochmal.` : `Das war schwer${c}. Hör es dir nochmal an und versuch es noch einmal – du schaffst das!`;
-  const nxt = KL.station(nextAfter(e.id)); e.nextId = nxt ? nxt.st.id : null;
+  const nxt = e.free ? null : KL.station(nextAfter(e.id)); e.nextId = nxt ? nxt.st.id : null;
   const tip = e.st.type === 'tongue' ? 'Tipp: Kinn ruhig, nur die Zunge bewegt sich.' : e.st.type === 'long' && earned < 3 ? 'Tipp: Vorher tief in den Bauch einatmen.' : e.st.type === 'song' && earned < 3 ? 'Tipp: Mit 🐢 langsam üben.' : '';
-  $('exRes').innerHTML = `<div class="stars">${starStr(earned)}</div><div class="say" style="max-width:720px">${msg}${tip ? '<br><span class="muted">' + tip + '</span>' : ''}</div><p style="font-size:24px;font-weight:800;margin:6px 0">${pay ? '+' + pay + ' ⭐' : current ? 'Kein neuer Stern – versuch deinen Rekord zu knacken!' : 'Gut geübt! Neue Sterne gibt es auf den neuen Inseln.'} ${tix ? ' · +' + tix + ' 🎟️' : ''} ${medal ? ' · Medaille ' + medal : ''}</p>${extra.length ? '<p class="xtra">' + extra.join('<br>') + '</p>' : ''}${unlock}<div class="row"><button class="btn alt" data-act="back">🗺️ Zur Insel</button><button class="btn alt huge" data-act="again">🔁 Nochmal</button>${nxt ? `<button class="btn green huge nx" data-act="nextst">➡ Weiter<small>${nxt.isl.n !== e.isl ? nxt.isl.icon + ' ' : ''}${nxt.st.title}</small></button>` : ''}</div>`;
+  $('exRes').innerHTML = `<div class="stars">${starStr(earned)}</div><div class="say" style="max-width:720px">${msg}${tip ? '<br><span class="muted">' + tip + '</span>' : ''}</div><p style="font-size:24px;font-weight:800;margin:6px 0">${pay ? '+' + pay + ' ⭐' : current ? 'Kein neuer Stern – versuch deinen Rekord zu knacken!' : 'Gut geübt! Neue Sterne gibt es auf den neuen Inseln.'} ${tix ? ' · +' + tix + ' 🎟️' : ''} ${medal ? ' · Medaille ' + medal : ''}</p>${extra.length ? '<p class="xtra">' + extra.join('<br>') + '</p>' : ''}${unlock}<div class="row"><button class="btn alt" data-act="back">${e.free ? '🏠 Start' : '🗺️ Zur Insel'}</button><button class="btn alt huge" data-act="again">🔁 Nochmal</button>${nxt ? `<button class="btn green huge nx" data-act="nextst">➡ Weiter<small>${nxt.isl.n !== e.isl ? nxt.isl.icon + ' ' : ''}${nxt.st.title}</small></button>` : ''}</div>`;
   $('exRes').classList.add('on');
   if (earned >= 2) { anim('exAlp', 'salto'); sStar(); } if (earned === 3 || medal || unlock) confetti();
 }
@@ -2494,7 +2563,6 @@ function parents() {
    <tr><td>Stimmton a'</td><td>${sel('sA4', [438, 439, 440, 441, 442, 443].map(v => [v, v + ' Hz']), S.set.a4)}</td></tr>
    <tr><td>Sicherungsdatei jede Woche</td><td>${sel('sFile', [['auto', 'automatisch (PC an, Tablet aus)'], [1, 'an (Ordner Downloads)'], [0, 'aus']], S.set.autoFile === true ? 1 : S.set.autoFile === false ? 0 : 'auto')}</td></tr>
    <tr><td>Vollbild</td><td>${sel('sFull', [['auto', 'automatisch auf Tablets'], ['on', 'immer'], ['off', 'aus']], S.set.full || 'auto')}</td></tr>
-   <tr><td>Klang-Formeln: Hilfe</td><td>${sel('sHelp', [['auto', 'automatisch nach Können'], [1, 'immer mit Notennamen und Griff'], [2, 'nur Noten (Notenlesen)'], [3, 'nur hören (Gehör)']], S.set.help || 'auto')}</td></tr>
    ${WEB ? `<tr><td>Grafik</td><td>${sel('sGfx', [['auto', '3D (Inseln, Figuren, Spiel)'], ['2d', 'einfach (2D, für schwache Geräte)']], S.set.gfx === '2d' ? '2d' : 'auto')}</td></tr>` : ''}</table>
    <button class="btn green" data-act="setsave">Speichern</button><button class="btn alt" data-act="reset">Spielstand löschen</button></div>
   <div class="card"><h2>So bewertet die App gerade</h2><p>Insel ${Math.min(S.unlocked, PLAYABLE)}: Ton gilt als richtig bis <b>±${D.tol} Cent</b>, in Tonfolgen <b>${D.hold} s</b> halten, lange Töne <b>${D.longSec} s</b>. Sterne ab ${D.th.map(x => Math.round(x * 100) + ' %').join(' / ')} Treffern.</p><p class="muted">Mit jeder Insel wird es in kleinen Schritten genauer (siehe Konzept). Wiederholte Übungen geben nur neue Bestwert-Sterne. Bei 3 Sternen gibt es höchstens zweimal am Tag einen Bonus-Stern, aber nur auf der aktuellen und der vorigen Insel sowie für Hausaufgaben – so lohnt es sich nicht, immer nur die leichteste alte Übung zu spielen. Dafür: 3 Tagesmissionen (je +1 ⭐, alle zusammen Schatztruhe +3 ⭐ +1 🎟️), ein Abwechslungs-Stern für 3 verschiedene Übungen am Tag und alle 5 Minuten echte Spielzeit ein Fleiß-Stern.</p><p class="muted">Klang-Abenteuer (Ton-Hüpfer, Zauberbuch): zählt als Üben – echte Spielzeit, Sterne nach denselben Regeln, kein Ticket. Klang-Formeln haben drei Hilfe-Stufen (mit Namen, nur Noten, nur hören); automatisch kommt die nächste nach zwei Erfolgen.</p><p class="muted">Datenschutz: Der Ton wird nur in diesem Gerät ausgewertet und nie gespeichert oder gesendet.</p></div>
@@ -2505,7 +2573,7 @@ function parents() {
 function gameProg() {
   const sp = S.game && S.game.spells ? S.game.spells : {}, n = Object.keys(sp).length, g = Object.keys(sp).filter(k => sp[k].gold).length;
   const th = Object.keys(S.st).filter(id => /^TH-/.test(id) && S.st[id].best > 0).length;
-  return n || th ? `<p>✨ Klang-Abenteuer: ${n} Klang-Formel${n === 1 ? '' : 'n'} gelernt${g ? ', ' + g + ' mit Gold-Siegel (nur nach Gehör)' : ''} · Ton-Hüpfer: ${th} Strecke${th === 1 ? '' : 'n'} geschafft.</p>` : '';
+  return n || th ? `<p>✨ Klang-Abenteuer: ${n} Klang-Formel${n === 1 ? '' : 'n'} gelernt${g ? ', ' + g + ' mit Gold-Siegel (auf Schwer)' : ''} · Ton-Hüpfer: ${th} Strecke${th === 1 ? '' : 'n'} geschafft.</p>` : '';
 }
 // Elternbereich: Offline-Zustand, Start vom Startbildschirm, Leistungstest
 function techHTML() {
@@ -2542,9 +2610,11 @@ document.addEventListener('click', e => {
   else if (a === 'begin') begin();
   else if (a === 'skipmic') { $('exGo').classList.remove('on'); if (EX && EX.demo) EX.demo(); toast('Ohne Mikrofon gibt es keine Sterne. Bitte die Eltern, das Mikrofon einzurichten.'); }
   else if (a === 'ans') { if (EX && EX.answer) EX.answer(b.dataset.v, b); }
-  else if (a === 'again') openStation(EX ? EX.id : nextStation());
+  else if (a === 'again') { if (EX && EX.free) openRead(); else openStation(EX ? EX.id : nextStation()); }
   else if (a === 'nextst') openStation(EX && EX.nextId ? EX.nextId : nextStation());
-  else if (a === 'back') { if (EX) island(EX.isl); else home(); }
+  else if (a === 'back') { if (EX && !EX.free) island(EX.isl); else home(); }
+  else if (a === 'read') openRead();
+  else if (a === 'nlhelp') { if (EX && EX.help) EX.help(); }
   else if (a === 'shop') shop();
   else if (a === 'buy') { const x = item(b.dataset.id); if (S.stars >= x.p) shop('', { id: x.id }); else shop(`Dafür brauchst du ${x.p} ⭐, du hast ${S.stars}. Übe noch ein bisschen!`); }
   else if (a === 'buyok') { const it = item(b.dataset.id); if (!Q.get('demo')) kontoDo(() => KK.sync(S)); if (S.stars >= it.p && S.own.indexOf(it.id) < 0) { kontoNote('Laden: ' + it.n); S.stars -= it.p; S.own.push(it.id); S.wear[it.slot] = it.id; save(); sStar(); shop(`Oh, wie schön! Danke${cm()}! ${it.ic}`); anim('sAlp', 'salto'); } else shop(); }
@@ -2554,7 +2624,7 @@ document.addEventListener('click', e => {
   else if (a === 'par') parGate();
   else if (a === 'gate') { if (+b.dataset.v === GATE) parents(); else options(); }
   else if (a === 'hwsave') { hwSync(); S.hw.txt = $('hwT').value; save(); toast('Hausaufgabe gespeichert ✓'); }
-  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === 'auto' ? null : $('sFile').value === '1'; S.set.full = $('sFull').value; S.set.help = $('sHelp').value === 'auto' ? 'auto' : +$('sHelp').value; const gOld = S.set.gfx || 'auto'; if ($('sGfx')) S.set.gfx = $('sGfx').value; save(); if ((S.set.gfx || 'auto') !== gOld) { location.reload(); return; } hud(); toast('Gespeichert ✓'); parents(); }
+  else if (a === 'setsave') { S.set.goal = +$('sGoal').value; S.set.gameLimit = +$('sLim').value; S.unlocked = +$('sUnl').value; S.set.tolAdj = +$('sTol').value; S.set.a4 = +$('sA4').value; S.set.autoFile = $('sFile').value === 'auto' ? null : $('sFile').value === '1'; S.set.full = $('sFull').value; const gOld = S.set.gfx || 'auto'; if ($('sGfx')) S.set.gfx = $('sGfx').value; save(); if ((S.set.gfx || 'auto') !== gOld) { location.reload(); return; } hud(); toast('Gespeichert ✓'); parents(); }
   else if (a === 'reset') { if (window.confirm('Wirklich den Lernstand der Klarinette löschen? Inseln, Übungen und Übungszeiten sind dann weg.\n\nSterne, Tickets, Sachen, Figur und Name liegen im gemeinsamen Flauschi-Konto aller Lernapps und bleiben.')) { S = fresh(); S.konto = 1; kontoDo(() => KK.take(S)); save(); home(); } }
   else if (a === 'opt') options();
   else if (a === 'about') { options(); setTimeout(() => { const c = $('about'); if (c && c.scrollIntoView) c.scrollIntoView(); }, 30); }
@@ -2590,8 +2660,8 @@ function openStationBpm(id, bpm, slowOn) { const r = KL.station(id); const st = 
 // Vollbild auf dem Tablet: pointerup/click zählen als Tippen (pointerdown bei Touch nicht)
 document.addEventListener('pointerup', fullOn, true);
 
-/* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|map|shop|home|par|tun|who|name|opt  ·  &wrong=1 */
-window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, home, finish, day, importSave, undoImport, snapList, PWA, get LASTSAVE() { return LASTSAVE; } };
+/* Testhilfen (nur mit URL-Parametern): ?sim=1&auto=1&speed=4  ·  ?demo=<StationsID>|nl|map|shop|home|par|tun|who|name|opt  ·  &wrong=1 */
+window.KLAPP = { get S() { return S; }, get EX() { return EX; }, openStation, openRead, home, finish, day, importSave, undoImport, snapList, PWA, get LASTSAVE() { return LASTSAVE; } };
 const demo = Q.get('demo');
 // Eine andere Flauschi-App (z. B. Englisch in einem anderen Tab) hat ins Konto gebucht: Anzeige sofort anpassen
 if (FK && !demo) FK.onChange(() => {
@@ -2608,6 +2678,7 @@ if (demo) {
   else if (demo === 'map') map();
   else if (demo === 'home') { S.tix = 3; home(); }
   else if (demo === 'tun') tuner();
+  else if (demo === 'nl') { openRead(); if (Q.has('go')) { begin(); if (Q.has('help')) setTimeout(() => { for (let i = 0; i < +Q.get('help'); i++) if (EX && EX.help) EX.help(); }, 2700 / SPEED); } } // &help=1..3: Hilfe-Stufen zeigen
   else if (demo === 'who') { S.char = ''; who('char', true); }
   else if (demo === 'name') who('name', true);
   else if (demo === 'opt') { S.stars = 12; options(); }

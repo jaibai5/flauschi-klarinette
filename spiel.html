@@ -72,8 +72,8 @@ h2{margin:4px 0 8px;font-size:26px}
 #exTop h2{flex:1;margin:0}
 #exBody{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0}
 #exL{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:100%}
-#exR{width:170px;display:flex;flex-direction:column;align-items:center;gap:6px}
-#exFing svg{width:150px;height:auto}
+#exR{width:200px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#exFing svg{height:min(400px,62vh);width:auto;display:block}
 #exAlp{width:140px}
 .bigname{font-size:64px;font-weight:900;line-height:1}
 .staff{width:100%;max-width:980px}
@@ -91,6 +91,11 @@ h2{margin:4px 0 8px;font-size:26px}
 .dots i.ok{background:#2fb35a;border-color:#1d7d3c}
 .dots i.bad{background:#ff4f8b;border-color:#c2185b}
 .dots i.now{border-color:#7b5cff;background:#d8ccff}
+.row.r3 .btn{white-space:nowrap;padding-left:12px;padding-right:12px}
+.dots i.mid{background:#ffd23f;border-color:#d9a400}
+/* Noten lesen: Fragezeichen statt Buchstabe, große Note */
+.bigname.nlq{color:#c9b8dc}
+.staff.nl{width:260px;flex:none}
 .ring{width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;background:#e9f6ff;border:8px solid #7cc8ff;transition:transform 1s linear}
 .ov{position:absolute;inset:0;background:rgba(255,246,252,.94);display:none;align-items:center;justify-content:center;z-index:8;flex-direction:column;text-align:center;padding:16px}
 .ov.on{display:flex}
@@ -134,7 +139,7 @@ h2{margin:4px 0 8px;font-size:26px}
 .conf{position:fixed;top:-40px;font-size:34px;animation:fall 2.6s linear forwards;z-index:30;pointer-events:none}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 @media (orientation:portrait){#home .wrap{flex-direction:column}#hAlp{width:44vw}#exBody{flex-direction:column}#exR{flex-direction:row;width:auto}.cols{grid-template-columns:1fr}}
-@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{width:116px}#exAlp{width:66px}}
+@media (max-height:620px){h1{font-size:26px}.bigname{font-size:48px}.btn.huge{font-size:28px;padding:16px 30px}.cnt{font-size:90px}#exFing svg{height:min(330px,58vh)}#exAlp{width:66px}}
 .gauge{width:min(230px,60%);height:auto;display:block;margin:2px auto}
 .gauge.big{width:min(460px,90%)}
 .gauge .nd{transform-origin:150px 150px;transform-box:view-box;transition:transform .12s ease-out,opacity .3s}
@@ -144,7 +149,7 @@ h2{margin:4px 0 8px;font-size:26px}
 .demoV .dn{display:flex;flex-direction:column;align-items:center}
 .demoV .dn .bigname{font-size:52px;line-height:1}
 .demoV .staff{width:170px}
-.demoV .df svg{height:170px;width:auto}
+.demoV .df svg{height:210px;width:auto}
 .ov.demo .say{font-size:20px;padding:10px 18px}
 .ov.demo .btn.huge{padding-top:8px;padding-bottom:8px}
 .ov.demo>p.muted{display:none}
@@ -294,9 +299,10 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
 #pHint{position:absolute;left:50%;top:174px;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:18px;padding:6px 16px;font-size:22px;font-weight:800;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
 #pHint:empty{display:none}
 #pHint .wrong{color:#c2185b}
-#pNext{position:absolute;right:10px;top:130px;background:rgba(255,255,255,.9);border-radius:18px;padding:6px 6px 2px;text-align:center;font-weight:900;font-size:26px;width:92px}
+#pNext{position:absolute;right:10px;top:130px;background:rgba(255,255,255,.9);border-radius:18px;padding:6px 6px 2px;text-align:center;font-weight:900;font-size:26px;width:110px}
+#pNext .pst svg{width:100%;height:auto;display:block}
 #pNext:empty{display:none}
-#pNext svg{width:70px;height:auto;display:block;margin:0 auto}
+#pNext>svg{width:86px;height:auto;display:block;margin:0 auto}
 #pNext small{display:block;font-size:13px;color:#7d6d8c}
 /* Zauberbuch */
 .book{background:#fffaf0;border:6px solid #b07a3c;border-radius:26px;box-shadow:0 8px 0 #7a4f22,0 12px 30px rgba(60,40,20,.35);max-width:min(980px,100%)}
@@ -320,7 +326,8 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
 .lvl.g{background:#ffe99a}
 .fings{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
 .fings div{text-align:center;font-weight:900;font-size:18px}
-.fings svg{width:44px;height:auto;display:block}
+.fings svg{width:62px;height:auto;display:block}
+.fings.nm div{font-size:26px;min-width:56px}
 .dots{font-size:40px;letter-spacing:6px}
 .dots .ok{color:#2fb35a}
 .listen{font-size:56px}
@@ -347,12 +354,12 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
   .panel .btn.huge{font-size:24px;padding:11px 22px}
   .gmenu{gap:8px;margin-top:4px}
   .spells{gap:8px}
-  .fings svg{width:36px}
+  .fings svg{width:50px}
   .sppan .staff svg{max-height:96px}
   .sres .stars{font-size:40px}
   .xtra{font-size:16px}
-  #pNext{top:120px;width:80px;font-size:22px}
-  #pNext svg{width:56px}
+  #pNext{top:126px;width:96px;font-size:22px}
+  #pNext>svg{width:70px}
 }
 /* 3D-Ansichten (v0.4) */
 .lanes3d{position:absolute;left:0;top:0;width:0;height:0;z-index:2;pointer-events:none}
@@ -383,7 +390,7 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
 </div>
 <div id="ui"></div>
 <div id="toast"></div>
-<script>window.KLMETA = {"version":"0.5.0","built":"26.11.2026 19:17","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
+<script>window.KLMETA = {"version":"0.6.0","built":"27.11.2026 21:41","credits":[["Idee, Konzept, Architektur, Projektleitung und Tests","M.G."],["Programmiert von","KI Claude Opus 5.5 (Anthropic)"]],"note":"Unabhängige Lern-App für zuhause. Kein Bezug zum Schulheft oder seinem Verlag: Alle Melodien sind eigene Kompositionen oder gemeinfreie Volkslieder, alle Figuren selbst gestaltet; Bäume, Steine und Inseln in 3D aus den freien Kenney-Paketen (CC0, kenney.nl). Der Ton wird nur auf diesem Gerät ausgewertet und nie gesendet."};</script>
 <script id="konto">/* Flauschi-Konto v1 – gemeinsames Punktekonto aller Flauschi-Lernapps (Klarinette, Englisch, Mathe, …).
    Vertrag: docs/FLAUSCHI_KONTO.md. Diese Datei wird in jede Lern-App unverändert kopiert (Prüfsumme vergleichen).
    Funktioniert nur, wenn alle Apps unter derselben Herkunft laufen: https://jaibai5.github.io/<app>/
@@ -669,6 +676,20 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
     return out;
   }
   function knownNotes(island) { var s = []; ISLANDS.forEach(function (i) { if (i.n <= island) i.notes.forEach(function (x) { if (s.indexOf(x) < 0) s.push(x); }); }); return s; }
+
+  /* ---------- Notenlesen (Startseite, seit v0.6.0) ---------- */
+  // Eine Runde: READ_N Noten aus den gelernten Tönen (mindestens die von Insel 3), nie zweimal derselbe Ton hintereinander.
+  var READ_N = 8;
+  function readNotes(island, n, seed) {
+    var pool = knownNotes(Math.max(3, island)).filter(function (x) { return NOTES[x]; }), out = [], sd = (Math.abs(Math.floor(seed || 1)) % 2147483646) + 1;
+    var rnd = function () { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    while (out.length < (n || READ_N)) { var x = pool[Math.floor(rnd() * pool.length)]; if (pool.length < 2 || x !== out[out.length - 1]) out.push(x); }
+    return out;
+  }
+  // Hilfe-Stufen: 0 = ohne Hilfe, 1 = Buchstabe, 2 = dazu der Griff, 3 = dazu wird der Ton vorgespielt. Wertung je Note:
+  var READ_SCORE = [1, 0.8, 0.6, 0.4];
+  function readScore(helps) { if (!helps || !helps.length) return 0; var t = 0; helps.forEach(function (h) { t += READ_SCORE[Math.max(0, Math.min(3, h | 0))]; }); return t / helps.length; }
+  function readId(island) { return 'NL-' + island; } // eigene Wertung je Insel: neue Töne, neue Sterne
   function station(id) { for (var i = 0; i < ISLANDS.length; i++) for (var j = 0; j < ISLANDS[i].st.length; j++) if (ISLANDS[i].st[j].id === id) return { isl: ISLANDS[i], st: ISLANDS[i].st[j], idx: j }; return null; }
   // Titel eigener Verlagsstücke, die NICHT verwendet werden dürfen (Prüfung in tests/test_logic.mjs)
   var FORBIDDEN_TITLES = ['Hokus Pokus', 'Mehr Bewegung', 'Kletterwand', 'Tägliche Noten', 'Die Brücke', 'Drei-Noten-Rock', 'Karussell', 'Play the Blues', 'H wie Hallo', 'Rockdahouse', 'Lausbub', 'Cool Song', 'Hoch und runter', 'Wechselspiel', 'Denkzeit', 'Gleitschirme', 'Fließende Töne', 'Puppenspieler', 'Auf Wiederhören', 'Igelrock', 'Bock auf Rock', 'Der Zeigefinger', 'Hetz mich nicht', 'Trampolin', 'Zwei dicke Freunde', 'fröhlichen Wanderer', 'Bitte folgen', 'Ganz schön effig', 'Schaukelstuhl', 'coole Kicker', 'Hochflieger', 'Achtelblues', 'Schmetterling', 'Gruppenbildung', 'Kunst des Weglassens', 'Kleine Sprünge', 'Große Sprünge', 'Zwei oder drei', 'schwarzen Bergen', 'In die Höhe', 'Turmbläser', 'Glatteis', 'Stufenweise', "Seh', wo ich steh'", 'Floh-Theater', 'Warte mal', 'Leinen los', "Hier braucht's Luft", 'mögen die Bögen', 'Auf der Hut', 'Rumba am Strand', 'Mini Cha-cha', 'Nino Latino', 'Bauerntanz', 'BMX-Bahn', 'Eine Menge Achtel', 'Verzaubertes Lied', 'Mini Tango', "hat 'ne Band", 'Vorzeichenjagd', 'Suchauftrag', 'Tiefe Gefühle', 'Baukasten', 'Herausforderung', 'Blonde Locken', 'B tut nicht weh', 'Reggaeman', 'Hippo Hop', 'Schöne Schleifen', 'Bläsercalypso', 'zu wenig von allem', 'Bohrhammer', 'Echo des Frühlings', 'Beim zweiten Mal', 'Schöne Töne', 'Bungee Jump'];
@@ -876,7 +897,7 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
   var KL = { SAVE_VERSION: SAVE_VERSION, freshSave: freshSave, freshGame: freshGame, migrateSave: migrateSave, pitchTracker: pitchTracker, pitchFrame: pitchFrame, dayRec: dayRec, practiceTick: practiceTick,
     missionsFor: missionsFor, misLabel: misLabel, misNote: misNote, misProgress: misProgress, noteStat: noteStat, award: award, genitive: genitive, NOTES: NOTES, ISLANDS: ISLANDS, FORBIDDEN_TITLES: FORBIDDEN_TITLES, TRANSPOSE: TRANSPOSE, nameOfMidi: nameOfMidi, fingerText: fingerText, staffStep: staffStep, accidental: accidental,
     concertFreq: concertFreq, analyzeFreq: analyzeFreq, yin: yin, rms: rms, parseMelody: parseMelody, barBeats: barBeats, diff: diff, starsFor: starsFor, payout: payout, isCurrent: isCurrent, mainStations: mainStations, islandPassed: islandPassed, dayMissions: dayMissions,
-    knownNotes: knownNotes, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
+    knownNotes: knownNotes, READ_N: READ_N, READ_SCORE: READ_SCORE, readNotes: readNotes, readScore: readScore, readId: readId, station: station, kontoMigrate: kontoMigrate, kontoLink: kontoLink, kontoEmpty: kontoEmpty, KONTO_APP: KONTO_APP };
   root.KL = KL;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -913,11 +934,14 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
   // gap/len: Faktor für Lücken und Plattformen im Ton-Hüpfer (Lücke = Zeit zum Umgreifen), v: Tempo der Welt,
   // need: Anteil der Plattform, den der Ton klingen muss, beat/songGap/bpm: Lied-Pfad, echo: Sekunden für Brunos Echo (0 = ohne Zeitgrenze)
   var DIFFS = [
-    { n: 1, name: 'Leicht', icon: '🐢', what: 'Viel Zeit zum Umgreifen', gap: 2.0, len: 1.15, v: 0.8, need: 0.4, beat: 1.9, songGap: 0.7, bpm: 72, echo: 0 },
-    { n: 2, name: 'Mittel', icon: '🙂', what: 'Normales Tempo', gap: 1.0, len: 1.0, v: 1.0, need: 0.5, beat: 1.15, songGap: 0.35, bpm: 80, echo: 10 },
-    { n: 3, name: 'Schwer', icon: '🔥', what: 'Kurze Pausen, schneller', gap: 0.6, len: 0.85, v: 1.15, need: 0.6, beat: 1.0, songGap: 0.32, bpm: 96, echo: 6 }
+    { n: 1, name: 'Leicht', icon: '🐢', what: 'Viel Zeit · Buchstaben und Griffe', gap: 2.0, len: 1.15, v: 0.8, need: 0.4, beat: 1.9, songGap: 0.7, bpm: 72, echo: 0 },
+    { n: 2, name: 'Mittel', icon: '🙂', what: 'Normales Tempo · Buchstaben', gap: 1.0, len: 1.0, v: 1.0, need: 0.5, beat: 1.15, songGap: 0.35, bpm: 80, echo: 10 },
+    { n: 3, name: 'Schwer', icon: '🔥', what: 'Schneller · nur Noten', gap: 0.6, len: 0.85, v: 1.15, need: 0.6, beat: 1.0, songGap: 0.32, bpm: 96, echo: 6 }
   ];
   function diffOf(n) { return DIFFS[(n | 0) - 1] || DIFFS[1]; }
+  // Notenanzeige im Klang-Abenteuer je Schwierigkeit (seit v0.6.0, gilt für alle Spiele): Note immer,
+  // Leicht zusätzlich Buchstabe und Griff, Mittel nur Buchstabe, Schwer nur die Note
+  function noteView(diff) { var n = diffOf(diff).n; return { names: n <= 2, fings: n === 1 }; }
 
   /* ---------- Hilfe-Stufen: 1 = mit Namen und Griff, 2 = nur Noten, 3 = nur hören ---------- */
   // rec = { ok: [n1, n2, n3] } Erfolge je Stufe. setting = 'auto' oder 1/2/3 (Elternbereich).
@@ -1116,7 +1140,7 @@ body.spiel{background:#bfe9ff;touch-action:none;user-select:none;-webkit-user-se
 
   root.KLG = { SPELLS: SPELLS, spell: spell, spellNotes: spellNotes, spellMelody: spellMelody, spellsOpen: spellsOpen, helpLevel: helpLevel, spellSuccess: spellSuccess,
     noteListener: noteListener, spellRun: spellRun, matchSpell: matchSpell, rng: rng, HOP_STAGES: HOP_STAGES, hopLanes: hopLanes, hopSongs: hopSongs, stageOpen: stageOpen,
-    hopTrack: hopTrack, HOP_NEED: HOP_NEED, DIFFS: DIFFS, diffOf: diffOf, REISE: REISE, reiseWorld: reiseWorld, reiseId: reiseId, reiseOpen: reiseOpen, echoRounds: echoRounds, hopPlatHit: hopPlatHit, hopScore: hopScore, hopId: hopId, hopWant: hopWant, introTexts: introTexts };
+    hopTrack: hopTrack, HOP_NEED: HOP_NEED, DIFFS: DIFFS, diffOf: diffOf, noteView: noteView, REISE: REISE, reiseWorld: reiseWorld, reiseId: reiseId, reiseOpen: reiseOpen, echoRounds: echoRounds, hopPlatHit: hopPlatHit, hopScore: hopScore, hopId: hopId, hopWant: hopWant, introTexts: introTexts };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>/* Klarinetten-Abenteuer · Zeichnungen für App und Spiel (alles eigene SVG, nichts aus dem Netz):
@@ -1944,7 +1968,7 @@ VIEWS.Hop = () => {
     [-1, 1].forEach(s => { const cap = new T.Mesh(new T.CylinderGeometry(0.15, 0.15, 1.0, 12).rotateX(Math.PI / 2), mat); cap.position.x = s * len / 2; g.add(cap); });
     const gold = new T.Mesh(new T.BoxGeometry(len + 0.36, 0.38, 1.08), new T.MeshBasicMaterial({ color: 0xffcf2e, transparent: true, opacity: 0.0, depthWrite: false })); g.add(gold);
     g.position.set(p.t * V + len / 2, y - 0.15, PZ); scene.add(g);
-    const lab = K.textSprite(p.name, { color: '#3a2d4a', size: 64, h: 0.5 }); lab.position.set(p.t * V + Math.min(len / 2, 0.7), y - 0.55, PZ + 0.6); scene.add(lab);
+    const lab = K.textSprite(p.name, { color: '#3a2d4a', size: 64, h: 0.5 }); lab.position.set(p.t * V + Math.min(len / 2, 0.7), y - 0.55, PZ + 0.6); lab.visible = window.KLG.noteView(tr.diff).names; scene.add(lab); // Schwer: nur die Note am Rand, keine Buchstaben
     p.coins = []; const nC = Math.max(1, Math.round(p.len / 0.45));
     for (let j = 0; j < nC; j++) { const at = p.t + (j + 0.5) * p.len / nC, cm = K.model('pf-coin-gold', { s: 1.0 }); cm.position.set(at * V, y + 0.45, PZ); scene.add(cm); p.coins.push({ at, got: false, im: cm }); }
     return { p, g, mat, gold, lab };
@@ -1954,7 +1978,7 @@ VIEWS.Hop = () => {
   const fig = K.char(C.S.char, C.S.wear); fig.scale.setScalar(1.45); fig.rotation.y = -0.35; fig.look = -0.25; scene.add(fig);
   // Notennamen am linken Rand (HTML über dem Bild)
   const labs = document.createElement('div'); labs.className = 'lanes3d'; EL.appendChild(labs);
-  const lab = lanes.map(n => { const d = document.createElement('div'); d.innerHTML = `<i style="background:${NOTE_HEX(n)}"></i>${n}`; labs.appendChild(d); return d; });
+  const lab = lanes.map(n => { const d = document.createElement('div'); d.innerHTML = `<i style="background:${NOTE_HEX(n)}"></i>${window.KLG.noteView(tr.diff).names ? n : ''}`; labs.appendChild(d); return d; });
   let fy = 0, tt = 0, half = 6, viewH = 7;
   const laneOf = a => { const i = lanes.indexOf(a.name); if (i >= 0) return i; return a.midi < C.KL.NOTES[lanes[0]].midi ? 0 : lanes.length - 1; };
   const frame = () => {
@@ -2538,8 +2562,9 @@ class Hop extends P4.Scene {
     this.ground = this.add.tileSprite(0, 0, 4000, 64, 'ground').setOrigin(0, 0);
     this.gl = this.add.graphics(); this.gp = this.add.graphics();
     const tr = HOP.track;
-    this.lab = tr.lanes.map(n => this.add.text(0, 0, n, { fontFamily: 'sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#3a2d4a', stroke: '#ffffff', strokeThickness: 6 }).setOrigin(0, 0.5).setDepth(5));
-    this.ptx = tr.plats.map(p => this.add.text(0, 0, p.name, { fontFamily: 'sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#3a2d4a' }).setOrigin(0.5, 0));
+    const nm = KLG.noteView(tr.diff).names;
+    this.lab = tr.lanes.map(n => this.add.text(0, 0, nm ? n : '', { fontFamily: 'sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#3a2d4a', stroke: '#ffffff', strokeThickness: 6 }).setOrigin(0, 0.5).setDepth(5));
+    this.ptx = tr.plats.map(p => this.add.text(0, 0, nm ? p.name : '', { fontFamily: 'sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#3a2d4a' }).setOrigin(0.5, 0));
     tr.plats.forEach(p => { p.coins = []; const n = Math.max(1, Math.round(p.len / 0.45)); for (let j = 0; j < n; j++) p.coins.push({ at: p.t + (j + 0.5) * p.len / n, got: false, im: this.add.image(0, 0, 'coin').setScale(0.8) }); });
     HOP.coinsAll = tr.plats.reduce((a, p) => a + p.coins.length, 0);
     this.fig = makeFig(this, 0, 0, 0.42); this.y = null; this.tt = 0; this.mode = 'idle';
@@ -2726,7 +2751,7 @@ function hopFrame(fr) {
   if (HOP.quiet > 8 && t > 1) { HOP.paused = true; HOP.resume = 0; RUNNING = false; ui(`<div class="pauseov"><div class="panel"><h1>⏸ Pause</h1><div class="say">Spiel einfach einen Ton, dann geht es weiter.</div><div class="row"><button class="btn alt" data-act="hopquit">Aufhören</button></div></div></div>`); return; }
   const cur = tr.plats.find(p => t >= p.t && t < p.t + p.len), nx = cur || tr.plats.find(p => p.t > t);
   // nächster Ton mit Griffbild am Rand
-  const nn = nx ? nx.name : ''; if (nn !== HOP.nextN) { HOP.nextN = nn; $('pNext').innerHTML = nn ? `<small>${cur ? 'Jetzt' : 'Gleich'}</small>${nn}${DR.fingSVG(nn)}` : ''; }
+  const nn = nx ? nx.name : ''; if (nn !== HOP.nextN) { HOP.nextN = nn; const v = KLG.noteView(tr.diff); $('pNext').innerHTML = nn ? `<small>${cur ? 'Jetzt' : 'Gleich'}</small><div class="pst">${DR.single(nn)}</div>${v.names ? '<b>' + nn + '</b>' : ''}${v.fings ? DR.fingSVG(nn) : ''}` : ''; }
   else if (nx) { const s = $('pNext').querySelector('small'); if (s && s.textContent !== (cur ? 'Jetzt' : 'Gleich')) s.textContent = cur ? 'Jetzt' : 'Gleich'; }
   if (fr.voiced && fr.a) {
     const target = cur ? cur.name : nn, ok = target && fr.a.name === target && Math.abs(fr.a.cents) <= D.tol;
@@ -2776,7 +2801,7 @@ function diffRow() {
   const cur = S.game.diff || 1;
   return `<div class="diffsel" role="group" aria-label="Schwierigkeit">${KLG.DIFFS.map(d => `<button class="${d.n === cur ? 'on' : ''}" data-act="diff" data-n="${d.n}"><b>${d.icon} ${d.name}</b><small>${d.what}</small></button>`).join('')}</div>`;
 }
-function diffSet(n) { S.game.diff = n; save(); const d = KLG.diffOf(n); toast(`${d.icon} ${d.name}: ${d.what}`); if (SCREEN === 'hopsel') hopSel(); else if (SCREEN === 'reise') reiseMap(); else menu(); }
+function diffSet(n) { S.game.diff = n; save(); const d = KLG.diffOf(n); toast(`${d.icon} ${d.name}: ${d.what}`); if (SCREEN === 'hopsel') hopSel(); else if (SCREEN === 'reise') reiseMap(); else if (SCREEN === 'book') book(); else menu(); }
 
 /* ----- Klang-Reise (Spielkonzept 7.4): Szenen, gelöst nur mit Klang-Formeln. Welt 1 Summwiese ----- */
 let RW = 1, RS = null;
@@ -2797,18 +2822,15 @@ function reiseMap() {
 }
 function rSay(h) { const e = $('rSay'); if (e) e.innerHTML = h; }
 function rShow(h) { const e = $('rShow'); if (e) e.innerHTML = h; }
-// Notenbild je Hilfe-Stufe: 1 mit Namen und Griff, 2 nur Noten, 3 nur Punkte (hören)
-function notesHTML(notes, lv) {
-  const mel = notes.map(n => ({ name: n, rest: false, dur: 4, beats: 1, bar: 0, dot: false }));
-  if (lv === 1) return `<div class="staff">${DR.staffSVG(mel, { single: false, per: 1 })}</div><div class="fings">${notes.map(n => `<div>${n}${DR.fingSVG(n)}</div>`).join('')}</div>`;
-  if (lv === 2) return `<div class="staff">${DR.staffSVG(mel, { per: 1 })}</div>`;
-  return `<div class="dots" id="dots">${notes.map(() => '○').join(' ')}</div>`;
+// Notenbild im Klang-Abenteuer (seit v0.6.0): Note immer, darunter je Schwierigkeit Buchstabe und Griff (KLG.noteView)
+function notesView(mel) {
+  const v = KLG.noteView(S.game.diff), staff = `<div class="staff">${DR.staffSVG(mel, { per: 1 })}</div>`;
+  if (!v.names) return staff;
+  return staff + `<div class="fings${v.fings ? '' : ' nm'}">${mel.map(n => `<div>${n.name}${v.fings ? DR.fingSVG(n.name) : ''}</div>`).join('')}</div>`;
 }
-function spellNotesHTML(sp, dir, lv) {
-  if (lv === 3) return `<div class="listen">🎧</div><div class="dots" id="dots">${sp.notes.map(() => '○').join(' ')}</div>`;
-  const mel = KLG.spellMelody(sp, dir);
-  return lv === 1 ? `<div class="staff">${DR.staffSVG(mel, { single: false, per: 1 })}</div><div class="fings">${mel.map(n => `<div>${n.name}${DR.fingSVG(n.name)}</div>`).join('')}</div>` : `<div class="staff">${DR.staffSVG(mel, { per: 1 })}</div>`;
-}
+const melOf = notes => notes.map(n => ({ name: n, rest: false, dur: 4, beats: 1, bar: 0, dot: false }));
+const diffN = () => KLG.diffOf(S.game.diff).n;
+const namesOn = () => KLG.noteView(S.game.diff).names; // Buchstaben sichtbar: falscher Ton darf den gesuchten nennen
 function reiseGo(k) {
   stopAll(); const W = KLG.reiseWorld(RW);
   if (!KLG.reiseOpen(RW, k, S.unlocked, S.game.scenes)) return reiseMap();
@@ -2830,7 +2852,7 @@ async function reiseStart() {
   RUNNING = true; wake(); LISTEN = reiseFrame; WANT = reiseWant;
   const sc = RS.sc;
   if (sc.kind === 'use' || sc.kind === 'rev') { RS.phase = 'free'; rSay(sc.say + '<br><b>Spiel die passende Klang-Formel! 🎤</b>'); const bb = $('rBtns'); if (bb) bb.innerHTML = ''; }
-  else if (sc.kind === 'find') { RS.phase = 'guided'; rGuided(1, true); }
+  else if (sc.kind === 'find') { RS.phase = 'guided'; rGuided(true); }
   else { RS.phase = 'echo'; RS.echo = KLG.echoRounds(RS.W.isl, Q.has('seed') ? +Q.get('seed') : Math.floor(Math.random() * 1e9)); RS.r = 0; echoRound(); }
 }
 // Ding (oder Bruno) spielt eine Tonfolge vor, solange hört das Mikrofon weg
@@ -2840,21 +2862,21 @@ function rDemo(notes, then, buzz) {
   setTimeout(() => { if (SCREEN === 'rscene' && RS) { if (RS.L) RS.L.reset(); LISTEN = keep || reiseFrame; if (then) then(); } }, (d + 0.4) * 1000 / SPEED);
 }
 // Angeleitet: Formel Ton für Ton (wie im Zauberbuch). learn = neue Formel, wird erst vorgespielt
-function rGuided(lv, learn) {
-  const sp = RS.sp; RS.run = KLG.spellRun(sp, RS.dir); RS.lv = lv; RS.miss = 0; RS.idle = 0;
-  rShow(spellNotesHTML(sp, RS.dir, lv));
+function rGuided(learn) {
+  const sp = RS.sp; RS.run = KLG.spellRun(sp, RS.dir); RS.lv = diffN(); RS.miss = 0; RS.idle = 0;
+  rShow(notesView(KLG.spellMelody(sp, RS.dir)));
   const nm = RS.dir === -1 ? sp.rev.icon + ' ' + sp.rev.name : sp.icon + ' ' + sp.name;
   rSay(learn ? 'Hör gut zu …' : `${RS.sc.hint || ''} Hör mal: ${nm}`);
   rDemo(KLG.spellMelody(sp, RS.dir), () => rSay(`Jetzt du! Spiel ${nm}. 🎤`));
 }
 function rHint() {
-  if (RS.hinted) return; RS.hinted = true; const r = S.game.spells[RS.sp.id];
-  rGuided(Math.min(2, r ? KLG.helpLevel(r, S.set.help) : 1), false);
+  if (RS.hinted) return; RS.hinted = true;
+  rGuided(false);
 }
 function echoRound() {
-  const seq = RS.echo[RS.r], d = KLG.diffOf(S.game.diff), lv = d.n === 1 ? 1 : d.n === 2 ? 2 : 3;
+  const seq = RS.echo[RS.r], d = KLG.diffOf(S.game.diff);
   RS.run = KLG.spellRun({ notes: seq, long: 0 }, 1); RS.timeLeft = d.echo; RS.timeouts = RS.timeouts || 0; RS.miss = 0; RS.idle = 0;
-  rShow(`<div class="muted">Echo ${RS.r + 1} von ${RS.echo.length}${d.echo ? ' · <span id="rTime">⏳ ' + d.echo + ' s</span>' : ''}</div>` + notesHTML(seq, lv));
+  rShow(`<div class="muted">Echo ${RS.r + 1} von ${RS.echo.length}${d.echo ? ' · <span id="rTime">⏳ ' + d.echo + ' s</span>' : ''}</div>` + notesView(melOf(seq)));
   rSay('Bruno brummt … 🐝');
   rDemo(seq, () => rSay('Brumm es nach! 🎤'), true);
 }
@@ -2865,7 +2887,7 @@ function bounce(e, res) { // gemeinsame Antwort auf Töne (ok / falsch / zu kurz
   if (res.wrong) {
     sBad(); RS.miss++;
     const m = KL.NOTES[res.wrong] ? KL.NOTES[res.wrong].midi : null, wm = KL.NOTES[res.want].midi;
-    rSay(`<span style="color:#c2185b">Du spielst <b>${res.wrong}</b>${RS.lv === 1 || RS.phase === 'echo' && KLG.diffOf(S.game.diff).n === 1 ? ' – gesucht ist <b>' + res.want + '</b>' : ''}.</span> ${m == null ? '' : m < wm ? 'Etwas höher ⬆' : m > wm ? 'Etwas tiefer ⬇' : 'Fast! Noch etwas sauberer.'}`);
+    rSay(`<span style="color:#c2185b">Du spielst <b>${res.wrong}</b>${namesOn() ? ' – gesucht ist <b>' + res.want + '</b>' : ''}.</span> ${m == null ? '' : m < wm ? 'Etwas höher ⬆' : m > wm ? 'Etwas tiefer ⬇' : 'Fast! Noch etwas sauberer.'}`);
   }
   if (res.short) rSay(`Länger halten! Der Ton ${res.short} muss ${res.need} Sekunden klingen. Tief einatmen …`);
 }
@@ -2904,7 +2926,7 @@ function reiseFrame(fr) {
     // müde: jetzt die Formel Summen
     RS.phase = 'tired'; LISTEN = null; if (sc) sc.tired();
     rSay(RS.sc.tired);
-    setTimeout(() => { if (SCREEN === 'rscene' && RS) { const r = S.game.spells[RS.sp.id]; rGuided(r ? KLG.helpLevel(r, S.set.help) : 1, false); } }, 1600 / SPEED);
+    setTimeout(() => { if (SCREEN === 'rscene' && RS) rGuided(false); }, 1600 / SPEED);
     return;
   }
   RS.scores.push(RS.sc.kind === 'find' || RS.phase === 'tired' ? run.score() : run.score() * 0.9); // nach Tipp: etwas weniger
@@ -2923,7 +2945,7 @@ function reiseWin() {
   LISTEN = null; RUNNING = false; WANT = null;
   const W = RS.W, sc = RS.sc, k = RS.k, score = avg(RS.scores) || 0, earned = KL.starsFor(score, W.isl);
   let news = [];
-  if (sc.kind === 'find' || sc.kind === 'boss') { const res = KLG.spellSuccess(S.game, RS.sp.id, RS.lv || 1, today(), S.set.help); if (res.first) news.push(`📖 Neue Klang-Formel im Zauberbuch: <b>${RS.sp.icon} ${RS.sp.name}</b>!`); }
+  if (sc.kind === 'find' || sc.kind === 'boss') { const res = KLG.spellSuccess(S.game, RS.sp.id, RS.lv || diffN(), today(), 'fest'); if (res.first) news.push(`📖 Neue Klang-Formel im Zauberbuch: <b>${RS.sp.icon} ${RS.sp.name}</b>!`); }
   const key = sceneKey(RW, sc), first = S.game.scenes.indexOf(key) < 0; if (first) S.game.scenes.push(key);
   if (sc.kind === 'boss' && S.game.boss.indexOf('w' + RW) < 0) { S.game.boss.push('w' + RW); news.push(`🏅 Welt ${RW} geschafft! Die ${W.name} klingt wieder.`); }
   const r = KL.award(S, { id: KLG.reiseId(RW, k), isl: W.isl, earned, date: today(), playable: PLAYABLE, medal: 0 });
@@ -2942,31 +2964,27 @@ function reiseWin() {
 }
 
 /* ----- Zauberbuch und Klang-Formeln ----- */
-const HELP_NAME = ['', 'mit Namen', 'nur Noten', 'nur hören'];
 function book() {
   stopAll(); SCREEN = 'book'; scene('Bg');
   const cards = KLG.SPELLS.map(sp => {
     const open = sp.isl <= S.unlocked, r = S.game.spells[sp.id];
     if (!open) return `<button class="spc lock" data-act="spelllock" data-n="${sp.isl}"><b>🔒</b>???<small>ab Insel ${sp.isl}</small></button>`;
     if (sp.reise && !r) return `<button class="spc lock" data-act="reise"><b>🧭</b>???<small>lernst du in der Klang-Reise</small></button>`;
-    return `<button class="spc${r && r.gold ? ' gold' : ''}" data-act="spell" data-id="${sp.id}"><b>${sp.icon}</b>${sp.name}${r && r.gold ? ' 🏅' : ''}<small>${r ? 'Hilfe: ' + HELP_NAME[KLG.helpLevel(r, S.set.help)] + (sp.rev ? ' · rückwärts: ' + sp.rev.name : '') : '✨ Neu! Tippe zum Lernen'}</small></button>`;
+    return `<button class="spc${r && r.gold ? ' gold' : ''}" data-act="spell" data-id="${sp.id}"><b>${sp.icon}</b>${sp.name}${r && r.gold ? ' 🏅' : ''}<small>${r ? (sp.rev ? 'rückwärts: ' + sp.rev.name : 'gelernt ✓') : '✨ Neu! Tippe zum Lernen'}</small></button>`;
   }).join('');
-  ui(`<div class="panel book"><h1>📖 ${esc(KL.genitive(CN))} Zauberbuch</h1><div class="muted">Klang-Formeln sind kleine Tonfolgen mit Zauberkraft. Rückwärts gespielt bewirken sie das Gegenteil. Mit jeder Insel kommen neue dazu.</div><div class="spells">${cards}</div><div class="row"><button class="btn alt" data-act="menu">⬅ Zurück</button></div></div>`);
+  ui(`<div class="panel book"><h1>📖 ${esc(KL.genitive(CN))} Zauberbuch</h1><div class="muted">Klang-Formeln sind kleine Tonfolgen mit Zauberkraft. Rückwärts gespielt bewirken sie das Gegenteil. Mit jeder Insel kommen neue dazu.</div><div class="spells">${cards}</div>${diffRow()}<div class="row"><button class="btn alt" data-act="menu">⬅ Zurück</button></div></div>`);
 }
 let SP = null; // { sp, dir, lv, run, L, idle, replays, learn }
 function spellPage(id, dir) {
   stopAll(); SCREEN = 'spell';
   const sp = KLG.spell(id); if (!sp || sp.isl > S.unlocked || (sp.reise && !S.game.spells[sp.id])) return book();
-  const r = S.game.spells[sp.id], learn = !r, lv = learn ? 1 : KLG.helpLevel(r, S.set.help); dir = learn || !sp.rev ? 1 : (dir || 1);
+  const r = S.game.spells[sp.id], learn = !r, lv = diffN(), dd = KLG.diffOf(lv); dir = learn || !sp.rev ? 1 : (dir || 1);
   SP = { sp, dir, lv, learn };
   scene('Spell', { sp, dir });
   const notes = KLG.spellMelody(sp, dir), title = dir === -1 ? `${sp.rev.icon} ${sp.rev.name} <span class="muted">(${sp.name} rückwärts)</span>` : `${sp.icon} ${sp.name}`;
-  let show;
-  if (lv === 1) show = `<div class="staff">${DR.staffSVG(notes, { single: false, per: 1 })}</div><div class="fings">${notes.map(n => `<div>${n.name}${DR.fingSVG(n.name)}</div>`).join('')}</div>`;
-  else if (lv === 2) show = `<div class="staff">${DR.staffSVG(notes, { per: 1 })}</div>`;
-  else show = `<div class="listen">🎧</div><div class="dots" id="dots">${notes.map(() => '○').join(' ')}</div>`;
+  const show = notesView(notes);
   const say = learn ? `${sp.from[0].toUpperCase() + sp.from.slice(1)} spielt dir eine Klang-Formel vor. Hör gut zu und spiel sie nach!` : sp.what;
-  ui(`<div class="panel book sppan"><h1 style="margin-bottom:2px">${title}<span class="lvl${lv === 3 ? ' g' : ''}">Hilfe: ${HELP_NAME[lv]}</span>${r && r.gold ? ' 🏅' : ''}</h1>
+  ui(`<div class="panel book sppan"><h1 style="margin-bottom:2px">${title}<span class="lvl${lv === 3 ? ' g' : ''}">${dd.icon} ${dd.name}</span>${r && r.gold ? ' 🏅' : ''}</h1>
   <div class="say" id="spSay" style="font-size:20px">${say}</div>${show}
   <div class="row"><button class="btn alt" data-act="spellplay">▶ Anhören</button><button class="btn pink huge" data-act="spellgo">🎤 ${learn ? 'Lernen' : 'Zaubern'}</button></div>
   <div class="row">${!learn && sp.rev ? `<button class="btn alt" data-act="spelldir">${dir === 1 ? '◀ Rückwärts: ' + sp.rev.name : '▶ Vorwärts: ' + sp.name}</button>` : ''}<button class="btn alt" data-act="book">📖 Zauberbuch</button></div></div>`, 'left');
@@ -2985,11 +3003,11 @@ async function spellGo() {
   document.querySelectorAll('[data-act="spellgo"],[data-act="spelldir"],[data-act="spellplay"]').forEach(b => { b.disabled = true; });
   const listen = () => {
     if (SCREEN !== 'spell' || !SP.run) return;
-    spSay(SP.lv === 3 ? 'Jetzt du! Spiel nach, was du gehört hast. 🎤' : 'Jetzt du! 🎤 ' + esc(CN) + ' hört zu.');
+    spSay('Jetzt du! 🎤 ' + esc(CN) + ' hört zu.');
     RUNNING = true; wake(); LISTEN = spellFrame; WANT = () => spellWant();
   };
-  // Beim Lernen und auf Stufe „nur hören“ spielt das Ding die Formel zuerst vor
-  if (SP.learn || SP.lv === 3) { spSay('Hör gut zu …'); spellDemo(listen); } else listen();
+  // Beim Lernen spielt das Ding die Formel zuerst vor
+  if (SP.learn) { spSay('Hör gut zu …'); spellDemo(listen); } else listen();
 }
 function spSay(h) { const e = $('spSay'); if (e) e.innerHTML = h; }
 function spellMark(i, cls) {
@@ -3007,8 +3025,8 @@ function spellFrame(fr) {
     sBad(); SP.noteMiss++;
     const want = res.want, m = KL.NOTES[res.wrong] ? KL.NOTES[res.wrong].midi : null, wm = KL.NOTES[want].midi;
     const dirTxt = m == null ? '' : m < wm ? 'Etwas höher ⬆' : m > wm ? 'Etwas tiefer ⬇' : 'Fast! Noch etwas sauberer.';
-    // Stufe 1 nennt den gesuchten Ton, Stufe 2 und 3 nur die Richtung (sonst wäre Notenlesen bzw. Hören überflüssig)
-    spSay(`<span class="wrong" style="color:#c2185b">Du spielst <b>${res.wrong}</b>${SP.lv === 1 ? ' – gesucht ist <b>' + want + '</b>' : ''}.</span> ${dirTxt}`);
+    // Leicht und Mittel nennen den gesuchten Ton, Schwer nur die Richtung (sonst wäre das Notenlesen überflüssig)
+    spSay(`<span class="wrong" style="color:#c2185b">Du spielst <b>${res.wrong}</b>${SP.lv <= 2 ? ' – gesucht ist <b>' + want + '</b>' : ''}.</span> ${dirTxt}`);
     if (SP.noteMiss >= 3) { SP.noteMiss = 0; LISTEN = null; spSay('Das war schwer. Hör noch einmal genau hin …'); spellDemo(() => { if (SCREEN === 'spell' && SP.run && !SP.run.done) { LISTEN = spellFrame; spSay('Jetzt du! 🎤'); } }); }
   }
   if (res.short) spSay(`Länger halten! Der Ton ${res.short} muss ${res.need} Sekunden klingen. Tief einatmen …`);
@@ -3022,14 +3040,14 @@ function spellWant() { // simulierter Spieler: spielt den gesuchten Ton (beim la
 function spellEnd() {
   LISTEN = null; RUNNING = false; WANT = null;
   const sp = SP.sp, run = SP.run, score = run.score(), earned = KL.starsFor(score, sp.isl);
-  const lv = SP.lv, res = KLG.spellSuccess(S.game, sp.id, lv, today(), S.set.help);
+  const lv = SP.lv, res = KLG.spellSuccess(S.game, sp.id, lv, today(), 'fest');
   const r = KL.award(S, { id: 'KF-' + sp.id, isl: sp.isl, earned, date: today(), playable: PLAYABLE, medal: 0 });
   kontoDo(() => KK.note('Klang-Formel ' + sp.id));
   save(); hud();
   const sc = sceneObj('Spell'); if (sc) sc.done();
   sStar(); if (res.first || res.gold) confetti();
   const nm = SP.dir === -1 ? sp.rev.icon + ' ' + sp.rev.name : sp.icon + ' ' + sp.name;
-  const news = [res.first ? `📖 Neue Klang-Formel im Zauberbuch: <b>${nm}</b>!` : '', res.gold ? '🏅 Gold-Siegel: nur nach Gehör gezaubert!' : '', res.up ? `⬆ Nächstes Mal schwerer: Hilfe „${HELP_NAME[res.up]}“` : '', res.first && sp.rev ? `Tipp: Rückwärts gespielt heißt sie <b>${sp.rev.name}</b>.` : ''].filter(Boolean);
+  const news = [res.first ? `📖 Neue Klang-Formel im Zauberbuch: <b>${nm}</b>!` : '', res.gold ? '🏅 Gold-Siegel: auf Schwer nur nach Noten gezaubert!' : '', res.first && sp.rev ? `Tipp: Rückwärts gespielt heißt sie <b>${sp.rev.name}</b>.` : ''].filter(Boolean);
   setTimeout(() => {
     if (SCREEN !== 'spell') return;
     ui(`<div class="panel book sres sppan"><div class="stars">${starStr(earned)}</div><div class="say">${nm} – es hat gewirkt${cm()}!</div>
